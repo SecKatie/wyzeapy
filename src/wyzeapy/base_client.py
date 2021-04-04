@@ -26,6 +26,10 @@ class DeviceTypes(Enum):
     MESH_LIGHT = "MeshLight"
     CAMERA = "Camera"
     CHIME_SENSOR = "ChimeSensor"
+    CONTACT_SENSOR = "ContactSensor"
+    MOTION_SENSOR = "MotionSensor"
+    WRIST = "Wrist"
+    BASE_STATION = "BaseStation"
 
 
 class PropertyIDs(Enum):

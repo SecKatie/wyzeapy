@@ -30,6 +30,7 @@ class DeviceTypes(Enum):
     MOTION_SENSOR = "MotionSensor"
     WRIST = "Wrist"
     BASE_STATION = "BaseStation"
+    SCALE = "WyzeScale"
 
 
 class PropertyIDs(Enum):

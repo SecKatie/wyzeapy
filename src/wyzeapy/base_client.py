@@ -31,6 +31,7 @@ class DeviceTypes(Enum):
     WRIST = "Wrist"
     BASE_STATION = "BaseStation"
     SCALE = "WyzeScale"
+    LOCK = "Lock"
 
 
 class PropertyIDs(Enum):

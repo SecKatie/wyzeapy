@@ -34,6 +34,7 @@ class DeviceTypes(Enum):
     LOCK = "Lock"
     GATEWAY = "gateway"
     COMMON = "Common"
+    VACUUM = "JA_RO2"
 
 
 class PropertyIDs(Enum):

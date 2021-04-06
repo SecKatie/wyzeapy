@@ -32,6 +32,8 @@ class DeviceTypes(Enum):
     BASE_STATION = "BaseStation"
     SCALE = "WyzeScale"
     LOCK = "Lock"
+    GATEWAY = "gateway"
+    COMMON = "Common"
 
 
 class PropertyIDs(Enum):

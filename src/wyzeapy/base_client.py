@@ -12,7 +12,7 @@ from enum import Enum
 import requests
 
 PHONE_SYSTEM_TYPE = "1"
-API_KEY = 'WMXHYf79Nr5gIlt3r0r7p9Tcw5bvs6BB4U8O8nGJ'
+API_KEY = "WMXHYf79Nr5gIlt3r0r7p9Tcw5bvs6BB4U8O8nGJ"
 APP_VERSION = "2.18.43"
 APP_VER = "com.hualai.WyzeCam___2.18.43"
 APP_NAME = "com.hualai.WyzeCam"
@@ -35,6 +35,7 @@ class DeviceTypes(Enum):
     GATEWAY = "gateway"
     COMMON = "Common"
     VACUUM = "JA_RO2"
+    HEADPHONES = "JA.SC"
 
 
 class PropertyIDs(Enum):

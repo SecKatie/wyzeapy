@@ -36,6 +36,8 @@ class DeviceTypes(Enum):
     COMMON = "Common"
     VACUUM = "JA_RO2"
     HEADPHONES = "JA.SC"
+    THERMOSTAT = "Thermostat"
+    GATEWAY_V2 = "GateWay"
 
 
 class PropertyIDs(Enum):

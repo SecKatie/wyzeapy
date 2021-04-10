@@ -3,11 +3,12 @@
 #  of the attached license. You should have received a copy of
 #  the license with this file. If not, please write to:
 #  joshua@mulliken.net to receive a copy
-
+import datetime
 import hashlib
 import time
 import uuid
 from enum import Enum
+from typing import List
 
 import requests
 
@@ -232,6 +233,15 @@ class BaseClient:
         self.check_for_errors(response_json)
 
     def set_property(self, device: Device, pid, pvalue):
+        """
+        Sets a single property on the selected device.
+        Only works for Plugs, Lights, and Outdoor Plugs
+
+        :param device: Device
+        :param pid: str
+        :param pvalue: str
+        :return: None
+        """
         if DeviceTypes(device.product_type) not in [
             DeviceTypes.PLUG,
             DeviceTypes.LIGHT,
@@ -257,3 +267,45 @@ class BaseClient:
         response_json = requests.post("https://api.wyzecam.com/app/v2/device/set_property", json=payload).json()
 
         self.check_for_errors(response_json)
+
+    def get_event_list(self, device: Device, count: int) -> dict:
+        """
+        Gets motion events from the event listing endpoint.
+
+        :param count:
+        :param device: Device
+        :return: dict
+        """
+        payload = {
+            "phone_id": PHONE_ID,
+            "begin_time": int(str(datetime.date.today().strftime("%s")) + "000"),
+            "event_type": "",
+            "app_name": APP_NAME,
+            "count": count,
+            "app_version": APP_VERSION,
+            "order_by": 2,
+            "event_value_list": [
+                "1",
+                "13",
+                "10",
+                "12"
+            ],
+            "sc": "9f275790cab94a72bd206c8876429f3c",
+            "device_mac_list": [
+                device.mac
+            ],
+            "event_tag_list": [],
+            "sv": "782ced6909a44d92a1f70d582bbe88be",
+            "end_time": int(str(int(time.time())) + "000"),
+            "phone_system_type": PHONE_SYSTEM_TYPE,
+            "app_ver": APP_VER,
+            "ts": int(str(int(time.time())) + "000"),
+            "device_mac": "",
+            "access_token": self.access_token
+        }
+
+        response_json = requests.post("https://api.wyzecam.com/app/v2/device/get_event_list", json=payload).json()
+
+        self.check_for_errors(response_json)
+
+        return response_json

@@ -1,7 +1,2 @@
-/dist/
-/build/
-*.egg-info/
-/.idea/
-.venv/
-
 /test.py
+/.idea/

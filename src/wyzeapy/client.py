@@ -6,7 +6,63 @@
 
 import re
 
+from typing import List, Any
 from .base_client import BaseClient, Device, DeviceTypes, ActionNotSupported, PropertyIDs
+
+
+class File:
+    file_id: str
+    type: Any
+    url: str
+    status: int
+    en_algorithm: int
+    en_password: str
+    is_ai: int
+    ai_tag_list: List
+    ai_url: str
+    file_params: dict
+
+    def __init__(self, dictionary):
+        for k, v in dictionary.items():
+            setattr(self, k, v)
+
+        if self.type == 1:
+            self.type = "Image"
+        else:
+            self.type = "Video"
+
+    def __repr__(self):
+        return "<File: {}, {}>".format(self.file_id, self.type)
+
+
+class Event:
+    event_id: str
+    device_mac: str
+    device_model: str
+    event_category: int
+    event_value: str
+    event_ts: int
+    event_ack_result: int
+    is_feedback_correct: int
+    is_feedback_face: int
+    is_feedback_person: int
+    file_list: List[File]
+    event_params: dict
+    recognized_instance_list: List
+    tag_list: List
+    read_state: int
+
+    def __init__(self, dictionary):
+        for k, v in dictionary.items():
+            setattr(self, k, v)
+        temp_file_list = []
+        if len(self.file_list) > 0:
+            for file in self.file_list:
+                temp_file_list.append(File(file))
+        self.file_list = temp_file_list
+
+    def __repr__(self):
+        return "<Event: {}, {}>".format(self.event_id, self.event_ts)
 
 
 class Client:
@@ -137,3 +193,22 @@ class Client:
                 pass
 
         return property_list
+
+    def get_events(self, device):
+        raw_events = self.client.get_event_list(device, 10)['data']['event_list']
+
+        events = []
+        if len(raw_events) > 0:
+            for raw_event in raw_events:
+                event = Event(raw_event)
+                events.append(event)
+
+        return events
+
+    def get_latest_event(self, device):
+        raw_events = self.client.get_event_list(device, 10)['data']['event_list']
+
+        if len(raw_events) > 0:
+            return Event(raw_events[0])
+
+        return None

@@ -96,7 +96,7 @@ class BaseClient:
     access_token = ""
     refresh_token = ""
 
-    def login(self, email, password) -> None:
+    def login(self, email, password) -> bool:
         email = email
         password = password
 
@@ -111,9 +111,15 @@ class BaseClient:
 
         response_json = requests.post("https://auth-prod.api.wyze.com/user/login",
                                       headers=headers, json=login_payload).json()
+        try:
+            self.access_token = response_json['access_token']
+            self.refresh_token = response_json['refresh_token']
+            return True
+        except KeyError:
+            return False
 
-        self.access_token = response_json['access_token']
-        self.refresh_token = response_json['refresh_token']
+    def can_login(self, username, password):
+        return self.login(username, password)
 
     @staticmethod
     def create_password(password) -> str:

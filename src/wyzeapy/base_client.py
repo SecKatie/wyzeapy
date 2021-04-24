@@ -8,7 +8,7 @@ import hashlib
 import time
 import uuid
 from enum import Enum
-from typing import List
+from typing import List, Dict
 
 import requests
 
@@ -53,6 +53,10 @@ class ResponseCodes(Enum):
     SUCCESS = "1"
     PARAMETER_ERROR = "1001"
     ACCESS_TOKEN_ERROR = "2001"
+
+
+class ResponseCodesLock(Enum):
+    SUCCESS = 0
 
 
 SWITCHABLE_DEVICES = [DeviceTypes.LIGHT, DeviceTypes.MESH_LIGHT, DeviceTypes.PLUG]
@@ -136,6 +140,51 @@ class BaseClient:
                 raise AccessTokenError
             else:
                 raise UnknownApiError(response_json)
+
+    @staticmethod
+    def check_for_errors_lock(response_json):
+        if response_json['ErrNo'] != ResponseCodes.SUCCESS.value:
+            if response_json['code'] == ResponseCodes.PARAMETER_ERROR.value:
+                raise ParameterError
+            elif response_json['code'] == ResponseCodes.ACCESS_TOKEN_ERROR.value:
+                raise AccessTokenError
+            else:
+                raise UnknownApiError(response_json)
+
+    app_key = "275965684684dbdaf29a0ed9"
+    app_secret = "4deekof1ba311c5c33a9cb8e12787e8c"
+
+    def postMethod(self, str, str2, map):
+        str4 = str
+        str3 = str2
+        map2 = map
+
+        return self.getTransferParam(map2, str3, str4, "post")
+
+    def getTransferParam(self, map, str4, str2, str3):
+        map["accessToken"] = self.access_token
+        map["key"] = self.app_key
+        map["timestamp"] = str(datetime.datetime.now().timestamp()).split(".")[0] + "000"
+        map["sign"] = self.getSignStr(str4, str3, map)
+        import json
+        print(json.dumps(map))
+        return map
+
+    def getSignStr(self, str, str2, map: Dict):
+        string_buf = str2 + str
+        for entry in sorted(map.keys()):
+            print(entry)
+            print(map[entry])
+            string_buf += entry + "=" + map[entry] + "&"
+
+        string_buf = string_buf[:-1]
+        print(string_buf)
+        string_buf += self.app_secret
+        import urllib.parse
+        urlencoded = urllib.parse.quote_plus(string_buf)
+        sign_str = hashlib.md5(urlencoded.encode()).hexdigest()
+        print(sign_str)
+        return sign_str
 
     def get_object_list(self):
         payload = {
@@ -317,3 +366,21 @@ class BaseClient:
         self.check_for_errors(response_json)
 
         return response_json
+
+    def lock_control(self, device: Device, action: str):
+        sb2 = "https://yd-saas-toc.wyzecam.com/openapi/lock/v1/control"
+        str3 = "/openapi/lock/v1/control"
+
+        uuid = device.mac.split(".")[2]
+
+        hash_map = {
+            "uuid": uuid,
+            "action": action  # "remoteLock" or "remoteUnlock"
+        }
+
+        payload = self.postMethod(sb2, str3, hash_map)
+
+        url = "https://yd-saas-toc.wyzecam.com/openapi/lock/v1/control"
+
+        response_json = requests.post(url, json=payload).json()
+        print(response_json)

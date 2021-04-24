@@ -117,6 +117,10 @@ class Client:
                 plist.extend(extra_pids)
 
             self.client.run_action_list(device, plist)
+        elif device_type in [
+            DeviceTypes.LOCK
+        ]:
+            self.client.lock_control(device, "remoteLock")
         else:
             raise ActionNotSupported(device_type.value)
 
@@ -148,6 +152,10 @@ class Client:
                 plist.extend(extra_pids)
 
             self.client.run_action_list(device, plist)
+        elif device_type in [
+            DeviceTypes.LOCK
+        ]:
+            self.client.lock_control(device, "remoteUnlock")
         else:
             raise ActionNotSupported(device_type.value)
 

@@ -76,6 +76,9 @@ class ParameterError(Exception):
 class AccessTokenError(Exception):
     pass
 
+class LoginError(Exception):
+    pass
+
 
 class UnknownApiError(Exception):
     def __init__(self, response_json):
@@ -115,11 +118,16 @@ class BaseClient:
 
         response_json = requests.post("https://auth-prod.api.wyze.com/user/login",
                                       headers=headers, json=login_payload).json()
+
+        # response_json = requests.post("https://auth-prod.api.wyze.com/user/login",
+        #                               json=login_payload).json()
+
         try:
             self.access_token = response_json['access_token']
             self.refresh_token = response_json['refresh_token']
             return True
-        except KeyError:
+        except KeyError as e:
+            print(e)
             return False
 
     def can_login(self, username, password):
@@ -135,7 +143,7 @@ class BaseClient:
     def check_for_errors(response_json):
         if response_json['code'] != ResponseCodes.SUCCESS.value:
             if response_json['code'] == ResponseCodes.PARAMETER_ERROR.value:
-                raise ParameterError
+                raise ParameterError(response_json)
             elif response_json['code'] == ResponseCodes.ACCESS_TOKEN_ERROR.value:
                 raise AccessTokenError
             else:
@@ -202,6 +210,7 @@ class BaseClient:
         response_json = requests.post("https://api.wyzecam.com/app/v2/home_page/get_object_list",
                                       json=payload).json()
 
+        print(payload)
         self.check_for_errors(response_json)
 
         return response_json
@@ -217,11 +226,12 @@ class BaseClient:
             "access_token": self.access_token,
             "phone_id": PHONE_ID,
             "app_name": APP_NAME,
-            "device_list": [device.mac],
-            "target_pid_list": ["P3", "P5", "P1501", "P1502", "P1506", "P1507", "P1509", "P1511", "P1512"]
+            "device_model": device.product_model,
+            "device_mac": device.mac,
+            "target_pid_list": []
         }
 
-        response_json = requests.post("https://api.wyzecam.com/app/v2/device_list/get_property_list",
+        response_json = requests.post("https://api.wyzecam.com/app/v2/device/get_property_list",
                                       json=payload).json()
 
         self.check_for_errors(response_json)

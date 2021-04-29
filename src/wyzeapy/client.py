@@ -187,7 +187,7 @@ class Client:
         ])
 
     def get_info(self, device):
-        properties = self.client.get_property_list(device)['data']['device_list'][0]['device_property_list']
+        properties = self.client.get_property_list(device)['data']['property_list']
 
         property_list = []
         for property in properties:

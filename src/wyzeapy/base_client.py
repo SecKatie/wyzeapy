@@ -276,6 +276,33 @@ class BaseClient:
 
         self.check_for_errors(response_json)
 
+    def run_action(self, device: Device, action: str):
+        if DeviceTypes(device.product_type) not in [
+            DeviceTypes.CAMERA
+        ]:
+            raise ActionNotSupported(device.product_type)
+
+        payload = {
+            "phone_system_type": PHONE_SYSTEM_TYPE,
+            "app_version": APP_VERSION,
+            "app_ver": APP_VER,
+            "sc": "9f275790cab94a72bd206c8876429f3c",
+            "ts": int(time.time()),
+            "sv": "9d74946e652647e9b6c9d59326aef104",
+            "access_token": self.access_token,
+            "phone_id": PHONE_ID,
+            "app_name": APP_NAME,
+            "provider_key": device.product_model,
+            "instance_id": device.mac,
+            "action_key": action,
+            "action_params": {},
+            "custom_string": "",
+        }
+
+        response_json = requests.post("https://api.wyzecam.com/app/v2/auto/run_action", json=payload).json()
+
+        self.check_for_errors(response_json)
+
     def set_property_list(self, device: Device, plist):
         if DeviceTypes(device.product_type) not in [
             DeviceTypes.LIGHT

@@ -121,6 +121,10 @@ class Client:
             DeviceTypes.LOCK
         ]:
             self.client.lock_control(device, "remoteLock")
+        elif device_type in [
+            DeviceTypes.CAMERA
+        ]:
+            self.client.run_action(device, "power_on")
         else:
             raise ActionNotSupported(device_type.value)
 
@@ -156,6 +160,10 @@ class Client:
             DeviceTypes.LOCK
         ]:
             self.client.lock_control(device, "remoteUnlock")
+        elif device_type in [
+            DeviceTypes.CAMERA
+        ]:
+            self.client.run_action(device, "power_off")
         else:
             raise ActionNotSupported(device_type.value)
 

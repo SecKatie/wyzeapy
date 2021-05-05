@@ -39,6 +39,8 @@ class DeviceTypes(Enum):
     HEADPHONES = "JA.SC"
     THERMOSTAT = "Thermostat"
     GATEWAY_V2 = "GateWay"
+    KEYPAD = "Keypad"
+    SENSOR_GATEWAY = "S1Gateway"
 
 
 class PropertyIDs(Enum):

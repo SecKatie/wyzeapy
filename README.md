@@ -11,7 +11,7 @@ from src.wyzeapy import AccessTokenError
 # except ParameterError as e:
 #     print(e)
 #
-# wyze_client.login("jocoder6@gmail.com", "7PRgKbiVUa.ZYk4tw@b@ij")
+# wyze_client.login("jocoder6@gmail.com", "7PRgKbiVUa.ZYk4tw@b@ij") # Don't worry it is an old password
 #
 # # Testing what happens when access token is bad
 # try:

@@ -36,6 +36,18 @@ class Client:
 
         return devices
 
+    def get_groups(self):
+        object_list = self.client.get_auto_group_list()
+
+        groups = []
+        for group in object_list['data']['auto_group_list']:
+            groups.append(Group(group))
+
+        return groups
+
+    def activate_group(self, group: Group):
+            self.client.auto_group_run(group)
+
     def turn_on(self, device: Device, extra_pids=None) -> None:
         device_type: DeviceTypes = DeviceTypes(device.product_type)
 

@@ -101,6 +101,16 @@ class Device:
     def __repr__(self):
         return "<Device: {}, {}>".format(DeviceTypes(self.product_type), self.mac)
 
+class Group:
+    group_id: str
+    group_name: str
+
+    def __init__(self, dictionary):
+        for k, v in dictionary.items():
+            setattr(self, k, v)
+
+    def __repr__(self):
+        return "<Group: {}, {}>".format(self.group_id, self.group_name)
 
 class BaseClient:
     access_token = ""
@@ -240,6 +250,27 @@ class BaseClient:
         self.check_for_errors(response_json)
 
         return response_json
+    
+    def get_auto_group_list(self):
+        payload = {
+            "access_token": self.access_token,
+            "app_name": APP_NAME,
+            "app_ver": APP_VER,
+            "app_version": APP_VERSION,
+            "group_type": "0",
+            "phone_id": PHONE_ID,
+            "phone_system_type": PHONE_SYSTEM_TYPE,
+            "sc": "9f275790cab94a72bd206c8876429f3c",
+            "sv": "9d74946e652647e9b6c9d59326aef104",
+            "ts": int(time.time()),
+        }
+
+        response_json = requests.post("https://api.wyzecam.com/app/v2/auto_group/get_list",
+                                      json=payload).json()
+
+        self.check_for_errors(response_json)
+
+        return response_json
 
     def run_action_list(self, device: Device, plist):
         if DeviceTypes(device.product_type) not in [
@@ -275,6 +306,29 @@ class BaseClient:
         }
 
         response_json = requests.post("https://api.wyzecam.com/app/v2/auto/run_action_list", json=payload).json()
+
+        self.check_for_errors(response_json)
+
+    def auto_group_run(self, group: Group):
+        #if DeviceTypes(device.product_type) not in [
+        #    DeviceTypes.CAMERA
+        #]:
+        #    raise ActionNotSupported(device.product_type)
+
+        payload = {
+            "access_token": self.access_token,
+            "app_name": APP_NAME,
+            "app_ver": APP_VER,
+            "app_version": APP_VERSION,
+            "group_id": group.group_id,
+            "phone_id": PHONE_ID,
+            "phone_system_type": PHONE_SYSTEM_TYPE,
+            "sc": "9f275790cab94a72bd206c8876429f3c",
+            "sv": "9d74946e652647e9b6c9d59326aef104",
+            "ts": int(time.time()),
+        }
+
+        response_json = requests.post("https://api.wyzecam.com/app/v2/auto_group/run", json=payload).json()
 
         self.check_for_errors(response_json)
 

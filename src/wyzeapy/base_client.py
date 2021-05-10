@@ -435,7 +435,7 @@ class BaseClient:
 
         payload = {
             "phone_id": PHONE_ID,
-            "begin_time": int(str(int(time.time()- (24 * 60 * 60))) + "000"),
+            "begin_time": int(str(int(time.time() - (24 * 60 * 60))) + "000"),
             "event_type": event_type,
             "app_name": APP_NAME,
             "count": count,

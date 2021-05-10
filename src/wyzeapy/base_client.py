@@ -61,6 +61,10 @@ class ResponseCodes(Enum):
 class ResponseCodesLock(Enum):
     SUCCESS = 0
 
+class EventTypes(Enum):
+    MOTION = 1
+    SOUND = 2
+    ALL = 3
 
 SWITCHABLE_DEVICES = [DeviceTypes.LIGHT, DeviceTypes.MESH_LIGHT, DeviceTypes.PLUG]
 
@@ -419,7 +423,7 @@ class BaseClient:
 
         self.check_for_errors(response_json)
 
-    def get_event_list(self, device: Device, count: int) -> dict:
+    def get_event_list(self, device: Device, count: int, requested_event_type: EventTypes = EventTypes.MOTION) -> dict:
         """
         Gets motion events from the event listing endpoint.
 
@@ -433,6 +437,15 @@ class BaseClient:
         else:
             event_type = ""
 
+        if requested_event_type == EventTypes.MOTION:
+            event_value_list = ["1", "13", "10", "12"]
+        elif requested_event_type == EventTypes.SOUND:
+            event_value_list = ["2"]
+        elif requested_event_type == EventTypes.ALL:
+            event_value_list = []
+        else: # Fallback
+            event_value_list = ["1", "13", "10", "12"]
+        
         payload = {
             "phone_id": PHONE_ID,
             "begin_time": int(str(int(time.time()- (24 * 60 * 60))) + "000"),
@@ -441,12 +454,7 @@ class BaseClient:
             "count": count,
             "app_version": APP_VERSION,
             "order_by": 2,
-            "event_value_list": [
-                "1",
-                "13",
-                "10",
-                "12"
-            ],
+            "event_value_list": event_value_list,
             "sc": "9f275790cab94a72bd206c8876429f3c",
             "device_mac_list": [
                 device.mac

@@ -427,10 +427,16 @@ class BaseClient:
         :param device: Device
         :return: dict
         """
+        device_type: DeviceTypes = DeviceTypes(device.product_type)
+        if device_type == DeviceTypes.CONTACT_SENSOR or device_type == DeviceTypes.MOTION_SENSOR:
+            event_type = 2
+        else:
+            event_type = ""
+
         payload = {
             "phone_id": PHONE_ID,
-            "begin_time": int(str(datetime.date.today().strftime("%s")) + "000"),
-            "event_type": "",
+            "begin_time": int(str(int(time.time()- (24 * 60 * 60))) + "000"),
+            "event_type": event_type,
             "app_name": APP_NAME,
             "count": count,
             "app_version": APP_VERSION,

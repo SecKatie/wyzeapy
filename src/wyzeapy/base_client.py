@@ -11,6 +11,7 @@ from typing import Any
 
 import requests
 import cachecontrol
+from cachecontrol import CacheControl
 
 from .const import *
 from .payload_factory import ford_create_payload, olive_create_get_payload, olive_create_post_payload
@@ -24,7 +25,7 @@ class BaseClient:
     refresh_token = ""
 
     def __init__(self):
-        self._session = cachecontrol.CacheControl(requests.Session())
+        self._session: CacheControl = cachecontrol.CacheControl(requests.Session())
 
     def login(self, email, password) -> bool:
         email = email
@@ -390,21 +391,20 @@ class BaseClient:
             'signature2': signature
         }
 
-        with self._session.Session() as session:
-            session.headers.update(headers)
+        self._session.headers.update(headers)
 
-            req = session.prepare_request(requests.Request('POST', url, json=payload))
+        req = self._session.prepare_request(requests.Request('POST', url, json=payload))
 
-            payload = json.dumps(payload, separators=(',', ':'))
+        payload = json.dumps(payload, separators=(',', ':'))
 
-            req.body = payload.encode('utf-8')
-            req.prepare_content_length(req.body)
+        req.body = payload.encode('utf-8')
+        req.prepare_content_length(req.body)
 
-            response_json = session.send(req).json()
+        response_json = self._session.send(req).json()
 
-            self.check_for_errors_thermostat(response_json)
+        self.check_for_errors_thermostat(response_json)
 
-            return response_json
+        return response_json
 
     @staticmethod
     def check_for_errors_thermostat(response_json):

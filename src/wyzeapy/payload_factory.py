@@ -6,9 +6,9 @@
 import time
 from typing import Any
 
-from src.wyzeapy.const import FORD_APP_KEY
-from src.wyzeapy.types import ThermostatProps
-from src.wyzeapy.crypto import ford_create_signature
+from .const import FORD_APP_KEY
+from .types import ThermostatProps
+from .crypto import ford_create_signature
 
 
 def ford_create_payload(access_token, payload, url_path, request_method):

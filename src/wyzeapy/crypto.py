@@ -8,7 +8,7 @@ import hmac
 import urllib.parse
 from typing import Dict, Union
 
-from src.wyzeapy.const import FORD_APP_SECRET, OLIVE_SIGNING_SECRET
+from .const import FORD_APP_SECRET, OLIVE_SIGNING_SECRET
 
 
 def olive_create_signature(payload: Union[dict, str], access_token: str) -> str:

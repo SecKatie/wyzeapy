@@ -10,6 +10,7 @@ import time
 from typing import Any
 
 import requests
+import cachecontrol
 
 from .const import *
 from .payload_factory import ford_create_payload, olive_create_get_payload, olive_create_post_payload
@@ -21,6 +22,9 @@ from .types import ResponseCodes, Device, DeviceTypes, ThermostatProps, Group
 class BaseClient:
     access_token = ""
     refresh_token = ""
+
+    def __init__(self):
+        self._session = cachecontrol.CacheControl(requests.Session())
 
     def login(self, email, password) -> bool:
         email = email
@@ -35,7 +39,7 @@ class BaseClient:
             "X-API-Key": API_KEY
         }
 
-        response_json = requests.post("https://auth-prod.api.wyze.com/user/login",
+        response_json = self._session.post("https://auth-prod.api.wyze.com/user/login",
                                       headers=headers, json=login_payload).json()
 
         try:
@@ -88,7 +92,7 @@ class BaseClient:
             "app_name": APP_NAME
         }
 
-        response_json = requests.post("https://api.wyzecam.com/app/v2/home_page/get_object_list",
+        response_json = self._session.post("https://api.wyzecam.com/app/v2/home_page/get_object_list",
                                       json=payload).json()
 
         self.check_for_errors(response_json)
@@ -111,7 +115,7 @@ class BaseClient:
             "target_pid_list": []
         }
 
-        response_json = requests.post("https://api.wyzecam.com/app/v2/device/get_property_list",
+        response_json = self._session.post("https://api.wyzecam.com/app/v2/device/get_property_list",
                                       json=payload).json()
 
         self.check_for_errors(response_json)
@@ -132,7 +136,7 @@ class BaseClient:
             "ts": int(time.time()),
         }
 
-        response_json = requests.post("https://api.wyzecam.com/app/v2/auto_group/get_list",
+        response_json = self._session.post("https://api.wyzecam.com/app/v2/auto_group/get_list",
                                       json=payload).json()
 
         self.check_for_errors(response_json)
@@ -172,7 +176,7 @@ class BaseClient:
             ]
         }
 
-        response_json = requests.post("https://api.wyzecam.com/app/v2/auto/run_action_list", json=payload).json()
+        response_json = self._session.post("https://api.wyzecam.com/app/v2/auto/run_action_list", json=payload).json()
 
         self.check_for_errors(response_json)
 
@@ -192,7 +196,7 @@ class BaseClient:
             "ts": int(time.time()),
         }
 
-        response_json = requests.post("https://api.wyzecam.com/app/v2/auto_group/run", json=payload).json()
+        response_json = self._session.post("https://api.wyzecam.com/app/v2/auto_group/run", json=payload).json()
 
         self.check_for_errors(response_json)
 
@@ -221,7 +225,7 @@ class BaseClient:
             "custom_string": "",
         }
 
-        response_json = requests.post("https://api.wyzecam.com/app/v2/auto/run_action", json=payload).json()
+        response_json = self._session.post("https://api.wyzecam.com/app/v2/auto/run_action", json=payload).json()
 
         self.check_for_errors(response_json)
 
@@ -247,7 +251,7 @@ class BaseClient:
             "device_model": device.product_model,
             "device_mac": device.mac
         }
-        response_json = requests.post("https://api.wyzecam.com/app/v2/device/set_property_list", json=payload).json()
+        response_json = self._session.post("https://api.wyzecam.com/app/v2/device/set_property_list", json=payload).json()
 
         self.check_for_errors(response_json)
 
@@ -285,7 +289,7 @@ class BaseClient:
             "device_model": device.product_model,
             "device_mac": device.mac
         }
-        response_json = requests.post("https://api.wyzecam.com/app/v2/device/set_property", json=payload).json()
+        response_json = self._session.post("https://api.wyzecam.com/app/v2/device/set_property", json=payload).json()
 
         self.check_for_errors(response_json)
 
@@ -327,7 +331,7 @@ class BaseClient:
             "access_token": self.access_token
         }
 
-        response_json = requests.post("https://api.wyzecam.com/app/v2/device/get_event_list", json=payload).json()
+        response_json = self._session.post("https://api.wyzecam.com/app/v2/device/get_event_list", json=payload).json()
 
         self.check_for_errors(response_json)
 
@@ -346,7 +350,7 @@ class BaseClient:
 
         url = "https://yd-saas-toc.wyzecam.com/openapi/lock/v1/control"
 
-        response_json = requests.post(url, json=payload).json()
+        response_json = self._session.post(url, json=payload).json()
 
         self.check_for_errors_lock(response_json)
 
@@ -366,7 +370,7 @@ class BaseClient:
         }
 
         url = 'https://wyze-earth-service.wyzecam.com/plugin/earth/get_iot_prop'
-        response_json = requests.get(url, headers=headers, params=payload).json()
+        response_json = self._session.get(url, headers=headers, params=payload).json()
 
         self.check_for_errors_thermostat(response_json)
 
@@ -386,7 +390,7 @@ class BaseClient:
             'signature2': signature
         }
 
-        with requests.Session() as session:
+        with self._session.Session() as session:
             session.headers.update(headers)
 
             req = session.prepare_request(requests.Request('POST', url, json=payload))

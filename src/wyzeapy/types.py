@@ -7,6 +7,18 @@ from enum import Enum
 from typing import Union, List
 
 
+class Group:
+    group_id: str
+    group_name: str
+
+    def __init__(self, dictionary):
+        for k, v in dictionary.items():
+            setattr(self, k, v)
+
+    def __repr__(self):
+        return "<Group: {}, {}>".format(self.group_id, self.group_name)
+
+
 class Device:
     product_type: str
     product_model: str

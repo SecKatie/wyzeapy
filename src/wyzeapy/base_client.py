@@ -15,18 +15,8 @@ from .const import *
 from .payload_factory import ford_create_payload, olive_create_get_payload, olive_create_post_payload
 from .crypto import olive_create_signature
 from .exceptions import *
-from .types import ResponseCodes, Device, DeviceTypes, ThermostatProps
+from .types import ResponseCodes, Device, DeviceTypes, ThermostatProps, Group
 
-class Group:
-    group_id: str
-    group_name: str
-
-    def __init__(self, dictionary):
-        for k, v in dictionary.items():
-            setattr(self, k, v)
-
-    def __repr__(self):
-        return "<Group: {}, {}>".format(self.group_id, self.group_name)
 
 class BaseClient:
     access_token = ""

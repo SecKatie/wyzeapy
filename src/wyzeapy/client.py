@@ -9,7 +9,7 @@ import re
 from typing import Any, Optional, List, Tuple
 from .base_client import BaseClient
 from .exceptions import ActionNotSupported
-from .types import ThermostatProps, Device, DeviceTypes, PropertyIDs, Event
+from .types import ThermostatProps, Device, DeviceTypes, PropertyIDs, Event, Group
 
 
 class Client:
@@ -46,7 +46,7 @@ class Client:
         return groups
 
     def activate_group(self, group: Group):
-            self.client.auto_group_run(group)
+        self.client.auto_group_run(group)
 
     def turn_on(self, device: Device, extra_pids=None) -> None:
         device_type: DeviceTypes = DeviceTypes(device.product_type)

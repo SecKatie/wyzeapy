@@ -5,118 +5,27 @@
 #  joshua@mulliken.net to receive a copy
 import datetime
 import hashlib
+import json
 import time
-import uuid
-from enum import Enum
-from typing import List, Dict
+from typing import Any
 
 import requests
 
-PHONE_SYSTEM_TYPE = "1"
-API_KEY = "WMXHYf79Nr5gIlt3r0r7p9Tcw5bvs6BB4U8O8nGJ"
-APP_VERSION = "2.18.43"
-APP_VER = "com.hualai.WyzeCam___2.18.43"
-APP_NAME = "com.hualai.WyzeCam"
-PHONE_ID = str(uuid.uuid4())
+from .const import *
+from .payload_factory import ford_create_payload, olive_create_get_payload, olive_create_post_payload
+from .crypto import olive_create_signature
+from .exceptions import *
+from .types import ResponseCodes, Device, DeviceTypes, ThermostatProps
 
-
-class DeviceTypes(Enum):
-    LIGHT = "Light"
-    PLUG = "Plug"
-    OUTDOOR_PLUG = "OutdoorPlug"
-    MESH_LIGHT = "MeshLight"
-    CAMERA = "Camera"
-    CHIME_SENSOR = "ChimeSensor"
-    CONTACT_SENSOR = "ContactSensor"
-    MOTION_SENSOR = "MotionSensor"
-    WRIST = "Wrist"
-    BASE_STATION = "BaseStation"
-    SCALE = "WyzeScale"
-    LOCK = "Lock"
-    GATEWAY = "gateway"
-    COMMON = "Common"
-    VACUUM = "JA_RO2"
-    HEADPHONES = "JA.SC"
-    THERMOSTAT = "Thermostat"
-    GATEWAY_V2 = "GateWay"
-    KEYPAD = "Keypad"
-    SENSOR_GATEWAY = "S1Gateway"
-
-
-class PropertyIDs(Enum):
-    ON = "P3"
-    AVAILABLE = "P5"
-    BRIGHTNESS = "P1501"  # From 0-100
-    COLOR_TEMP = "P1502"  # In Kelvin
-    COLOR = "P1507"  # As a hex string RrGgBb
-    DOOR_OPEN = "P2001"  # 0 if the door is closed
-
-
-class ResponseCodes(Enum):
-    SUCCESS = "1"
-    PARAMETER_ERROR = "1001"
-    ACCESS_TOKEN_ERROR = "2001"
-
-
-class ResponseCodesLock(Enum):
-    SUCCESS = 0
-
-
-SWITCHABLE_DEVICES = [DeviceTypes.LIGHT, DeviceTypes.MESH_LIGHT, DeviceTypes.PLUG]
-
-
-class ActionNotSupported(Exception):
-    def __init__(self, device_type):
-        message = "The action specified is not supported by device type: {}".format(device_type)
-
-        super().__init__(message)
-
-
-class ParameterError(Exception):
-    pass
-
-
-class AccessTokenError(Exception):
-    pass
-
-class LoginError(Exception):
-    pass
-
-
-class UnknownApiError(Exception):
-    def __init__(self, response_json):
-        super(UnknownApiError, self).__init__(str(response_json))
-
-
-class Device:
-    product_type: str
-    product_model: str
-    mac: str
-    nickname: str
-
-    def __init__(self, dictionary):
-        for k, v in dictionary.items():
-            setattr(self, k, v)
-
-    def __repr__(self):
-        return "<Device: {}, {}>".format(DeviceTypes(self.product_type), self.mac)
-
-class Group:
-    group_id: str
-    group_name: str
-
-    def __init__(self, dictionary):
-        for k, v in dictionary.items():
-            setattr(self, k, v)
-
-    def __repr__(self):
-        return "<Group: {}, {}>".format(self.group_id, self.group_name)
 
 class BaseClient:
     access_token = ""
     refresh_token = ""
 
     def login(self, email, password) -> bool:
+        email = email
+        password = password
+
         login_payload = {
             "email": email,
             "password": self.create_password(password)
@@ -128,9 +37,6 @@ class BaseClient:
 
         response_json = requests.post("https://auth-prod.api.wyze.com/user/login",
                                       headers=headers, json=login_payload).json()
-
-        # response_json = requests.post("https://auth-prod.api.wyze.com/user/login",
-        #                               json=login_payload).json()
 
         try:
             self.access_token = response_json['access_token']
@@ -169,41 +75,6 @@ class BaseClient:
             else:
                 raise UnknownApiError(response_json)
 
-    app_key = "275965684684dbdaf29a0ed9"
-    app_secret = "4deekof1ba311c5c33a9cb8e12787e8c"
-
-    def postMethod(self, str, str2, map):
-        str4 = str
-        str3 = str2
-        map2 = map
-
-        return self.getTransferParam(map2, str3, str4, "post")
-
-    def getTransferParam(self, map, str4, str2, str3):
-        map["accessToken"] = self.access_token
-        map["key"] = self.app_key
-        map["timestamp"] = str(datetime.datetime.now().timestamp()).split(".")[0] + "000"
-        map["sign"] = self.getSignStr(str4, str3, map)
-        import json
-        print(json.dumps(map))
-        return map
-
-    def getSignStr(self, str, str2, map: Dict):
-        string_buf = str2 + str
-        for entry in sorted(map.keys()):
-            print(entry)
-            print(map[entry])
-            string_buf += entry + "=" + map[entry] + "&"
-
-        string_buf = string_buf[:-1]
-        print(string_buf)
-        string_buf += self.app_secret
-        import urllib.parse
-        urlencoded = urllib.parse.quote_plus(string_buf)
-        sign_str = hashlib.md5(urlencoded.encode()).hexdigest()
-        print(sign_str)
-        return sign_str
-
     def get_object_list(self):
         payload = {
             "phone_system_type": PHONE_SYSTEM_TYPE,
@@ -220,7 +91,6 @@ class BaseClient:
         response_json = requests.post("https://api.wyzecam.com/app/v2/home_page/get_object_list",
                                       json=payload).json()
 
-        print(payload)
         self.check_for_errors(response_json)
 
         return response_json
@@ -242,27 +112,6 @@ class BaseClient:
         }
 
         response_json = requests.post("https://api.wyzecam.com/app/v2/device/get_property_list",
-                                      json=payload).json()
-
-        self.check_for_errors(response_json)
-
-        return response_json
-    
-    def get_auto_group_list(self):
-        payload = {
-            "access_token": self.access_token,
-            "app_name": APP_NAME,
-            "app_ver": APP_VER,
-            "app_version": APP_VERSION,
-            "group_type": "0",
-            "phone_id": PHONE_ID,
-            "phone_system_type": PHONE_SYSTEM_TYPE,
-            "sc": "9f275790cab94a72bd206c8876429f3c",
-            "sv": "9d74946e652647e9b6c9d59326aef104",
-            "ts": int(time.time()),
-        }
-
-        response_json = requests.post("https://api.wyzecam.com/app/v2/auto_group/get_list",
                                       json=payload).json()
 
         self.check_for_errors(response_json)
@@ -306,28 +155,7 @@ class BaseClient:
 
         self.check_for_errors(response_json)
 
-    def auto_group_run(self, group: Group):
-        #if DeviceTypes(device.product_type) not in [
-        #    DeviceTypes.CAMERA
-        #]:
-        #    raise ActionNotSupported(device.product_type)
-
-        payload = {
-            "access_token": self.access_token,
-            "app_name": APP_NAME,
-            "app_ver": APP_VER,
-            "app_version": APP_VERSION,
-            "group_id": group.group_id,
-            "phone_id": PHONE_ID,
-            "phone_system_type": PHONE_SYSTEM_TYPE,
-            "sc": "9f275790cab94a72bd206c8876429f3c",
-            "sv": "9d74946e652647e9b6c9d59326aef104",
-            "ts": int(time.time()),
-        }
-
-        response_json = requests.post("https://api.wyzecam.com/app/v2/auto_group/run", json=payload).json()
-
-        self.check_for_errors(response_json)
+        return response_json
 
     def run_action(self, device: Device, action: str):
         if DeviceTypes(device.product_type) not in [
@@ -356,6 +184,8 @@ class BaseClient:
 
         self.check_for_errors(response_json)
 
+        return response_json
+
     def set_property_list(self, device: Device, plist):
         if DeviceTypes(device.product_type) not in [
             DeviceTypes.LIGHT
@@ -379,6 +209,8 @@ class BaseClient:
         response_json = requests.post("https://api.wyzecam.com/app/v2/device/set_property_list", json=payload).json()
 
         self.check_for_errors(response_json)
+
+        return response_json
 
     def set_property(self, device: Device, pid, pvalue):
         """
@@ -416,6 +248,8 @@ class BaseClient:
 
         self.check_for_errors(response_json)
 
+        return response_json
+
     def get_event_list(self, device: Device, count: int) -> dict:
         """
         Gets motion events from the event listing endpoint.
@@ -426,7 +260,7 @@ class BaseClient:
         """
         payload = {
             "phone_id": PHONE_ID,
-            "begin_time": int(str(int(time.time() - (24 * 60 * 60))) + "000"),
+            "begin_time": int(str(datetime.date.today().strftime("%s")) + "000"),
             "event_type": "",
             "app_name": APP_NAME,
             "count": count,
@@ -459,19 +293,75 @@ class BaseClient:
         return response_json
 
     def lock_control(self, device: Device, action: str):
-        sb2 = "https://yd-saas-toc.wyzecam.com/openapi/lock/v1/control"
-        str3 = "/openapi/lock/v1/control"
+        url_path = "/openapi/lock/v1/control"
 
-        uuid = device.mac.split(".")[2]
+        device_uuid = device.mac.split(".")[2]
 
-        hash_map = {
-            "uuid": uuid,
+        payload = {
+            "uuid": device_uuid,
             "action": action  # "remoteLock" or "remoteUnlock"
         }
-
-        payload = self.postMethod(sb2, str3, hash_map)
+        payload = ford_create_payload(self.access_token, payload, url_path, "post")
 
         url = "https://yd-saas-toc.wyzecam.com/openapi/lock/v1/control"
 
         response_json = requests.post(url, json=payload).json()
-        print(response_json)
+
+        self.check_for_errors_lock(response_json)
+
+        return response_json
+
+    def thermostat_get_iot_prop(self, device: Device):
+        payload = olive_create_get_payload(device.mac)
+        signature = olive_create_signature(payload, self.access_token)
+        headers = {
+            'Accept-Encoding': 'gzip',
+            'User-Agent': 'myapp',
+            'appid': OLIVE_APP_ID,
+            'appinfo': APP_INFO,
+            'phoneid': PHONE_ID,
+            'access_token': self.access_token,
+            'signature2': signature
+        }
+
+        url = 'https://wyze-earth-service.wyzecam.com/plugin/earth/get_iot_prop'
+        response_json = requests.get(url, headers=headers, params=payload).json()
+
+        self.check_for_errors_thermostat(response_json)
+
+        return response_json
+
+    def thermostat_set_iot_prop(self, device: Device, prop: ThermostatProps, value: Any):
+        url = "https://wyze-earth-service.wyzecam.com/plugin/earth/set_iot_prop_by_topic"
+        payload = olive_create_post_payload(device.mac, device.product_model, prop, value)
+        signature = olive_create_signature(json.dumps(payload, separators=(',', ':')), self.access_token)
+        headers = {
+            'Accept-Encoding': 'gzip',
+            'User-Agent': 'myapp',
+            'appid': OLIVE_APP_ID,
+            'appinfo': APP_INFO,
+            'phoneid': PHONE_ID,
+            'access_token': self.access_token,
+            'signature2': signature
+        }
+
+        with requests.Session() as session:
+            session.headers.update(headers)
+
+            req = session.prepare_request(requests.Request('POST', url, json=payload))
+
+            payload = json.dumps(payload, separators=(',', ':'))
+
+            req.body = payload.encode('utf-8')
+            req.prepare_content_length(req.body)
+
+            response_json = session.send(req).json()
+
+            self.check_for_errors_thermostat(response_json)
+
+            return response_json
+
+    @staticmethod
+    def check_for_errors_thermostat(response_json):
+        if response_json['code'] != 1:
+            raise UnknownApiError(response_json)

@@ -91,6 +91,8 @@ class ThermostatProps(Enum):
     W_LON = "w_lon"
     DEV_HOLD = "dev_hold"
     TEMP_UNIT = "temp_unit"
+    ASW_HOLD = "asw_hold"
+
 
 
 class ResponseCodes(Enum):

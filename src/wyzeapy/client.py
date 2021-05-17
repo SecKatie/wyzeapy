@@ -3,7 +3,7 @@
 #  of the attached license. You should have received a copy of
 #  the license with this file. If not, please write to:
 #  joshua@mulliken.net to receive a copy
-
+import logging
 import re
 
 from typing import Any, Optional, List, Tuple
@@ -11,6 +11,7 @@ from .base_client import BaseClient
 from .exceptions import ActionNotSupported
 from .types import ThermostatProps, Device, DeviceTypes, PropertyIDs, Event, Group
 
+_LOGGER = logging.getLogger(__name__)
 
 class Client:
     def __init__(self, email, password):
@@ -201,8 +202,8 @@ class Client:
             try:
                 prop = ThermostatProps(property)
                 device_props.append((prop, properties[property]))
-            except AttributeError as e:
-                print(e)
+            except ValueError as e:
+                _LOGGER.debug(f"{e} with value {properties[property]}")
 
         return device_props
 

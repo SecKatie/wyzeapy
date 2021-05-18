@@ -6,6 +6,7 @@
 import datetime
 import hashlib
 import json
+import logging
 import time
 from typing import Any
 
@@ -19,6 +20,7 @@ from .crypto import olive_create_signature
 from .exceptions import *
 from .types import ResponseCodes, Device, DeviceTypes, ThermostatProps, Group
 
+_LOGGER = logging.getLogger(__name__)
 
 class BaseClient:
     access_token = ""
@@ -26,6 +28,9 @@ class BaseClient:
 
     def __init__(self):
         self._session: CacheControl = cachecontrol.CacheControl(requests.Session())
+
+    def __del__(self):
+        self._session.close()
 
     def login(self, email, password) -> bool:
         email = email
@@ -40,16 +45,17 @@ class BaseClient:
             "X-API-Key": API_KEY
         }
 
-        response_json = self._session.post("https://auth-prod.api.wyze.com/user/login",
+        response_json: dict = self._session.post("https://auth-prod.api.wyze.com/user/login",
                                       headers=headers, json=login_payload).json()
 
-        try:
-            self.access_token = response_json['access_token']
-            self.refresh_token = response_json['refresh_token']
-            return True
-        except KeyError as e:
-            print(e)
+        if response_json.get('errorCode') is not None:
+            _LOGGER.error(f"Unable to login with response from Wyze: {response_json}")
             return False
+
+        self.access_token = response_json['access_token']
+        self.refresh_token = response_json['refresh_token']
+
+        return True
 
     def can_login(self, username, password):
         return self.login(username, password)
@@ -352,8 +358,6 @@ class BaseClient:
         url = "https://yd-saas-toc.wyzecam.com/openapi/lock/v1/control"
 
         response_json = self._session.post(url, json=payload).json()
-
-        self.check_for_errors_lock(response_json)
 
         return response_json
 

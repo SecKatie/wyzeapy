@@ -19,7 +19,11 @@ class Client:
         self.password = password
 
         self.client = BaseClient()
-        self.client.login(self.email, self.password)
+        self._valid_login = self.client.login(self.email, self.password)
+
+    @property
+    def valid_login(self):
+        return self._valid_login
 
     def reauthenticate(self) -> None:
         self.client.login(self.email, self.password)

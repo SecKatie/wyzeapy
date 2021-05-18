@@ -34,6 +34,13 @@ class Client:
     def create_pid_pair(pid_enum: PropertyIDs, value) -> dict:
         return {"pid": pid_enum.value, "pvalue": value}
 
+    def get_plugs(self) -> List[Device]:
+        if self._devices is None:
+            self.get_devices()
+
+        return [device for device in self._devices if device.type is DeviceTypes.PLUG or
+                device.type is DeviceTypes.OUTDOOR_PLUG]
+
     def get_cameras(self) -> List[Device]:
         if self._devices is None:
             self.get_devices()

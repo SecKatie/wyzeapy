@@ -63,7 +63,7 @@ class Client:
         if self._devices is None:
             self.get_devices()
 
-        return [device for device in self._devices if device.type is DeviceTypes.CAMERA or
+        return [device for device in self._devices if device.type is DeviceTypes.LIGHT or
                 device.type is DeviceTypes.MESH_LIGHT]
 
     def get_devices(self) -> List[Device]:

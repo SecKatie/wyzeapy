@@ -18,21 +18,6 @@ class Group:
     def __repr__(self):
         return "<Group: {}, {}>".format(self.group_id, self.group_name)
 
-
-class Device:
-    product_type: str
-    product_model: str
-    mac: str
-    nickname: str
-
-    def __init__(self, dictionary):
-        for k, v in dictionary.items():
-            setattr(self, k, v)
-
-    def __repr__(self):
-        return "<Device: {}, {}>".format(DeviceTypes(self.product_type), self.mac)
-
-
 class DeviceTypes(Enum):
     LIGHT = "Light"
     PLUG = "Plug"
@@ -52,6 +37,27 @@ class DeviceTypes(Enum):
     HEADPHONES = "JA.SC"
     THERMOSTAT = "Thermostat"
     GATEWAY_V2 = "GateWay"
+    UNKNOWN = "Unknown"
+
+class Device:
+    product_type: str
+    product_model: str
+    mac: str
+    nickname: str
+
+    def __init__(self, dictionary):
+        for k, v in dictionary.items():
+            setattr(self, k, v)
+
+    @property
+    def type(self) -> DeviceTypes:
+        try:
+            return DeviceTypes(self.product_type)
+        except ValueError:
+            return DeviceTypes.UNKNOWN
+
+    def __repr__(self):
+        return "<Device: {}, {}>".format(DeviceTypes(self.product_type), self.mac)
 
 
 class PropertyIDs(Enum):

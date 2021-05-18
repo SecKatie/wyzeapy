@@ -14,6 +14,8 @@ from .types import ThermostatProps, Device, DeviceTypes, PropertyIDs, Event, Gro
 _LOGGER = logging.getLogger(__name__)
 
 class Client:
+    _devices: List[Device] = None
+
     def __init__(self, email, password):
         self.email = email
         self.password = password
@@ -32,23 +34,42 @@ class Client:
     def create_pid_pair(pid_enum: PropertyIDs, value) -> dict:
         return {"pid": pid_enum.value, "pvalue": value}
 
+    def get_cameras(self) -> List[Device]:
+        if self._devices is None:
+            self.get_devices()
+
+        return [device for device in self._devices if device.type is DeviceTypes.CAMERA]
+
+    def get_locks(self) -> List[Device]:
+        if self._devices is None:
+            self.get_devices()
+
+        return [device for device in self._devices if device.type is DeviceTypes.LOCK]
+
+    def get_thermostats(self) -> List[Device]:
+        if self._devices is None:
+            self.get_devices()
+
+        return [device for device in self._devices if device.type is DeviceTypes.THERMOSTAT]
+
+    def get_bulbs(self) -> List[Device]:
+        if self._devices is None:
+            self.get_devices()
+
+        return [device for device in self._devices if device.type is DeviceTypes.CAMERA or
+                device.type is DeviceTypes.MESH_LIGHT]
+
     def get_devices(self) -> List[Device]:
         object_list = self.client.get_object_list()
 
-        devices = []
-        for device in object_list['data']['device_list']:
-            devices.append(Device(device))
+        self._devices = [Device(device) for device in object_list['data']['device_list']]
 
-        return devices
+        return self._devices
 
     def get_groups(self):
         object_list = self.client.get_auto_group_list()
 
-        groups = []
-        for group in object_list['data']['auto_group_list']:
-            groups.append(Group(group))
-
-        return groups
+        return [Group(group) for group in object_list['data']['auto_group_list']]
 
     def activate_group(self, group: Group):
         self.client.auto_group_run(group)

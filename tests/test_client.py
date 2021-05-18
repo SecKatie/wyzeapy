@@ -6,7 +6,6 @@
 
 import os
 import unittest
-from unittest import mock
 from typing import List
 
 from src.wyzeapy.client import Client
@@ -100,5 +99,5 @@ class TestFunctions(unittest.TestCase):
         info = self._client.get_thermostat_info(test_thermostat)
 
         self.assertIsInstance(info, List)
-        for item in info:
-            self.assertIsInstance(info, ThermostatProps)
+        for prop, value in info:
+            self.assertIsInstance(prop, ThermostatProps)

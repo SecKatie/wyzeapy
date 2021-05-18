@@ -62,9 +62,12 @@ class ResponseCodesLock(Enum):
     SUCCESS = 0
 
 class EventTypes(Enum):
-    MOTION = 1
-    SOUND = 2
-    ALL = 3
+    ALL = 1
+    MOTION = 2
+    SOUND = 3
+    CO2 = 4
+    SMOKE = 5
+    TRIGGERED = 6
 
 SWITCHABLE_DEVICES = [DeviceTypes.LIGHT, DeviceTypes.MESH_LIGHT, DeviceTypes.PLUG]
 
@@ -437,10 +440,27 @@ class BaseClient:
         else:
             event_type = ""
 
+        # From https://github.com/shauntarves/wyze-sdk
+        # MOTION = ("Motion", [1, 6, 7, 13])
+        # SOUND = ("Sound", 2)
+        # OTHER = ("Other", 3)
+        # SMOKE = ("Smoke", 4)
+        # CO = ("Carbon Monoxide", 5)
+        # TRIGGERED = ("Triggered", 8)  # this applies for contact/motion sensors only
+        # DOORBELL_RANG = ("Doorbell rang", 10)
+        # SCENE = ("Scene action", 11)
+        # FACE = ("Face appeared", 12)
+
         if requested_event_type == EventTypes.MOTION:
             event_value_list = ["1", "13", "10", "12"]
         elif requested_event_type == EventTypes.SOUND:
             event_value_list = ["2"]
+        elif requested_event_type == EventTypes.CO2:
+            event_value_list = ["5"]
+        elif requested_event_type == EventTypes.SMOKE:
+            event_value_list = ["4"]
+        elif requested_event_type == EventTypes.TRIGGERED:
+            event_value_list = ["8"]
         elif requested_event_type == EventTypes.ALL:
             event_value_list = []
         else: # Fallback

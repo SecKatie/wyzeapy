@@ -9,6 +9,8 @@ import time
 import uuid
 from enum import Enum
 from typing import List, Dict
+from functools import lru_cache, wraps
+from datetime import datetime, timedelta
 
 import requests
 
@@ -19,6 +21,23 @@ APP_VER = "com.hualai.WyzeCam___2.18.43"
 APP_NAME = "com.hualai.WyzeCam"
 PHONE_ID = str(uuid.uuid4())
 
+def timed_lru_cache(seconds: int, maxsize: int = 1024):
+    def wrapper_cache(func):
+        func = lru_cache(maxsize=maxsize)(func)
+        func.lifetime = timedelta(seconds=seconds)
+        func.expiration = datetime.utcnow() + func.lifetime
+
+        @wraps(func)
+        def wrapped_func(*args, **kwargs):
+            if datetime.utcnow() >= func.expiration:
+                func.cache_clear()
+                func.expiration = datetime.utcnow() + func.lifetime
+            
+            return func(*args, **kwargs)
+
+        return wrapped_func
+
+    return wrapper_cache
 
 class DeviceTypes(Enum):
     LIGHT = "Light"
@@ -230,7 +249,6 @@ class BaseClient:
         response_json = requests.post("https://api.wyzecam.com/app/v2/home_page/get_object_list",
                                       json=payload).json()
 
-        print(payload)
         self.check_for_errors(response_json)
 
         return response_json
@@ -426,15 +444,8 @@ class BaseClient:
 
         self.check_for_errors(response_json)
 
-    def get_event_list(self, device: Device, count: int, requested_event_type: EventTypes = EventTypes.MOTION) -> dict:
-        """
-        Gets motion events from the event listing endpoint.
-
-        :param count:
-        :param device: Device
-        :return: dict
-        """
-        device_type: DeviceTypes = DeviceTypes(device.product_type)
+    @timed_lru_cache(10)
+    def get_complete_event_list(self, count: int, device_type: DeviceTypes, requested_event_type: EventTypes) -> dict:
         if device_type == DeviceTypes.CONTACT_SENSOR or device_type == DeviceTypes.MOTION_SENSOR:
             event_type = 2
         else:
@@ -476,9 +487,6 @@ class BaseClient:
             "order_by": 2,
             "event_value_list": event_value_list,
             "sc": "9f275790cab94a72bd206c8876429f3c",
-            "device_mac_list": [
-                device.mac
-            ],
             "event_tag_list": [],
             "sv": "782ced6909a44d92a1f70d582bbe88be",
             "end_time": int(str(int(time.time())) + "000"),
@@ -489,11 +497,37 @@ class BaseClient:
             "access_token": self.access_token
         }
 
+        print("Downloading from Wyze")
         response_json = requests.post("https://api.wyzecam.com/app/v2/device/get_event_list", json=payload).json()
 
         self.check_for_errors(response_json)
 
         return response_json
+
+    def get_event_list(self, device: Device, count: int, requested_event_type: EventTypes = EventTypes.MOTION) -> dict:
+        """
+        Gets motion events from the event listing endpoint.
+
+        :param count:
+        :param device: Device
+        :param requested_event_type:
+        :return: dict
+        """
+        device_type: DeviceTypes = DeviceTypes(device.product_type)
+        if device_type == DeviceTypes.CONTACT_SENSOR or device_type == DeviceTypes.MOTION_SENSOR:
+            event_type = 2
+        else:
+            event_type = ""
+
+        raw_events = self.get_complete_event_list(count, device_type, requested_event_type)['data']['event_list']
+        events = []
+        if len(raw_events) > 0:
+            for raw_event in raw_events:
+                if raw_event.get('device_mac') == device.mac:
+                    events.append(raw_event)
+        
+        return events
+
 
     def lock_control(self, device: Device, action: str):
         sb2 = "https://yd-saas-toc.wyzecam.com/openapi/lock/v1/control"
@@ -511,4 +545,3 @@ class BaseClient:
         url = "https://yd-saas-toc.wyzecam.com/openapi/lock/v1/control"
 
         response_json = requests.post(url, json=payload).json()
-        print(response_json)

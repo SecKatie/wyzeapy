@@ -60,6 +60,9 @@ class DeviceTypes(Enum):
     GATEWAY_V2 = "GateWay"
     KEYPAD = "Keypad"
     SENSOR_GATEWAY = "S1Gateway"
+    CAMERA_NOTIFICATIONS = "CameraNotifications"
+    CAMERA_SOUND_NOTIFICATIONS = "CameraSoundNotifications"
+    CAMERA_MOTION_NOTIFICATIONS = "CameraMotionNotifications"
 
 
 class PropertyIDs(Enum):
@@ -69,6 +72,9 @@ class PropertyIDs(Enum):
     COLOR_TEMP = "P1502"  # In Kelvin
     COLOR = "P1507"  # As a hex string RrGgBb
     DOOR_OPEN = "P2001"  # 0 if the door is closed
+    NOTIFICATIONS = "P1"  # All notifications on(1)/off(0)
+    MOTION_NOTIFICATION = "P1020"  # Motion notifications on(1)/off(0)
+    SOUND_NOTIFICATION = "P1019"  # Sound notifications on(1)/off(0)
 
 
 class ResponseCodes(Enum):
@@ -386,7 +392,8 @@ class BaseClient:
 
     def set_property_list(self, device: Device, plist):
         if DeviceTypes(device.product_type) not in [
-            DeviceTypes.LIGHT
+            DeviceTypes.LIGHT,
+            DeviceTypes.CAMERA
         ]:
             raise ActionNotSupported(device.product_type)
 

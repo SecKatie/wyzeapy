@@ -179,6 +179,28 @@ class Client:
         else:
             raise ActionNotSupported(device_type.value)
 
+    def notifications_on(self, device: Device, notification: PropertyIDs):
+        if DeviceTypes(device.product_type) not in [
+            DeviceTypes.CAMERA
+        ]:
+            raise ActionNotSupported(device.product_type)
+
+        plist = [
+            self.create_pid_pair(notification, "1")
+        ]
+        self.client.set_property_list(device, plist)
+
+    def notifications_off(self, device: Device, notification: PropertyIDs):
+        if DeviceTypes(device.product_type) not in [
+            DeviceTypes.CAMERA
+        ]:
+            raise ActionNotSupported(device.product_type)
+
+        plist = [
+            self.create_pid_pair(notification, "0")
+        ]
+        self.client.set_property_list(device, plist)
+
     def set_brightness(self, device: Device, brightness: int):
         if DeviceTypes(device.product_type) not in [
             DeviceTypes.LIGHT,

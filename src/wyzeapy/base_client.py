@@ -42,7 +42,7 @@ from .types import ResponseCodes, Device, DeviceTypes, ThermostatProps, Group
 _LOGGER = logging.getLogger(__name__)
 
 
-class BaseClient:
+class NetClient:
     access_token = ""
     refresh_token = ""
 

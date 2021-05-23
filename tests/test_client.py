@@ -59,6 +59,15 @@ class TestFunctions(unittest.TestCase):
         for device in devices:
             self.assertIsInstance(device, Device)
 
+    def test_get_info(self):
+        test_bulb = Device({
+            'mac': '7C78B214CF40',
+            'product_type': 'MeshLight',
+            'product_model': 'WLPA19C'
+        })
+
+        self._client.get_info(test_bulb)
+
     def test_turn_on_color_bulb(self):
         test_bulb = Device({
             'mac': '7C78B214CF40',

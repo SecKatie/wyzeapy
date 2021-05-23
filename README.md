@@ -1,6 +1,6 @@
 # Wyzeapy: Python wrapper around the Wyze App APIs
 
-This library is primaraly desined to be used in the [ha-wyzeapi](https://github.com/JoshuaMulliken/ha-wyzeapi) Home Assistant integration. If you find it useful in another application please let me know so that I can notify you of any breaking changes.
+This library is primarily designed to be used in the [ha-wyzeapi](https://github.com/JoshuaMulliken/ha-wyzeapi) Home Assistant integration. If you find it useful in another application please let me know so that I can notify you of any breaking changes.
 
 ## Usage
 

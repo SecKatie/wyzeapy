@@ -7,7 +7,7 @@ import logging
 import re
 
 from typing import Any, Optional, List, Tuple
-from .base_client import BaseClient
+from .base_client import NetClient
 from .exceptions import ActionNotSupported
 from .types import ThermostatProps, Device, DeviceTypes, PropertyIDs, Event, Group
 
@@ -21,15 +21,15 @@ class Client:
         self.email = email
         self.password = password
 
-        self.client = BaseClient()
-        self._valid_login = self.client.login(self.email, self.password)
+        self.net_client = NetClient()
+        self._valid_login = self.net_client.login(self.email, self.password)
 
     @property
     def valid_login(self) -> bool:
         return self._valid_login
 
     def reauthenticate(self) -> None:
-        self.client.login(self.email, self.password)
+        self.net_client.login(self.email, self.password)
 
     @staticmethod
     def create_pid_pair(pid_enum: PropertyIDs, value) -> dict:
@@ -68,17 +68,17 @@ class Client:
                 device.type is DeviceTypes.MESH_LIGHT]
 
     def get_devices(self) -> List[Device]:
-        object_list = self.client.get_object_list()
+        object_list = self.net_client.get_object_list()
 
         return [Device(device) for device in object_list['data']['device_list']]
 
     def get_groups(self):
-        object_list = self.client.get_auto_group_list()
+        object_list = self.net_client.get_auto_group_list()
 
         return [Group(group) for group in object_list['data']['auto_group_list']]
 
     def activate_group(self, group: Group):
-        self.client.auto_group_run(group)
+        self.net_client.auto_group_run(group)
 
     def turn_on(self, device: Device, extra_pids=None) -> None:
         device_type: DeviceTypes = DeviceTypes(device.product_type)
@@ -87,7 +87,7 @@ class Client:
             DeviceTypes.PLUG,
             DeviceTypes.OUTDOOR_PLUG
         ]:
-            self.client.set_property(device, PropertyIDs.ON.value, "1")
+            self.net_client.set_property(device, PropertyIDs.ON.value, "1")
         elif device_type in [
             DeviceTypes.LIGHT
         ]:
@@ -97,7 +97,7 @@ class Client:
             if extra_pids is not None:
                 plist.extend(extra_pids)
 
-            self.client.set_property_list(device, plist)
+            self.net_client.set_property_list(device, plist)
         elif device_type in [
             DeviceTypes.MESH_LIGHT
         ]:
@@ -107,15 +107,15 @@ class Client:
             if extra_pids is not None:
                 plist.extend(extra_pids)
 
-            self.client.run_action_list(device, plist)
+            self.net_client.run_action_list(device, plist)
         elif device_type in [
             DeviceTypes.LOCK
         ]:
-            self.client.lock_control(device, "remoteLock")
+            self.net_client.lock_control(device, "remoteLock")
         elif device_type in [
             DeviceTypes.CAMERA
         ]:
-            self.client.run_action(device, "power_on")
+            self.net_client.run_action(device, "power_on")
         else:
             raise ActionNotSupported(device_type.value)
 
@@ -126,7 +126,7 @@ class Client:
             DeviceTypes.PLUG,
             DeviceTypes.OUTDOOR_PLUG
         ]:
-            self.client.set_property(device, PropertyIDs.ON.value, "0")
+            self.net_client.set_property(device, PropertyIDs.ON.value, "0")
         elif device_type in [
             DeviceTypes.LIGHT
         ]:
@@ -136,7 +136,7 @@ class Client:
             if extra_pids is not None:
                 plist.extend(extra_pids)
 
-            self.client.set_property_list(device, plist)
+            self.net_client.set_property_list(device, plist)
         elif device_type in [
             DeviceTypes.MESH_LIGHT
         ]:
@@ -146,15 +146,15 @@ class Client:
             if extra_pids is not None:
                 plist.extend(extra_pids)
 
-            self.client.run_action_list(device, plist)
+            self.net_client.run_action_list(device, plist)
         elif device_type in [
             DeviceTypes.LOCK
         ]:
-            self.client.lock_control(device, "remoteUnlock")
+            self.net_client.lock_control(device, "remoteUnlock")
         elif device_type in [
             DeviceTypes.CAMERA
         ]:
-            self.client.run_action(device, "power_off")
+            self.net_client.run_action(device, "power_off")
         else:
             raise ActionNotSupported(device_type.value)
 
@@ -186,7 +186,7 @@ class Client:
         ])
 
     def get_info(self, device) -> List[Tuple[PropertyIDs, Any]]:
-        properties = self.client.get_property_list(device)['data']['property_list']
+        properties = self.net_client.get_property_list(device)['data']['property_list']
 
         property_list = []
         for property in properties:
@@ -202,7 +202,7 @@ class Client:
         return property_list
 
     def get_events(self, device) -> List[Event]:
-        raw_events = self.client.get_event_list(device, 10)['data']['event_list']
+        raw_events = self.net_client.get_event_list(device, 10)['data']['event_list']
 
         events = []
         if len(raw_events) > 0:
@@ -213,7 +213,7 @@ class Client:
         return events
 
     def get_latest_event(self, device) -> Optional[Event]:
-        raw_events = self.client.get_event_list(device, 10)['data']['event_list']
+        raw_events = self.net_client.get_event_list(device, 10)['data']['event_list']
 
         if len(raw_events) > 0:
             return Event(raw_events[0])
@@ -226,7 +226,7 @@ class Client:
         ]:
             raise ActionNotSupported(device.product_type)
 
-        properties = self.client.thermostat_get_iot_prop(device)['data']['props']
+        properties = self.net_client.thermostat_get_iot_prop(device)['data']['props']
 
         device_props = []
         for property in properties:
@@ -244,4 +244,4 @@ class Client:
         ]:
             raise ActionNotSupported(device.product_type)
 
-        self.client.thermostat_set_iot_prop(device, prop, value)
+        self.net_client.thermostat_set_iot_prop(device, prop, value)

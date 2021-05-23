@@ -109,17 +109,17 @@ class TestHMS(unittest.TestCase):
         cls._client = Client(os.getenv("WYZE_EMAIL"), os.getenv("WYZE_PASSWORD"))
 
     def test_can_get_hms_id(self):
-        device_id = self._client.client.get_hms_id()
+        device_id = self._client.net_client.get_hms_id()
 
         self.assertEqual(device_id, "c35aecadc9d24e42b799e0be9c2ffc2f")
 
     def test_can_set_hms_status(self):
-        device_id = self._client.client.get_hms_id()
-        response = self._client.client.monitoring_profile_active(device_id, 0, 0)
+        device_id = self._client.net_client.get_hms_id()
+        response = self._client.net_client.monitoring_profile_active(device_id, 0, 0)
         self.assertEqual(response['status'], 200)
 
     def test_can_get_hms_status(self):
-        device_id = self._client.client.get_hms_id()
-        response = self._client.client.monitoring_profile_state_status(device_id)
+        device_id = self._client.net_client.get_hms_id()
+        response = self._client.net_client.monitoring_profile_state_status(device_id)
         print(response)
         self.assertEqual(response['status'], 200)

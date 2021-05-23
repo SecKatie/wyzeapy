@@ -8,26 +8,26 @@ import hashlib
 import json
 import logging
 import time
-from typing import Any
+from typing import Any, Dict, Optional
 
 import requests
-import cachecontrol
-from cachecontrol import CacheControl
 
 from .const import *
-from .payload_factory import ford_create_payload, olive_create_get_payload, olive_create_post_payload
 from .crypto import olive_create_signature
 from .exceptions import *
+from .payload_factory import ford_create_payload, olive_create_get_payload, olive_create_post_payload, \
+    olive_create_hms_payload, olive_create_hms_patch_payload, olive_create_hms_get_payload
 from .types import ResponseCodes, Device, DeviceTypes, ThermostatProps, Group
 
 _LOGGER = logging.getLogger(__name__)
+
 
 class BaseClient:
     access_token = ""
     refresh_token = ""
 
     def __init__(self):
-        self._session: CacheControl = cachecontrol.CacheControl(requests.Session())
+        self._session = requests.Session()
 
     def __del__(self):
         self._session.close()
@@ -46,7 +46,7 @@ class BaseClient:
         }
 
         response_json: dict = self._session.post("https://auth-prod.api.wyze.com/user/login",
-                                      headers=headers, json=login_payload).json()
+                                                 headers=headers, json=login_payload).json()
 
         if response_json.get('errorCode') is not None:
             _LOGGER.error(f"Unable to login with response from Wyze: {response_json}")
@@ -100,7 +100,7 @@ class BaseClient:
         }
 
         response_json = self._session.post("https://api.wyzecam.com/app/v2/home_page/get_object_list",
-                                      json=payload).json()
+                                           json=payload).json()
 
         self.check_for_errors(response_json)
 
@@ -123,7 +123,7 @@ class BaseClient:
         }
 
         response_json = self._session.post("https://api.wyzecam.com/app/v2/device/get_property_list",
-                                      json=payload).json()
+                                           json=payload).json()
 
         self.check_for_errors(response_json)
 
@@ -144,7 +144,28 @@ class BaseClient:
         }
 
         response_json = self._session.post("https://api.wyzecam.com/app/v2/auto_group/get_list",
-                                      json=payload).json()
+                                           json=payload).json()
+
+        self.check_for_errors(response_json)
+
+        return response_json
+
+    def get_device_info(self, device: Device):
+        payload = {
+            "phone_system_type": PHONE_SYSTEM_TYPE,
+            "app_version": APP_VERSION,
+            "app_ver": APP_VER,
+            "device_mac": device.mac,
+            "sc": "9f275790cab94a72bd206c8876429f3c",
+            "ts": int(time.time()),
+            "device_model": device.product_model,
+            "sv": "c86fa16fc99d4d6580f82ef3b942e586",
+            "access_token": self.access_token,
+            "phone_id": PHONE_ID,
+            "app_name": APP_NAME
+        }
+        response_json = self._session.post("https://api.wyzecam.com/app/v2/device/get_device_Info",
+                                           json=payload).json()
 
         self.check_for_errors(response_json)
 
@@ -189,7 +210,7 @@ class BaseClient:
 
         return response_json
 
-    def auto_group_run(self, group: Group):
+    def auto_group_run(self, group: Group) -> dict:
         payload = {
             "access_token": self.access_token,
             "app_name": APP_NAME,
@@ -209,7 +230,7 @@ class BaseClient:
 
         return response_json
 
-    def run_action(self, device: Device, action: str):
+    def run_action(self, device: Device, action: str) -> dict:
         if DeviceTypes(device.product_type) not in [
             DeviceTypes.CAMERA
         ]:
@@ -258,7 +279,8 @@ class BaseClient:
             "device_model": device.product_model,
             "device_mac": device.mac
         }
-        response_json = self._session.post("https://api.wyzecam.com/app/v2/device/set_property_list", json=payload).json()
+        response_json = self._session.post("https://api.wyzecam.com/app/v2/device/set_property_list",
+                                           json=payload).json()
 
         self.check_for_errors(response_json)
 
@@ -414,3 +436,82 @@ class BaseClient:
     def check_for_errors_thermostat(response_json):
         if response_json['code'] != 1:
             raise UnknownApiError(response_json)
+
+    def get_plan_binding_list_by_user(self) -> Dict:
+        url = "https://wyze-membership-service.wyzecam.com/platform/v2/membership/get_plan_binding_list_by_user"
+        payload = olive_create_hms_payload()
+        signature = olive_create_signature(payload, self.access_token)
+        headers = {
+            'Accept-Encoding': 'gzip',
+            'User-Agent': 'myapp',
+            'appid': OLIVE_APP_ID,
+            'appinfo': APP_INFO,
+            'phoneid': PHONE_ID,
+            'access_token': self.access_token,
+            'signature2': signature
+        }
+
+        response_json = self._session.get(url, headers=headers, params=payload).json()
+
+        return response_json
+
+    def get_hms_id(self) -> Optional[Dict]:
+        response = self.get_plan_binding_list_by_user()
+        hms_subs = response['data']
+
+        if len(hms_subs) >= 1:
+            for sub in hms_subs:
+                if (devices := sub.get('deviceList')) is not None:
+                    if len(devices) >= 1:
+                        for device in devices:
+                            return device['device_id']
+
+        return None
+
+    def monitoring_profile_active(self, hms_id: str, home: int, away: int) -> Dict:
+        url = "https://hms.api.wyze.com/api/v1/monitoring/v1/profile/active"
+        query = olive_create_hms_patch_payload(hms_id)
+        signature = olive_create_signature(query, self.access_token)
+        headers = {
+            'Accept-Encoding': 'gzip',
+            'User-Agent': 'myapp',
+            'appid': OLIVE_APP_ID,
+            'appinfo': APP_INFO,
+            'phoneid': PHONE_ID,
+            'access_token': self.access_token,
+            'signature2': signature,
+            'Authorization': self.access_token
+        }
+        payload = [
+            {
+                "state": "home",
+                "active": home
+            },
+            {
+                "state": "away",
+                "active": away
+            }
+        ]
+
+        response = self._session.patch(url, headers=headers, params=query, json=payload)
+
+        return response.json()
+
+    def monitoring_profile_state_status(self, hms_id):
+        url = "https://hms.api.wyze.com/api/v1/monitoring/v1/profile/state-status"
+        query = olive_create_hms_get_payload(hms_id)
+        signature = olive_create_signature(query, self.access_token)
+        headers = {
+            'User-Agent': 'myapp',
+            'appid': OLIVE_APP_ID,
+            'appinfo': APP_INFO,
+            'phoneid': PHONE_ID,
+            'access_token': self.access_token,
+            'signature2': signature,
+            'Authorization': self.access_token,
+            'Content-Type': "application/json"
+        }
+
+        response = self._session.get(url, headers=headers, params=query).json()
+
+        return response

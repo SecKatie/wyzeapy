@@ -18,6 +18,7 @@ class Group:
     def __repr__(self):
         return "<Group: {}, {}>".format(self.group_id, self.group_name)
 
+
 class DeviceTypes(Enum):
     LIGHT = "Light"
     PLUG = "Plug"
@@ -38,6 +39,9 @@ class DeviceTypes(Enum):
     THERMOSTAT = "Thermostat"
     GATEWAY_V2 = "GateWay"
     UNKNOWN = "Unknown"
+    SENSE_V2_GATEWAY = "S1Gateway"
+    KEYPAD = "Keypad"
+
 
 class Device:
     product_type: str
@@ -98,7 +102,6 @@ class ThermostatProps(Enum):
     DEV_HOLD = "dev_hold"
     TEMP_UNIT = "temp_unit"
     ASW_HOLD = "asw_hold"
-
 
 
 class ResponseCodes(Enum):

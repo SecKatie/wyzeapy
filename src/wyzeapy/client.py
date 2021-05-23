@@ -13,8 +13,9 @@ from .types import ThermostatProps, Device, DeviceTypes, PropertyIDs, Event, Gro
 
 _LOGGER = logging.getLogger(__name__)
 
+
 class Client:
-    _devices: List[Device] = None
+    _devices: Optional[List[Device]] = None
 
     def __init__(self, email, password):
         self.email = email
@@ -24,7 +25,7 @@ class Client:
         self._valid_login = self.client.login(self.email, self.password)
 
     @property
-    def valid_login(self):
+    def valid_login(self) -> bool:
         return self._valid_login
 
     def reauthenticate(self) -> None:
@@ -36,32 +37,32 @@ class Client:
 
     def get_plugs(self) -> List[Device]:
         if self._devices is None:
-            self.get_devices()
+            self._devices = self.get_devices()
 
         return [device for device in self._devices if device.type is DeviceTypes.PLUG or
                 device.type is DeviceTypes.OUTDOOR_PLUG]
 
     def get_cameras(self) -> List[Device]:
         if self._devices is None:
-            self.get_devices()
+            self._devices = self.get_devices()
 
         return [device for device in self._devices if device.type is DeviceTypes.CAMERA]
 
     def get_locks(self) -> List[Device]:
         if self._devices is None:
-            self.get_devices()
+            self._devices = self.get_devices()
 
         return [device for device in self._devices if device.type is DeviceTypes.LOCK]
 
     def get_thermostats(self) -> List[Device]:
         if self._devices is None:
-            self.get_devices()
+            self._devices = self.get_devices()
 
         return [device for device in self._devices if device.type is DeviceTypes.THERMOSTAT]
 
     def get_bulbs(self) -> List[Device]:
         if self._devices is None:
-            self.get_devices()
+            self._devices = self.get_devices()
 
         return [device for device in self._devices if device.type is DeviceTypes.LIGHT or
                 device.type is DeviceTypes.MESH_LIGHT]
@@ -69,9 +70,7 @@ class Client:
     def get_devices(self) -> List[Device]:
         object_list = self.client.get_object_list()
 
-        self._devices = [Device(device) for device in object_list['data']['device_list']]
-
-        return self._devices
+        return [Device(device) for device in object_list['data']['device_list']]
 
     def get_groups(self):
         object_list = self.client.get_auto_group_list()

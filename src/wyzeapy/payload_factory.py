@@ -44,3 +44,26 @@ def olive_create_post_payload(device_mac, device_model, prop: ThermostatProps, v
         "is_sub_device": 0,
         "nonce": str(nonce)
     }
+
+
+def olive_create_hms_payload():
+    nonce = int(time.time() * 1000)
+
+    return {
+        "group_id": "hms",
+        "nonce": str(nonce)
+    }
+
+
+def olive_create_hms_get_payload(hms_id: str):
+    nonce = int(time.time() * 1000)
+    return {
+        "hms_id": hms_id,
+        "nonce": str(nonce)
+    }
+
+
+def olive_create_hms_patch_payload(hms_id: str):
+    return {
+        "hms_id": hms_id
+    }

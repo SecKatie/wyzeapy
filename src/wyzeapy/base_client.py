@@ -458,10 +458,9 @@ class BaseClient:
 
         if len(hms_subs) >= 1:
             for sub in hms_subs:
-                if (devices := sub.get('deviceList')) is not None:
-                    if len(devices) >= 1:
-                        for device in devices:
-                            return device['device_id']
+                if (devices := sub.get('deviceList')) is not None and len(devices) >= 1:
+                    for device in devices:
+                        return device['device_id']
 
         return None
 

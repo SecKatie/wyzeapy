@@ -33,9 +33,6 @@ class BaseClient:
         self._session.close()
 
     def login(self, email, password) -> bool:
-        email = email
-        password = password
-
         login_payload = {
             "email": email,
             "password": self.create_password(password)

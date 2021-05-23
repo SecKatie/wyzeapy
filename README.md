@@ -8,4 +8,4 @@ For now please look at the implementation of ha-wyzeapi. I do not have the time 
 
 ## Code Scanning
 
-Analysis is run through: https://sonarcloud.io/dashboard?id=JoshuaMulliken_wyzeapy
+Analysis is run through: [sonarcloud](https://sonarcloud.io/dashboard?id=JoshuaMulliken_wyzeapy)

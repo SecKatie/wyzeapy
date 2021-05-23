@@ -35,6 +35,30 @@ class TestFunctions(unittest.TestCase):
         for device in devices:
             self.assertIsInstance(device, Device)
 
+    def test_get_plugs(self):
+        devices = self._client.get_plugs()
+        self.assertIsInstance(devices, List)
+        for device in devices:
+            self.assertIsInstance(device, Device)
+
+    def test_get_cameras(self):
+        devices = self._client.get_cameras()
+        self.assertIsInstance(devices, List)
+        for device in devices:
+            self.assertIsInstance(device, Device)
+
+    def test_get_locks(self):
+        devices = self._client.get_locks()
+        self.assertIsInstance(devices, List)
+        for device in devices:
+            self.assertIsInstance(device, Device)
+
+    def test_get_bulbs(self):
+        devices = self._client.get_bulbs()
+        self.assertIsInstance(devices, List)
+        for device in devices:
+            self.assertIsInstance(device, Device)
+
     def test_turn_on_color_bulb(self):
         test_bulb = Device({
             'mac': '7C78B214CF40',

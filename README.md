@@ -5,3 +5,7 @@ This library is primarily designed to be used in the [ha-wyzeapi](https://github
 ## Usage
 
 For now please look at the implementation of ha-wyzeapi. I do not have the time to write significant documentation until both of these projects are at a feature complete and stable place.
+
+## Code Scanning
+
+Analysis is run through: https://sonarcloud.io/dashboard?id=JoshuaMulliken_wyzeapy

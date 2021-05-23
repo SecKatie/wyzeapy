@@ -3,105 +3,84 @@
 #  of the attached license. You should have received a copy of
 #  the license with this file. If not, please write to:
 #  joshua@mulliken.net to receive a copy
-
+import logging
 import re
 
-from typing import List, Any
-from .base_client import BaseClient, Device, DeviceTypes, ActionNotSupported, PropertyIDs, Group
+from typing import Any, Optional, List, Tuple
+from .base_client import BaseClient
+from .exceptions import ActionNotSupported
+from .types import ThermostatProps, Device, DeviceTypes, PropertyIDs, Event, Group
 
-
-class File:
-    file_id: str
-    type: Any
-    url: str
-    status: int
-    en_algorithm: int
-    en_password: str
-    is_ai: int
-    ai_tag_list: List
-    ai_url: str
-    file_params: dict
-
-    def __init__(self, dictionary):
-        for k, v in dictionary.items():
-            setattr(self, k, v)
-
-        if self.type == 1:
-            self.type = "Image"
-        else:
-            self.type = "Video"
-
-    def __repr__(self):
-        return "<File: {}, {}>".format(self.file_id, self.type)
-
-
-class Event:
-    event_id: str
-    device_mac: str
-    device_model: str
-    event_category: int
-    event_value: str
-    event_ts: int
-    event_ack_result: int
-    is_feedback_correct: int
-    is_feedback_face: int
-    is_feedback_person: int
-    file_list: List[File]
-    event_params: dict
-    recognized_instance_list: List
-    tag_list: List
-    read_state: int
-
-    def __init__(self, dictionary):
-        for k, v in dictionary.items():
-            setattr(self, k, v)
-        temp_file_list = []
-        if len(self.file_list) > 0:
-            for file in self.file_list:
-                temp_file_list.append(File(file))
-        self.file_list = temp_file_list
-
-    def __repr__(self):
-        return "<Event: {}, {}>".format(self.event_id, self.event_ts)
+_LOGGER = logging.getLogger(__name__)
 
 
 class Client:
+    _devices: Optional[List[Device]] = None
+
     def __init__(self, email, password):
         self.email = email
         self.password = password
 
         self.client = BaseClient()
-        self.client.login(self.email, self.password)
+        self._valid_login = self.client.login(self.email, self.password)
 
-    def reauthenticate(self):
+    @property
+    def valid_login(self) -> bool:
+        return self._valid_login
+
+    def reauthenticate(self) -> None:
         self.client.login(self.email, self.password)
 
     @staticmethod
-    def create_pid_pair(pid_enum: PropertyIDs, value):
+    def create_pid_pair(pid_enum: PropertyIDs, value) -> dict:
         return {"pid": pid_enum.value, "pvalue": value}
 
-    def get_devices(self):
+    def get_plugs(self) -> List[Device]:
+        if self._devices is None:
+            self._devices = self.get_devices()
+
+        return [device for device in self._devices if device.type is DeviceTypes.PLUG or
+                device.type is DeviceTypes.OUTDOOR_PLUG]
+
+    def get_cameras(self) -> List[Device]:
+        if self._devices is None:
+            self._devices = self.get_devices()
+
+        return [device for device in self._devices if device.type is DeviceTypes.CAMERA]
+
+    def get_locks(self) -> List[Device]:
+        if self._devices is None:
+            self._devices = self.get_devices()
+
+        return [device for device in self._devices if device.type is DeviceTypes.LOCK]
+
+    def get_thermostats(self) -> List[Device]:
+        if self._devices is None:
+            self._devices = self.get_devices()
+
+        return [device for device in self._devices if device.type is DeviceTypes.THERMOSTAT]
+
+    def get_bulbs(self) -> List[Device]:
+        if self._devices is None:
+            self._devices = self.get_devices()
+
+        return [device for device in self._devices if device.type is DeviceTypes.LIGHT or
+                device.type is DeviceTypes.MESH_LIGHT]
+
+    def get_devices(self) -> List[Device]:
         object_list = self.client.get_object_list()
 
-        devices = []
-        for device in object_list['data']['device_list']:
-            devices.append(Device(device))
-
-        return devices
+        return [Device(device) for device in object_list['data']['device_list']]
 
     def get_groups(self):
         object_list = self.client.get_auto_group_list()
 
-        groups = []
-        for group in object_list['data']['auto_group_list']:
-            groups.append(Group(group))
-
-        return groups
+        return [Group(group) for group in object_list['data']['auto_group_list']]
 
     def activate_group(self, group: Group):
-            self.client.auto_group_run(group)
+        self.client.auto_group_run(group)
 
-    def turn_on(self, device: Device, extra_pids=None):
+    def turn_on(self, device: Device, extra_pids=None) -> None:
         device_type: DeviceTypes = DeviceTypes(device.product_type)
 
         if device_type in [
@@ -140,7 +119,7 @@ class Client:
         else:
             raise ActionNotSupported(device_type.value)
 
-    def turn_off(self, device: Device, extra_pids=None):
+    def turn_off(self, device: Device, extra_pids=None) -> None:
         device_type: DeviceTypes = DeviceTypes(device.product_type)
 
         if device_type in [
@@ -179,7 +158,7 @@ class Client:
         else:
             raise ActionNotSupported(device_type.value)
 
-    def set_brightness(self, device: Device, brightness: int):
+    def set_brightness(self, device: Device, brightness: int) -> None:
         if DeviceTypes(device.product_type) not in [
             DeviceTypes.LIGHT,
             DeviceTypes.MESH_LIGHT
@@ -193,7 +172,7 @@ class Client:
             self.create_pid_pair(PropertyIDs.BRIGHTNESS, str(brightness))
         ])
 
-    def set_color(self, device, rgb_hex_string):
+    def set_color(self, device, rgb_hex_string) -> None:
         if DeviceTypes(device.product_type) not in [
             DeviceTypes.MESH_LIGHT
         ]:
@@ -206,7 +185,7 @@ class Client:
             self.create_pid_pair(PropertyIDs.COLOR, rgb_hex_string)
         ])
 
-    def get_info(self, device):
+    def get_info(self, device) -> List[Tuple[PropertyIDs, Any]]:
         properties = self.client.get_property_list(device)['data']['property_list']
 
         property_list = []
@@ -222,7 +201,7 @@ class Client:
 
         return property_list
 
-    def get_events(self, device):
+    def get_events(self, device) -> List[Event]:
         raw_events = self.client.get_event_list(device, 10)['data']['event_list']
 
         events = []
@@ -233,10 +212,36 @@ class Client:
 
         return events
 
-    def get_latest_event(self, device):
+    def get_latest_event(self, device) -> Optional[Event]:
         raw_events = self.client.get_event_list(device, 10)['data']['event_list']
 
         if len(raw_events) > 0:
             return Event(raw_events[0])
 
         return None
+
+    def get_thermostat_info(self, device) -> List[Tuple[ThermostatProps, Any]]:
+        if DeviceTypes(device.product_type) not in [
+            DeviceTypes.THERMOSTAT
+        ]:
+            raise ActionNotSupported(device.product_type)
+
+        properties = self.client.thermostat_get_iot_prop(device)['data']['props']
+
+        device_props = []
+        for property in properties:
+            try:
+                prop = ThermostatProps(property)
+                device_props.append((prop, properties[property]))
+            except ValueError as e:
+                _LOGGER.debug(f"{e} with value {properties[property]}")
+
+        return device_props
+
+    def set_thermostat_prop(self, device: Device, prop: ThermostatProps, value: Any) -> None:
+        if DeviceTypes(device.product_type) not in [
+            DeviceTypes.THERMOSTAT
+        ]:
+            raise ActionNotSupported(device.product_type)
+
+        self.client.thermostat_set_iot_prop(device, prop, value)

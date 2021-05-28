@@ -150,5 +150,11 @@ class TestHMS(unittest.TestCase):
         status = self._client.get_hms_info()
         self.assertIsInstance(status, HMSStatus)
 
-    def test_set_hms_status(self):
+    def test_set_hms_status_disarmed(self):
         self._client.set_hms_status(HMSStatus.DISARMED)
+
+    def test_set_hms_status_home(self):
+        self._client.set_hms_status(HMSStatus.HOME)
+
+    def test_set_hms_status_away(self):
+        self._client.set_hms_status(HMSStatus.AWAY)

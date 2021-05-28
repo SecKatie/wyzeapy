@@ -158,3 +158,6 @@ class TestHMS(unittest.TestCase):
 
     def test_set_hms_status_away(self):
         self._client.set_hms_status(HMSStatus.AWAY)
+
+    def test_has_hms(self):
+        self.assertTrue(self._client.has_hms())

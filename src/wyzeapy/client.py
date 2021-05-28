@@ -219,9 +219,15 @@ class Client:
 
         self.net_client.thermostat_set_iot_prop(device, prop, value)
 
+    def has_hms(self) -> bool:
+        if self.net_client.get_hms_id() is None:
+            return False
+
+        return True
+
     def get_hms_info(self) -> HMSStatus:
-        hmd_id = self.net_client.get_hms_id()
-        status_response = self.net_client.monitoring_profile_state_status(hmd_id)
+        hms_id = self.net_client.get_hms_id()
+        status_response = self.net_client.monitoring_profile_state_status(hms_id)
         if status_response.get('status') == 200:
             status = status_response.get('message')
             if status == 'disarm':

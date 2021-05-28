@@ -158,33 +158,6 @@ class Client:
         else:
             raise ActionNotSupported(device_type.value)
 
-    def set_brightness(self, device: Device, brightness: int) -> None:
-        if DeviceTypes(device.product_type) not in [
-            DeviceTypes.LIGHT,
-            DeviceTypes.MESH_LIGHT
-        ]:
-            raise ActionNotSupported(device.product_type)
-
-        if brightness > 100 or brightness < 0:
-            raise AttributeError("Value must be between 0 and 100")
-
-        self.turn_on(device, extra_pids=[
-            self.create_pid_pair(PropertyIDs.BRIGHTNESS, str(brightness))
-        ])
-
-    def set_color(self, device, rgb_hex_string) -> None:
-        if DeviceTypes(device.product_type) not in [
-            DeviceTypes.MESH_LIGHT
-        ]:
-            raise ActionNotSupported(device.product_type)
-
-        if len(rgb_hex_string) != 6 or bool(re.compile(r'[^A-F0-9]').search(rgb_hex_string)):
-            raise AttributeError("Value must be a valid hex string in the format: 000000-FFFFFF")
-
-        self.turn_on(device, extra_pids=[
-            self.create_pid_pair(PropertyIDs.COLOR, rgb_hex_string)
-        ])
-
     def get_info(self, device) -> List[Tuple[PropertyIDs, Any]]:
         properties = self.net_client.get_property_list(device)['data']['property_list']
 

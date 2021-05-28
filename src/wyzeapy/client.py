@@ -8,8 +8,8 @@ import re
 
 from typing import Any, Optional, List, Tuple
 from .base_client import NetClient
-from .exceptions import ActionNotSupported
-from .types import ThermostatProps, Device, DeviceTypes, PropertyIDs, Event, Group
+from .exceptions import ActionNotSupported, UnknownApiError
+from .types import ThermostatProps, Device, DeviceTypes, PropertyIDs, Event, Group, HMSStatus
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -245,3 +245,33 @@ class Client:
             raise ActionNotSupported(device.product_type)
 
         self.net_client.thermostat_set_iot_prop(device, prop, value)
+
+    def get_hms_info(self) -> HMSStatus:
+        hmd_id = self.net_client.get_hms_id()
+        status_response = self.net_client.monitoring_profile_state_status(hmd_id)
+        if status_response.get('status') == 200:
+            status = status_response.get('message')
+            if status == 'disarm':
+                return HMSStatus.DISARMED
+            elif status == 'home':
+                return HMSStatus.HOME
+            elif status == 'away':
+                return HMSStatus.AWAY
+            elif status == 'changing':
+                return HMSStatus.DISARMED
+            else:
+                raise UnknownApiError(status_response)
+        else:
+            raise UnknownApiError(status_response)
+
+    def set_hms_status(self, state: HMSStatus):
+        hms_id = self.net_client.get_hms_id()
+        assert hms_id is not None
+        if state == HMSStatus.DISARMED:
+            self.net_client.monitoring_profile_active(hms_id, 0, 0)
+        elif state == HMSStatus.HOME:
+            self.net_client.monitoring_profile_active(hms_id, 1, 0)
+        elif state == HMSStatus.AWAY:
+            self.net_client.monitoring_profile_active(hms_id, 0, 1)
+        else:
+            raise AttributeError("Status must be one of HMSStatus values")

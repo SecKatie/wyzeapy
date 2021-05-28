@@ -9,7 +9,7 @@ import unittest
 from typing import List
 
 from src.wyzeapy.client import Client
-from src.wyzeapy.types import Device, ThermostatProps
+from src.wyzeapy.types import Device, ThermostatProps, HMSStatus
 
 
 class TestLogin(unittest.TestCase):
@@ -146,13 +146,9 @@ class TestHMS(unittest.TestCase):
 
         self.assertEqual(device_id, "c35aecadc9d24e42b799e0be9c2ffc2f")
 
-    def test_can_set_hms_status(self):
-        device_id = self._client.net_client.get_hms_id()
-        response = self._client.net_client.monitoring_profile_active(device_id, 0, 0)
-        self.assertEqual(response['status'], 200)
+    def test_get_hms_status(self):
+        status = self._client.get_hms_info()
+        self.assertIsInstance(status, HMSStatus)
 
-    def test_can_get_hms_status(self):
-        device_id = self._client.net_client.get_hms_id()
-        response = self._client.net_client.monitoring_profile_state_status(device_id)
-        print(response)
-        self.assertEqual(response['status'], 200)
+    def test_set_hms_status(self):
+        self._client.set_hms_status(HMSStatus.DISARMED)

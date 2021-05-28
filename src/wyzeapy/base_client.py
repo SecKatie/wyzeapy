@@ -472,7 +472,7 @@ class NetClient:
 
         return response_json
 
-    def get_hms_id(self) -> Optional[Dict]:
+    def get_hms_id(self) -> Optional[str]:
         response = self.get_plan_binding_list_by_user()
         hms_subs = response['data']
 

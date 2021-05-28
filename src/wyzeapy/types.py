@@ -168,3 +168,9 @@ class Event:
 
     def __repr__(self):
         return "<Event: {}, {}>".format(self.event_id, self.event_ts)
+
+
+class HMSStatus(Enum):
+    DISARMED = 'disarmed'
+    HOME = 'home'
+    AWAY = 'away'

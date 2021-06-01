@@ -9,7 +9,7 @@ import unittest
 from typing import List
 
 from src.wyzeapy.client import Client
-from src.wyzeapy.types import Device, ThermostatProps, HMSStatus
+from src.wyzeapy.types import Device, ThermostatProps, HMSStatus, Sensor
 
 
 class TestLogin(unittest.TestCase):
@@ -134,6 +134,22 @@ class TestFunctions(unittest.TestCase):
         self.assertIsInstance(info, List)
         for prop, value in info:
             self.assertIsInstance(prop, ThermostatProps)
+
+
+class TestSensors(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls._client = Client(os.getenv("WYZE_EMAIL"), os.getenv("WYZE_PASSWORD"))
+
+    def test_can_get_sensors(self):
+        sensors = self._client.get_sensors()
+        self.assertIsInstance(sensors, List)
+        self.assertIsInstance(sensors[0], Sensor)
+
+    def test_can_update_sensors(self):
+        sensors = self._client.get_sensors()
+
+        self._client.get_sensor_state(sensors[0])
 
 
 class TestHMS(unittest.TestCase):

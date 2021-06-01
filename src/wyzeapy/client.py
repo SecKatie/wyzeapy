@@ -4,12 +4,12 @@
 #  the license with this file. If not, please write to:
 #  joshua@mulliken.net to receive a copy
 import logging
-import re
+import time
 
 from typing import Any, Optional, List, Tuple
 from .base_client import NetClient
 from .exceptions import ActionNotSupported, UnknownApiError
-from .types import ThermostatProps, Device, DeviceTypes, PropertyIDs, Event, Group, HMSStatus
+from .types import ThermostatProps, Device, DeviceTypes, PropertyIDs, Event, Group, HMSStatus, Sensor
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -18,6 +18,8 @@ class Client:
     _devices: Optional[List[Device]] = None
 
     def __init__(self, email, password):
+        self._last_sensor_update = time.time()
+        self._latest_sensors = []
         self.email = email
         self.password = password
 
@@ -66,6 +68,27 @@ class Client:
 
         return [device for device in self._devices if device.type is DeviceTypes.LIGHT or
                 device.type is DeviceTypes.MESH_LIGHT]
+
+    def get_sensors(self) -> List[Sensor]:
+        if self._devices is None:
+            self._devices = self.get_devices()
+
+        self._latest_sensors = [Sensor(device.raw_dict) for device in self._devices if device.type is DeviceTypes.MOTION_SENSOR or
+                device.type is DeviceTypes.CONTACT_SENSOR]
+
+        return self._latest_sensors
+
+    def get_sensor_state(self, sensor: Sensor):
+        current_update_time = time.time()
+        if current_update_time - self._last_sensor_update >= 5:
+            self._latest_sensors = self.get_sensors()
+            self._last_sensor_update = current_update_time
+
+        for i in self._latest_sensors:
+            if i.mac == sensor.mac:
+                return i
+
+        raise RuntimeError(f"Unable to find sensor with mac: {sensor.mac}")
 
     def get_devices(self) -> List[Device]:
         object_list = self.net_client.get_object_list()

@@ -4,7 +4,7 @@
 #  the license with this file. If not, please write to:
 #  joshua@mulliken.net to receive a copy
 from enum import Enum
-from typing import Union, List
+from typing import Union, List, Optional
 
 
 class Group:
@@ -48,8 +48,11 @@ class Device:
     product_model: str
     mac: str
     nickname: str
+    device_params: dict
+    raw_dict: dict
 
     def __init__(self, dictionary):
+        self.raw_dict = dictionary
         for k, v in dictionary.items():
             setattr(self, k, v)
 
@@ -62,6 +65,24 @@ class Device:
 
     def __repr__(self):
         return "<Device: {}, {}>".format(DeviceTypes(self.product_type), self.mac)
+
+
+class Sensor(Device):
+    def __init__(self, dictionary):
+        super().__init__(dictionary)
+
+    @property
+    def activity_detected(self) -> int:
+        if self.type is DeviceTypes.CONTACT_SENSOR:
+            return self.device_params['open_close_state']
+        elif self.type is DeviceTypes.MOTION_SENSOR:
+            return self.device_params['motion_state']
+        else:
+            raise AssertionError("Device must be of type CONTACT_SENSOR or MOTION_SENSOR")
+
+    @property
+    def is_low_battery(self) -> int:
+        return self.device_params['is_low_battery']
 
 
 class PropertyIDs(Enum):

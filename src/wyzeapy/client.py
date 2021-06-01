@@ -69,8 +69,8 @@ class Client:
         return [device for device in self._devices if device.type is DeviceTypes.LIGHT or
                 device.type is DeviceTypes.MESH_LIGHT]
 
-    def get_sensors(self) -> List[Sensor]:
-        if self._devices is None:
+    def get_sensors(self, force_update=False) -> List[Sensor]:
+        if self._devices is None and force_update is False:
             self._devices = self.get_devices()
 
         self._latest_sensors = [Sensor(device.raw_dict) for device in self._devices if device.type is DeviceTypes.MOTION_SENSOR or
@@ -81,7 +81,7 @@ class Client:
     def get_sensor_state(self, sensor: Sensor):
         current_update_time = time.time()
         if current_update_time - self._last_sensor_update >= 5:
-            self._latest_sensors = self.get_sensors()
+            self._latest_sensors = self.get_sensors(force_update=True)
             self._last_sensor_update = current_update_time
 
         for i in self._latest_sensors:

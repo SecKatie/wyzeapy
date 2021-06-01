@@ -70,7 +70,7 @@ class Client:
                 device.type is DeviceTypes.MESH_LIGHT]
 
     def get_sensors(self, force_update=False) -> List[Sensor]:
-        if self._devices is None and force_update is False:
+        if self._devices is None or force_update is True:
             self._devices = self.get_devices()
 
         self._latest_sensors = [Sensor(device.raw_dict) for device in self._devices if device.type is DeviceTypes.MOTION_SENSOR or

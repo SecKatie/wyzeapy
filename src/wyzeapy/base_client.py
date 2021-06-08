@@ -513,6 +513,20 @@ class NetClient:
 
         return response.json()
 
+    def disable_reme_alarm(self, hms_id):
+        url = "https://hms.api.wyze.com/api/v1/reme-alarm"
+        payload = {
+            "hms_id": hms_id,
+            "remediation_id": "emergency"
+        }
+        headers = {
+            "Authorization": self.access_token
+        }
+
+        response = self._session.delete(url, headers=headers, json=payload).json()
+
+        return response
+
     def monitoring_profile_state_status(self, hms_id):
         url = "https://hms.api.wyze.com/api/v1/monitoring/v1/profile/state-status"
         query = olive_create_hms_get_payload(hms_id)
@@ -531,3 +545,5 @@ class NetClient:
         response = self._session.get(url, headers=headers, params=query).json()
 
         return response
+
+

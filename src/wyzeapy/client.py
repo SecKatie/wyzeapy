@@ -271,6 +271,7 @@ class Client:
         assert hms_id is not None
         if state == HMSStatus.DISARMED:
             self.net_client.monitoring_profile_active(hms_id, 0, 0)
+            self.net_client.disable_reme_alarm(hms_id)
         elif state == HMSStatus.HOME:
             self.net_client.monitoring_profile_active(hms_id, 1, 0)
         elif state == HMSStatus.AWAY:

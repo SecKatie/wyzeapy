@@ -4,18 +4,18 @@
 #  the license with this file. If not, please write to:
 #  joshua@mulliken.net to receive a copy
 from enum import Enum
-from typing import Union, List, Optional
+from typing import Union, List, Optional, Dict, Any
 
 
 class Group:
     group_id: str
     group_name: str
 
-    def __init__(self, dictionary):
+    def __init__(self, dictionary: Dict[Any, Any]):
         for k, v in dictionary.items():
             setattr(self, k, v)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<Group: {}, {}>".format(self.group_id, self.group_name)
 
 
@@ -48,10 +48,10 @@ class Device:
     product_model: str
     mac: str
     nickname: str
-    device_params: dict
-    raw_dict: dict
+    device_params: Dict[str, Any]
+    raw_dict: Dict[str, Any]
 
-    def __init__(self, dictionary):
+    def __init__(self, dictionary: Dict[Any, Any]):
         self.raw_dict = dictionary
         for k, v in dictionary.items():
             setattr(self, k, v)
@@ -63,26 +63,26 @@ class Device:
         except ValueError:
             return DeviceTypes.UNKNOWN
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<Device: {}, {}>".format(DeviceTypes(self.product_type), self.mac)
 
 
 class Sensor(Device):
-    def __init__(self, dictionary):
+    def __init__(self, dictionary: Dict[Any, Any]):
         super().__init__(dictionary)
 
     @property
     def activity_detected(self) -> int:
         if self.type is DeviceTypes.CONTACT_SENSOR:
-            return self.device_params['open_close_state']
+            return int(self.device_params['open_close_state'])
         elif self.type is DeviceTypes.MOTION_SENSOR:
-            return self.device_params['motion_state']
+            return int(self.device_params['motion_state'])
         else:
             raise AssertionError("Device must be of type CONTACT_SENSOR or MOTION_SENSOR")
 
     @property
     def is_low_battery(self) -> int:
-        return self.device_params['is_low_battery']
+        return int(self.device_params['is_low_battery'])
 
 
 class PropertyIDs(Enum):
@@ -143,11 +143,11 @@ class File:
     en_algorithm: int
     en_password: str
     is_ai: int
-    ai_tag_list: List
+    ai_tag_list: List[Any]
     ai_url: str
-    file_params: dict
+    file_params: Dict[Any, Any]
 
-    def __init__(self, dictionary):
+    def __init__(self, dictionary: Dict[Any, Any]):
         for k, v in dictionary.items():
             setattr(self, k, v)
 
@@ -156,7 +156,7 @@ class File:
         else:
             self.type = "Video"
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<File: {}, {}>".format(self.file_id, self.type)
 
 
@@ -171,23 +171,21 @@ class Event:
     is_feedback_correct: int
     is_feedback_face: int
     is_feedback_person: int
-    file_list: List[File]
-    event_params: dict
-    recognized_instance_list: List
-    tag_list: List
+    file_list: List[Dict[Any, Any]]
+    typed_file_list: List[File]
+    event_params: Dict[Any, Any]
+    recognized_instance_list: List[Any]
+    tag_list: List[Any]
     read_state: int
 
-    def __init__(self, dictionary):
+    def __init__(self, dictionary: Dict[Any, Any]):
         for k, v in dictionary.items():
             setattr(self, k, v)
-        temp_file_list = []
         if len(self.file_list) > 0:
             for file in self.file_list:
-                # noinspection PyTypeChecker
-                temp_file_list.append(File(file))
-        self.file_list = temp_file_list
+                self.typed_file_list.append(File(file))
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<Event: {}, {}>".format(self.event_id, self.event_ts)
 
 

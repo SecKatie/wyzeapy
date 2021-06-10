@@ -4,14 +4,14 @@
 #  the license with this file. If not, please write to:
 #  joshua@mulliken.net to receive a copy
 import time
-from typing import Any
+from typing import Any, Dict
 
 from .const import FORD_APP_KEY
 from .types import ThermostatProps
 from .crypto import ford_create_signature
 
 
-def ford_create_payload(access_token, payload, url_path, request_method):
+def ford_create_payload(access_token: str, payload: Dict[str, Any], url_path: str, request_method: str) -> Dict[str, Any]:
     payload["accessToken"] = access_token
     payload["key"] = FORD_APP_KEY
     payload["timestamp"] = str(int(time.time() * 1000))
@@ -19,7 +19,7 @@ def ford_create_payload(access_token, payload, url_path, request_method):
     return payload
 
 
-def olive_create_get_payload(device_mac):
+def olive_create_get_payload(device_mac: str) -> Dict[str, Any]:
     nonce = int(time.time() * 1000)
 
     return {
@@ -32,7 +32,7 @@ def olive_create_get_payload(device_mac):
     }
 
 
-def olive_create_post_payload(device_mac, device_model, prop: ThermostatProps, value: Any):
+def olive_create_post_payload(device_mac: str, device_model: str, prop: ThermostatProps, value: Any) -> Dict[str, Any]:
     nonce = int(time.time() * 1000)
 
     return {
@@ -46,7 +46,7 @@ def olive_create_post_payload(device_mac, device_model, prop: ThermostatProps, v
     }
 
 
-def olive_create_hms_payload():
+def olive_create_hms_payload() -> Dict[str, str]:
     nonce = int(time.time() * 1000)
 
     return {
@@ -55,7 +55,7 @@ def olive_create_hms_payload():
     }
 
 
-def olive_create_hms_get_payload(hms_id: str):
+def olive_create_hms_get_payload(hms_id: str) -> Dict[str, str]:
     nonce = int(time.time() * 1000)
     return {
         "hms_id": hms_id,
@@ -63,7 +63,7 @@ def olive_create_hms_get_payload(hms_id: str):
     }
 
 
-def olive_create_hms_patch_payload(hms_id: str):
+def olive_create_hms_patch_payload(hms_id: str) -> Dict[str, Any]:
     return {
         "hms_id": hms_id
     }

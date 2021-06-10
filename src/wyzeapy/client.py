@@ -6,7 +6,7 @@
 import logging
 import time
 
-from typing import Any, Optional, List, Tuple
+from typing import Any, Optional, List, Tuple, Iterable, Dict
 from .base_client import NetClient
 from .exceptions import ActionNotSupported, UnknownApiError
 from .types import ThermostatProps, Device, DeviceTypes, PropertyIDs, Event, Group, HMSStatus, Sensor
@@ -17,9 +17,9 @@ _LOGGER = logging.getLogger(__name__)
 class Client:
     _devices: Optional[List[Device]] = None
 
-    def __init__(self, email, password):
+    def __init__(self, email: str, password: str):
         self._last_sensor_update = time.time()
-        self._latest_sensors = []
+        self._latest_sensors: List[Sensor] = []
         self.email = email
         self.password = password
 
@@ -34,7 +34,7 @@ class Client:
         self.net_client.login(self.email, self.password)
 
     @staticmethod
-    def create_pid_pair(pid_enum: PropertyIDs, value) -> dict:
+    def create_pid_pair(pid_enum: PropertyIDs, value: str) -> Dict[str, str]:
         return {"pid": pid_enum.value, "pvalue": value}
 
     def get_plugs(self) -> List[Device]:
@@ -69,16 +69,17 @@ class Client:
         return [device for device in self._devices if device.type is DeviceTypes.LIGHT or
                 device.type is DeviceTypes.MESH_LIGHT]
 
-    def get_sensors(self, force_update=False) -> List[Sensor]:
+    def get_sensors(self, force_update: bool = False) -> List[Sensor]:
         if self._devices is None or force_update is True:
             self._devices = self.get_devices()
 
-        self._latest_sensors = [Sensor(device.raw_dict) for device in self._devices if device.type is DeviceTypes.MOTION_SENSOR or
-                device.type is DeviceTypes.CONTACT_SENSOR]
+        self._latest_sensors = [Sensor(device.raw_dict) for device in self._devices if
+                                device.type is DeviceTypes.MOTION_SENSOR or
+                                device.type is DeviceTypes.CONTACT_SENSOR]
 
         return self._latest_sensors
 
-    def get_sensor_state(self, sensor: Sensor):
+    def get_sensor_state(self, sensor: Sensor) -> Sensor:
         current_update_time = time.time()
         if current_update_time - self._last_sensor_update >= 5:
             self._latest_sensors = self.get_sensors(force_update=True)
@@ -95,15 +96,15 @@ class Client:
 
         return [Device(device) for device in object_list['data']['device_list']]
 
-    def get_groups(self):
+    def get_groups(self) -> List[Group]:
         object_list = self.net_client.get_auto_group_list()
 
         return [Group(group) for group in object_list['data']['auto_group_list']]
 
-    def activate_group(self, group: Group):
+    def activate_group(self, group: Group) -> None:
         self.net_client.auto_group_run(group)
 
-    def turn_on(self, device: Device, extra_pids=None) -> None:
+    def turn_on(self, device: Device, extra_pids: Optional[Iterable[Dict[Any, Any]]] = None) -> None:
         device_type: DeviceTypes = DeviceTypes(device.product_type)
 
         if device_type in [
@@ -142,7 +143,7 @@ class Client:
         else:
             raise ActionNotSupported(device_type.value)
 
-    def turn_off(self, device: Device, extra_pids=None) -> None:
+    def turn_off(self, device: Device, extra_pids: Optional[Iterable[Dict[Any, Any]]] = None) -> None:
         device_type: DeviceTypes = DeviceTypes(device.product_type)
 
         if device_type in [
@@ -181,7 +182,7 @@ class Client:
         else:
             raise ActionNotSupported(device_type.value)
 
-    def get_info(self, device) -> List[Tuple[PropertyIDs, Any]]:
+    def get_info(self, device: Device) -> List[Tuple[PropertyIDs, Any]]:
         properties = self.net_client.get_property_list(device)['data']['property_list']
 
         property_list = []
@@ -197,7 +198,7 @@ class Client:
 
         return property_list
 
-    def get_events(self, device) -> List[Event]:
+    def get_events(self, device: Device) -> List[Event]:
         raw_events = self.net_client.get_event_list(device, 10)['data']['event_list']
 
         events = []
@@ -208,7 +209,7 @@ class Client:
 
         return events
 
-    def get_latest_event(self, device) -> Optional[Event]:
+    def get_latest_event(self, device: Device) -> Optional[Event]:
         raw_events = self.net_client.get_event_list(device, 10)['data']['event_list']
 
         if len(raw_events) > 0:
@@ -216,7 +217,7 @@ class Client:
 
         return None
 
-    def get_thermostat_info(self, device) -> List[Tuple[ThermostatProps, Any]]:
+    def get_thermostat_info(self, device: Device) -> List[Tuple[ThermostatProps, Any]]:
         if DeviceTypes(device.product_type) not in [
             DeviceTypes.THERMOSTAT
         ]:
@@ -250,6 +251,7 @@ class Client:
 
     def get_hms_info(self) -> HMSStatus:
         hms_id = self.net_client.get_hms_id()
+        assert hms_id is not None
         status_response = self.net_client.monitoring_profile_state_status(hms_id)
         if status_response.get('status') == 200:
             status = status_response.get('message')
@@ -266,7 +268,7 @@ class Client:
         else:
             raise UnknownApiError(status_response)
 
-    def set_hms_status(self, state: HMSStatus):
+    def set_hms_status(self, state: HMSStatus) -> None:
         hms_id = self.net_client.get_hms_id()
         assert hms_id is not None
         if state == HMSStatus.DISARMED:

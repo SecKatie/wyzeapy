@@ -6,12 +6,12 @@
 import hashlib
 import hmac
 import urllib.parse
-from typing import Dict, Union
+from typing import Dict, Union, Any
 
 from .const import FORD_APP_SECRET, OLIVE_SIGNING_SECRET
 
 
-def olive_create_signature(payload: Union[dict, str], access_token: str) -> str:
+def olive_create_signature(payload: Union[Dict[Any, Any], str], access_token: str) -> str:
     if isinstance(payload, dict):
         body = ""
         for item in sorted(payload):
@@ -28,7 +28,7 @@ def olive_create_signature(payload: Union[dict, str], access_token: str) -> str:
     return hmac.new(secret.encode(), body.encode(), hashlib.md5).hexdigest()
 
 
-def ford_create_signature(url_path, request_method, payload: Dict):
+def ford_create_signature(url_path: str, request_method: str, payload: Dict[Any, Any]) -> str:
     string_buf = request_method + url_path
     for entry in sorted(payload.keys()):
         string_buf += entry + "=" + payload[entry] + "&"

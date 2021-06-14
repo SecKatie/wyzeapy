@@ -172,7 +172,7 @@ class Event:
     is_feedback_face: int
     is_feedback_person: int
     file_list: List[Dict[Any, Any]]
-    typed_file_list: List[File]
+    typed_file_list: List[File] = []
     event_params: Dict[Any, Any]
     recognized_instance_list: List[Any]
     tag_list: List[Any]

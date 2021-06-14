@@ -20,6 +20,8 @@ class Client:
     def __init__(self, email: str, password: str):
         self._last_sensor_update = time.time()
         self._latest_sensors: List[Sensor] = []
+        self._last_event_update: float = time.time()
+        self._latest_events: Optional[List[Event]] = None
         self.email = email
         self.password = password
 
@@ -214,6 +216,22 @@ class Client:
 
         if len(raw_events) > 0:
             return Event(raw_events[0])
+
+        return None
+
+    def get_cached_latest_event(self, device: Device) -> Optional[Event]:
+        if self._latest_events is not None and time.time() - self._last_event_update < 5:
+            return self.return_event_for_device(device, self._latest_events)
+
+        raw_events = self.net_client.get_full_event_list(10)['data']['event_list']
+
+        self._latest_events = [Event(raw_event) for raw_event in raw_events]
+        return self.return_event_for_device(device, self._latest_events)
+
+    def return_event_for_device(self, device: Device, events: List[Event]) -> Optional[Event]:
+        for event in events:
+            if event.device_mac == device.mac:
+                return event
 
         return None
 

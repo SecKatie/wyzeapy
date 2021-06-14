@@ -177,3 +177,13 @@ class TestHMS(unittest.TestCase):
 
     def test_has_hms(self):
         self.assertTrue(self._client.has_hms())
+
+class TestEvents(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls._client = Client(os.getenv("WYZE_EMAIL"), os.getenv("WYZE_PASSWORD"))
+
+    def test_get_latest_cached_event(self):
+        devices = self._client.get_cameras()
+
+        self._client.get_cached_latest_event(devices[0])

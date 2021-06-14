@@ -63,7 +63,7 @@ class NetClient:
         }
 
         response_json: Dict[Any, Any] = self._session.post("https://auth-prod.api.wyze.com/user/login",
-                                                 headers=headers, json=login_payload).json()
+                                                           headers=headers, json=login_payload).json()
 
         if response_json.get('errorCode') is not None:
             _LOGGER.error(f"Unable to login with response from Wyze: {response_json}")
@@ -117,7 +117,7 @@ class NetClient:
         }
 
         response_json: Dict[Any, Any] = self._session.post("https://api.wyzecam.com/app/v2/home_page/get_object_list",
-                                           json=payload).json()
+                                                           json=payload).json()
 
         self.check_for_errors(response_json)
 
@@ -140,7 +140,7 @@ class NetClient:
         }
 
         response_json: Dict[Any, Any] = self._session.post("https://api.wyzecam.com/app/v2/device/get_property_list",
-                                           json=payload).json()
+                                                           json=payload).json()
 
         self.check_for_errors(response_json)
 
@@ -161,7 +161,7 @@ class NetClient:
         }
 
         response_json: Dict[Any, Any] = self._session.post("https://api.wyzecam.com/app/v2/auto_group/get_list",
-                                           json=payload).json()
+                                                           json=payload).json()
 
         self.check_for_errors(response_json)
 
@@ -182,7 +182,7 @@ class NetClient:
             "app_name": APP_NAME
         }
         response_json: Dict[Any, Any] = self._session.post("https://api.wyzecam.com/app/v2/device/get_device_Info",
-                                           json=payload).json()
+                                                           json=payload).json()
 
         self.check_for_errors(response_json)
 
@@ -221,7 +221,8 @@ class NetClient:
             ]
         }
 
-        response_json: Dict[Any, Any] = self._session.post("https://api.wyzecam.com/app/v2/auto/run_action_list", json=payload).json()
+        response_json: Dict[Any, Any] = self._session.post("https://api.wyzecam.com/app/v2/auto/run_action_list",
+                                                           json=payload).json()
 
         self.check_for_errors(response_json)
 
@@ -241,7 +242,8 @@ class NetClient:
             "ts": int(time.time()),
         }
 
-        response_json: Dict[Any, Any] = self._session.post("https://api.wyzecam.com/app/v2/auto_group/run", json=payload).json()
+        response_json: Dict[Any, Any] = self._session.post("https://api.wyzecam.com/app/v2/auto_group/run",
+                                                           json=payload).json()
 
         self.check_for_errors(response_json)
 
@@ -270,7 +272,8 @@ class NetClient:
             "custom_string": "",
         }
 
-        response_json: Dict[Any, Any] = self._session.post("https://api.wyzecam.com/app/v2/auto/run_action", json=payload).json()
+        response_json: Dict[Any, Any] = self._session.post("https://api.wyzecam.com/app/v2/auto/run_action",
+                                                           json=payload).json()
 
         self.check_for_errors(response_json)
 
@@ -297,7 +300,7 @@ class NetClient:
             "device_mac": device.mac
         }
         response_json: Dict[Any, Any] = self._session.post("https://api.wyzecam.com/app/v2/device/set_property_list",
-                                           json=payload).json()
+                                                           json=payload).json()
 
         self.check_for_errors(response_json)
 
@@ -335,7 +338,42 @@ class NetClient:
             "device_model": device.product_model,
             "device_mac": device.mac
         }
-        response_json: Dict[Any, Any] = self._session.post("https://api.wyzecam.com/app/v2/device/set_property", json=payload).json()
+        response_json: Dict[Any, Any] = self._session.post("https://api.wyzecam.com/app/v2/device/set_property",
+                                                           json=payload).json()
+
+        self.check_for_errors(response_json)
+
+        return response_json
+
+    def get_full_event_list(self, count: int) -> Dict[str, Any]:
+        payload = {
+            "phone_id": PHONE_ID,
+            "begin_time": int((time.time() - (60 * 60)) * 1000),
+            "event_type": "",
+            "app_name": APP_NAME,
+            "count": count,
+            "app_version": APP_VERSION,
+            "order_by": 2,
+            "event_value_list": [
+                "1",
+                "13",
+                "10",
+                "12"
+            ],
+            "sc": "9f275790cab94a72bd206c8876429f3c",
+            "device_mac_list": [],
+            "event_tag_list": [],
+            "sv": "782ced6909a44d92a1f70d582bbe88be",
+            "end_time": int(time.time() * 1000),
+            "phone_system_type": PHONE_SYSTEM_TYPE,
+            "app_ver": APP_VER,
+            "ts": 1623612037763,
+            "device_mac": "",
+            "access_token": self.access_token
+        }
+
+        response_json: Dict[Any, Any] = self._session.post("https://api.wyzecam.com/app/v2/device/get_event_list",
+                                                           json=payload).json()
 
         self.check_for_errors(response_json)
 
@@ -377,7 +415,8 @@ class NetClient:
             "access_token": self.access_token
         }
 
-        response_json: Dict[Any, Any] = self._session.post("https://api.wyzecam.com/app/v2/device/get_event_list", json=payload).json()
+        response_json: Dict[Any, Any] = self._session.post("https://api.wyzecam.com/app/v2/device/get_event_list",
+                                                           json=payload).json()
 
         self.check_for_errors(response_json)
 
@@ -545,5 +584,3 @@ class NetClient:
         response: Dict[Any, Any] = self._session.get(url, headers=headers, params=query).json()
 
         return response
-
-

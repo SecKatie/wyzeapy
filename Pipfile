@@ -8,6 +8,7 @@ requests = "*"
 cachecontrol = "*"
 mypy = "*"
 coverage = "*"
+aiohttp = "*"
 
 [dev-packages]
 

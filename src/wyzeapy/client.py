@@ -44,8 +44,8 @@ class Client:
     def valid_login(self) -> bool:
         return self._valid_login
 
-    def reauthenticate(self) -> None:
-        self.net_client.login(self.email, self.password)
+    async def reauthenticate(self) -> None:
+        await self.net_client.login(self.email, self.password)
 
     @staticmethod
     def create_pid_pair(pid_enum: PropertyIDs, value: str) -> Dict[str, str]:
@@ -266,16 +266,16 @@ class Client:
 
         return device_props
 
-    def set_thermostat_prop(self, device: Device, prop: ThermostatProps, value: Any) -> None:
+    async def set_thermostat_prop(self, device: Device, prop: ThermostatProps, value: Any) -> None:
         if DeviceTypes(device.product_type) not in [
             DeviceTypes.THERMOSTAT
         ]:
             raise ActionNotSupported(device.product_type)
 
-        self.net_client.thermostat_set_iot_prop(device, prop, value)
+        await self.net_client.thermostat_set_iot_prop(device, prop, value)
 
     async def has_hms(self) -> bool:
-        if self.net_client.get_hms_id() is None:
+        if await self.net_client.get_hms_id() is None:
             return False
 
         return True

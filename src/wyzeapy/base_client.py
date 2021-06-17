@@ -48,6 +48,7 @@ class NetClient:
     access_token = ""
     refresh_token = ""
     _session: ClientSession
+    _hms_id: str
 
     async def async_init(self):
         self._session = aiohttp.ClientSession()
@@ -69,14 +70,14 @@ class NetClient:
                                       json=login_payload) as response:
             response_json: Dict[Any, Any] = await response.json()
 
-        if response_json.get('errorCode') is not None:
-            _LOGGER.error(f"Unable to login with response from Wyze: {response_json}")
-            return False
+            if response_json.get('errorCode') is not None:
+                _LOGGER.error(f"Unable to login with response from Wyze: {response_json}")
+                return False
 
-        self.access_token = response_json['access_token']
-        self.refresh_token = response_json['refresh_token']
+            self.access_token = response_json['access_token']
+            self.refresh_token = response_json['refresh_token']
 
-        return True
+            return True
 
     async def can_login(self, username: str, password: str) -> bool:
         return await self.login(username, password)
@@ -511,6 +512,9 @@ class NetClient:
         return response_json
 
     async def get_hms_id(self) -> Optional[str]:
+        if self._hms_id is not None:
+            return self._hms_id
+
         response = await self.get_plan_binding_list_by_user()
         hms_subs = response['data']
 
@@ -518,7 +522,8 @@ class NetClient:
             for sub in hms_subs:
                 if (devices := sub.get('deviceList')) is not None and len(devices) >= 1:
                     for device in devices:
-                        return str(device['device_id'])
+                        self._hms_id = str(device['device_id'])
+                        return self._hms_id
 
         return None
 
@@ -552,7 +557,7 @@ class NetClient:
 
         return response_json
 
-    async def disable_reme_alarm(self, hms_id: str) -> Dict[Any, Any]:
+    async def disable_reme_alarm(self, hms_id: str) -> None:
         url = "https://hms.api.wyze.com/api/v1/reme-alarm"
         payload = {
             "hms_id": hms_id,
@@ -562,9 +567,8 @@ class NetClient:
             "Authorization": self.access_token
         }
 
-        response: Dict[Any, Any] = await (await self._session.delete(url, headers=headers, json=payload)).json()
-
-        return response
+        loop = asyncio.get_event_loop()
+        loop.create_task(self._session.delete(url, headers=headers, json=payload))
 
     async def monitoring_profile_state_status(self, hms_id: str) -> Dict[Any, Any]:
         url = "https://hms.api.wyze.com/api/v1/monitoring/v1/profile/state-status"
@@ -581,6 +585,6 @@ class NetClient:
             'Content-Type': "application/json"
         }
 
-        response: Dict[Any, Any] = await (await self._session.get(url, headers=headers, params=query)).json()
-
-        return response
+        async with self._session.get(url, headers=headers, params=query) as response:
+            response_json = await response.json()
+            return response_json

@@ -14,6 +14,9 @@ from .types import ThermostatProps, Device, DeviceTypes, PropertyIDs, Event, Gro
 
 _LOGGER = logging.getLogger(__name__)
 
+EVENT_UPDATE_TIME_INTERVAL = 2.5
+SENSOR_UPDATE_TIME_INTERVAL = 2.5
+
 
 class Client:
     _devices: Optional[List[Device]] = None
@@ -92,7 +95,7 @@ class Client:
 
     async def get_sensor_state(self, sensor: Sensor) -> Sensor:
         current_update_time = time.time()
-        if current_update_time - self._last_sensor_update >= 5:
+        if current_update_time - self._last_sensor_update >= SENSOR_UPDATE_TIME_INTERVAL:
             self._latest_sensors = await self.get_sensors(force_update=True)
             self._last_sensor_update = current_update_time
 
@@ -229,7 +232,7 @@ class Client:
         return None
 
     async def get_cached_latest_event(self, device: Device) -> Optional[Event]:
-        if self._latest_events is not None and time.time() - self._last_event_update < 5:
+        if self._latest_events is not None and time.time() - self._last_event_update < EVENT_UPDATE_TIME_INTERVAL:
             return self.return_event_for_device(device, self._latest_events)
 
         raw_events = (await self.net_client.get_full_event_list(10))['data']['event_list']

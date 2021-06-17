@@ -345,7 +345,7 @@ class NetClient:
         loop.create_task(self._session.post("https://api.wyzecam.com/app/v2/device/set_property",
                                             json=payload))
 
-    async def get_full_event_list(self, count: int) -> None:
+    async def get_full_event_list(self, count: int) -> Dict[Any, Any]:
 
         payload = {
             "phone_id": PHONE_ID,
@@ -373,9 +373,11 @@ class NetClient:
             "access_token": self.access_token
         }
 
-        loop = asyncio.get_event_loop()
-        loop.create_task(self._session.post("https://api.wyzecam.com/app/v2/device/get_event_list",
-                                            json=payload))
+        async with self._session.post("https://api.wyzecam.com/app/v2/device/get_event_list",
+                                      json=payload) as response:
+            response_json = await response.json()
+
+            return response_json
 
     async def get_event_list(self, device: Device, count: int) -> Dict[str, Any]:
 

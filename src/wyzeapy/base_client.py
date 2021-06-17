@@ -144,13 +144,13 @@ class NetClient:
             "target_pid_list": []
         }
 
-        response_json: Dict[Any, Any] = await (
-            await self._session.post("https://api.wyzecam.com/app/v2/device/get_property_list",
-                                     json=payload)).json()
+        async with self._session.post("https://api.wyzecam.com/app/v2/device/get_property_list",
+                                      json=payload) as response:
+            response_json = await response.json()
 
-        self.check_for_errors(response_json)
+            self.check_for_errors(response_json)
 
-        return response_json
+            return response_json
 
     async def get_auto_group_list(self) -> Dict[Any, Any]:
         payload = {
@@ -166,13 +166,13 @@ class NetClient:
             "ts": int(time.time()),
         }
 
-        response_json: Dict[Any, Any] = await (
-            await self._session.post("https://api.wyzecam.com/app/v2/auto_group/get_list",
-                                     json=payload)).json()
+        async with self._session.post("https://api.wyzecam.com/app/v2/auto_group/get_list",
+                                      json=payload) as response:
+            response_json = await response.json()
 
-        self.check_for_errors(response_json)
+            self.check_for_errors(response_json)
 
-        return response_json
+            return response_json
 
     async def get_device_info(self, device: Device) -> Dict[Any, Any]:
         payload = {
@@ -188,15 +188,17 @@ class NetClient:
             "phone_id": PHONE_ID,
             "app_name": APP_NAME
         }
-        response_json: Dict[Any, Any] = await (
-            await self._session.post("https://api.wyzecam.com/app/v2/device/get_device_Info",
-                                     json=payload)).json()
 
-        self.check_for_errors(response_json)
+        async with self._session.post("https://api.wyzecam.com/app/v2/device/get_device_Info",
+                                      json=payload) as response:
+            response_json = await response.json()
 
-        return response_json
+            self.check_for_errors(response_json)
 
-    async def run_action_list(self, device: Device, plist: List[Dict[Any, Any]]) -> Dict[Any, Any]:
+            return response_json
+
+    async def run_action_list(self, device: Device, plist: List[Dict[Any, Any]]) -> None:
+
         if DeviceTypes(device.product_type) not in [
             DeviceTypes.MESH_LIGHT
         ]:
@@ -229,15 +231,11 @@ class NetClient:
             ]
         }
 
-        response_json: Dict[Any, Any] = await (
-            await self._session.post("https://api.wyzecam.com/app/v2/auto/run_action_list",
-                                     json=payload)).json()
+        loop = asyncio.get_event_loop()
+        loop.create_task(self._session.post("https://api.wyzecam.com/app/v2/auto/run_action_list",
+                                            json=payload))
 
-        self.check_for_errors(response_json)
-
-        return response_json
-
-    async def auto_group_run(self, group: Group) -> Dict[Any, Any]:
+    async def auto_group_run(self, group: Group) -> None:
         payload = {
             "access_token": self.access_token,
             "app_name": APP_NAME,
@@ -251,14 +249,12 @@ class NetClient:
             "ts": int(time.time()),
         }
 
-        response_json: Dict[Any, Any] = await (await self._session.post("https://api.wyzecam.com/app/v2/auto_group/run",
-                                                                        json=payload)).json()
+        loop = asyncio.get_event_loop()
+        loop.create_task(self._session.post("https://api.wyzecam.com/app/v2/auto_group/run",
+                                            json=payload))
 
-        self.check_for_errors(response_json)
+    async def run_action(self, device: Device, action: str) -> None:
 
-        return response_json
-
-    async def run_action(self, device: Device, action: str) -> Dict[Any, Any]:
         if DeviceTypes(device.product_type) not in [
             DeviceTypes.CAMERA
         ]:
@@ -281,15 +277,12 @@ class NetClient:
             "custom_string": "",
         }
 
-        response_json: Dict[Any, Any] = await (
-            await self._session.post("https://api.wyzecam.com/app/v2/auto/run_action",
-                                     json=payload)).json()
+        loop = asyncio.get_event_loop()
+        loop.create_task(self._session.post("https://api.wyzecam.com/app/v2/auto/run_action",
+                                            json=payload))
 
-        self.check_for_errors(response_json)
+    async def set_property_list(self, device: Device, plist: List[Dict[str, str]]) -> None:
 
-        return response_json
-
-    async def set_property_list(self, device: Device, plist: List[Dict[str, str]]) -> Dict[Any, Any]:
         if DeviceTypes(device.product_type) not in [
             DeviceTypes.LIGHT
         ]:
@@ -309,15 +302,13 @@ class NetClient:
             "device_model": device.product_model,
             "device_mac": device.mac
         }
-        response_json: Dict[Any, Any] = await (
-            await self._session.post("https://api.wyzecam.com/app/v2/device/set_property_list",
-                                     json=payload)).json()
 
-        self.check_for_errors(response_json)
+        loop = asyncio.get_event_loop()
+        loop.create_task(self._session.post("https://api.wyzecam.com/app/v2/device/set_property_list",
+                                            json=payload))
 
-        return response_json
+    async def set_property(self, device: Device, pid: str, pvalue: str) -> None:
 
-    async def set_property(self, device: Device, pid: str, pvalue: str) -> Dict[Any, Any]:
         """
         Sets a single property on the selected device.
         Only works for Plugs, Lights, and Outdoor Plugs
@@ -349,15 +340,13 @@ class NetClient:
             "device_model": device.product_model,
             "device_mac": device.mac
         }
-        response_json: Dict[Any, Any] = await (
-            await self._session.post("https://api.wyzecam.com/app/v2/device/set_property",
-                                     json=payload)).json()
 
-        self.check_for_errors(response_json)
+        loop = asyncio.get_event_loop()
+        loop.create_task(self._session.post("https://api.wyzecam.com/app/v2/device/set_property",
+                                            json=payload))
 
-        return response_json
+    async def get_full_event_list(self, count: int) -> None:
 
-    async def get_full_event_list(self, count: int) -> Dict[str, Any]:
         payload = {
             "phone_id": PHONE_ID,
             "begin_time": int((time.time() - (60 * 60)) * 1000),
@@ -384,15 +373,12 @@ class NetClient:
             "access_token": self.access_token
         }
 
-        response_json: Dict[Any, Any] = await (
-            await self._session.post("https://api.wyzecam.com/app/v2/device/get_event_list",
-                                     json=payload)).json()
-
-        self.check_for_errors(response_json)
-
-        return response_json
+        loop = asyncio.get_event_loop()
+        loop.create_task(self._session.post("https://api.wyzecam.com/app/v2/device/get_event_list",
+                                            json=payload))
 
     async def get_event_list(self, device: Device, count: int) -> Dict[str, Any]:
+
         """
         Gets motion events from the event listing endpoint.
 
@@ -428,15 +414,15 @@ class NetClient:
             "access_token": self.access_token
         }
 
-        response_json: Dict[Any, Any] = await (
-            await self._session.post("https://api.wyzecam.com/app/v2/device/get_event_list",
-                                     json=payload)).json()
+        async with self._session.post("https://api.wyzecam.com/app/v2/device/get_event_list",
+                                      json=payload) as response:
+            response_json = await response.json()
 
-        self.check_for_errors(response_json)
+            self.check_for_errors(response_json)
 
-        return response_json
+            return response_json
 
-    async def lock_control(self, device: Device, action: str) -> Dict[Any, Any]:
+    async def lock_control(self, device: Device, action: str) -> None:
         url_path = "/openapi/lock/v1/control"
 
         device_uuid = device.mac.split(".")[2]
@@ -449,9 +435,8 @@ class NetClient:
 
         url = "https://yd-saas-toc.wyzecam.com/openapi/lock/v1/control"
 
-        response_json: Dict[Any, Any] = await (await self._session.post(url, json=payload)).json()
-
-        return response_json
+        loop = asyncio.get_event_loop()
+        loop.create_task(self._session.post(url, json=payload))
 
     async def thermostat_get_iot_prop(self, device: Device) -> Dict[Any, Any]:
         payload = olive_create_get_payload(device.mac)
@@ -467,13 +452,15 @@ class NetClient:
         }
 
         url = 'https://wyze-earth-service.wyzecam.com/plugin/earth/get_iot_prop'
-        response_json: Dict[Any, Any] = await (await self._session.get(url, headers=headers, params=payload)).json()
 
-        self.check_for_errors_thermostat(response_json)
+        async with self._session.get(url, headers=headers, params=payload) as response:
+            response_json: Dict[Any, Any] = await response.json()
 
-        return response_json
+            self.check_for_errors_thermostat(response_json)
 
-    async def thermostat_set_iot_prop(self, device: Device, prop: ThermostatProps, value: Any) -> Dict[Any, Any]:
+            return response_json
+
+    async def thermostat_set_iot_prop(self, device: Device, prop: ThermostatProps, value: Any) -> None:
         url = "https://wyze-earth-service.wyzecam.com/plugin/earth/set_iot_prop_by_topic"
         payload = olive_create_post_payload(device.mac, device.product_model, prop, value)
         signature = olive_create_signature(json.dumps(payload, separators=(',', ':')), self.access_token)
@@ -495,11 +482,8 @@ class NetClient:
 
         req.body = payload_str.encode('utf-8')
 
-        response_json: Dict[Any, Any] = await (await req.send(None)).json()
-
-        self.check_for_errors_thermostat(response_json)
-
-        return response_json
+        loop = asyncio.get_event_loop()
+        loop.create_task(req.send(None))
 
     @staticmethod
     def check_for_errors_thermostat(response_json: Dict[Any, Any]) -> None:

@@ -48,7 +48,10 @@ class NetClient:
     access_token = ""
     refresh_token = ""
     _session: ClientSession
-    _hms_id: str
+    _hms_id: Optional[str]
+
+    def __init__(self):
+        self._hms_id = None
 
     async def async_init(self):
         self._session = aiohttp.ClientSession()

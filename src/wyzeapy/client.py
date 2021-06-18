@@ -262,7 +262,7 @@ class Client:
         current_update_time = time.time()  # Time value to check if the current value is fresh
 
         if self._latest_events is None or current_update_time - self._last_event_update > self.event_update_interval:
-            _LOGGER.debug(f"Sensor: Refreshing information")
+            _LOGGER.debug(f"Event: Refreshing information")
 
             start_time = time.time()
             raw_events = (await self.net_client.get_full_event_list(10))['data']['event_list']
@@ -276,7 +276,7 @@ class Client:
             self.event_update_interval = (sum(self.previous_event_update_times) / len(
                 self.previous_event_update_times)) + BLINK_TIME  # Freshness calculation
 
-            _LOGGER.debug(f"Sensor: Update interval: {self.event_update_interval}")
+            _LOGGER.debug(f"Event: Update interval: {self.event_update_interval}")
 
             self._last_event_update = current_update_time
 

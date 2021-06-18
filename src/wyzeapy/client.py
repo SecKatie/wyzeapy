@@ -288,7 +288,8 @@ class Client:
             latest_events = [Event(raw_event) for raw_event in raw_events]
 
             for callback, device in self._event_subscribers:
-                self.return_event_for_device(device, latest_events)
+                if event := self.return_event_for_device(device, latest_events) is not None:
+                    callback(event)
 
     async def get_latest_event(self, device: Device) -> Optional[Event]:
         raw_events = (await self.net_client.get_event_list(device, 10))['data']['event_list']

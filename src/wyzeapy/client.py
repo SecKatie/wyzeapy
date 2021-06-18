@@ -7,6 +7,7 @@ import asyncio
 import logging
 import time
 from asyncio import Task
+from threading import Thread
 
 from typing import Any, Optional, List, Tuple, Iterable, Dict
 from .base_client import NetClient
@@ -50,14 +51,16 @@ class Client:
 
         self._valid_login = await self.net_client.login(self.email, self.password)
 
-        self._sensor_task = asyncio.create_task(self.sensor_update_publisher())
-        self._event_task = asyncio.create_task(self.event_update_publisher())
+        self._sensor_thread = Thread(target=self.sensor_update_worker)
+        self._sensor_thread.start()
+        self._event_thread = Thread(target=self.event_update_worker)
+        self._event_thread.start()
 
     async def async_close(self):
         await self.net_client.async_close()
 
-        self._event_task.cancel()
-        self._sensor_task.cancel()
+        self._event_thread.join(timeout=0)
+        self._sensor_thread.join(timeout=0)
 
     @property
     def valid_login(self) -> bool:
@@ -147,6 +150,10 @@ class Client:
         if (callback, sensor) not in self._subscribers:
             self._subscribers.append((callback, sensor))
 
+    def sensor_update_worker(self):
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(self.sensor_update_publisher())
+
     async def sensor_update_publisher(self):
         while True:
             _LOGGER.debug("Updating sensors")
@@ -159,6 +166,25 @@ class Client:
                         callback(i)
 
                 raise RuntimeError(f"Unable to find sensor with mac: {sensor.mac}")
+
+    def event_update_worker(self):
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(self.register_for_event_updates())
+
+    async def register_for_event_updates(self, callback, device):
+        if (callback, device) not in self._event_subscribers:
+            self._event_subscribers.append((callback, device))
+
+    async def event_update_publisher(self):
+        while True:
+            _LOGGER.debug("Updating events")
+            raw_events = (await self.net_client.get_full_event_list(10))['data']['event_list']
+            latest_events = [Event(raw_event) for raw_event in raw_events]
+
+            for callback, device in self._event_subscribers:
+                if event := self.return_event_for_device(device, latest_events) is not None:
+                    _LOGGER.debug(f"Updating {device.mac}")
+                    callback(event)
 
     async def get_devices(self) -> List[Device]:
         object_list: Dict[Any, Any] = await self.net_client.get_object_list()
@@ -279,21 +305,6 @@ class Client:
         return events
 
     _event_subscribers: List[Tuple[Any, Device]] = []
-
-    async def register_for_event_updates(self, callback, device):
-        if (callback, device) not in self._event_subscribers:
-            self._event_subscribers.append((callback, device))
-
-    async def event_update_publisher(self):
-        while True:
-            _LOGGER.debug("Updating events")
-            raw_events = (await self.net_client.get_full_event_list(10))['data']['event_list']
-            latest_events = [Event(raw_event) for raw_event in raw_events]
-
-            for callback, device in self._event_subscribers:
-                if event := self.return_event_for_device(device, latest_events) is not None:
-                    _LOGGER.debug(f"Updating {device.mac}")
-                    callback(event)
 
     async def get_latest_event(self, device: Device) -> Optional[Event]:
         raw_events = (await self.net_client.get_event_list(device, 10))['data']['event_list']

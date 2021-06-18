@@ -169,7 +169,7 @@ class Client:
 
     def event_update_worker(self):
         loop = asyncio.new_event_loop()
-        loop.run_until_complete(self.register_for_event_updates())
+        loop.run_until_complete(self.event_update_publisher())
 
     async def register_for_event_updates(self, callback, device):
         if (callback, device) not in self._event_subscribers:

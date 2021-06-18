@@ -125,11 +125,11 @@ class Client:
                 self.sensor_update_interval = (sum(self.previous_sensor_update_times) / len(
                     self.previous_sensor_update_times)) + BLINK_TIME  # Freshness calculation
 
-                _LOGGER.debug(f"Current event update interval: {self.sensor_update_interval}")
+                _LOGGER.debug(f"Current sensor update interval: {self.sensor_update_interval}")
 
                 self._last_sensor_update = current_update_time
             else:
-                _LOGGER.debug(f"Returning old info")
+                _LOGGER.debug(f"Returning old sensor info")
 
             for i in self._latest_sensors:
                 if i.mac == sensor.mac:

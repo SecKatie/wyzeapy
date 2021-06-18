@@ -121,6 +121,8 @@ class Client:
                 self.sensor_update_interval = (sum(self.previous_sensor_update_times) / len(
                     self.previous_sensor_update_times)) + BLINK_TIME  # Freshness calculation
 
+                _LOGGER.debug(f"Current event update interval: {self.sensor_update_interval}")
+
                 self._last_sensor_update = current_update_time
 
             for i in self._latest_sensors:
@@ -271,6 +273,8 @@ class Client:
 
                 self.event_update_interval = (sum(self.previous_event_update_times) / len(
                     self.previous_event_update_times)) + BLINK_TIME  # Freshness calculation
+
+                _LOGGER.debug(f"Current event update interval: {self.event_update_interval}")
 
                 self._last_event_update = current_update_time
 

@@ -124,13 +124,14 @@ class NetClient:
             "app_name": APP_NAME
         }
 
-        async with self._session.post("https://api.wyzecam.com/app/v2/home_page/get_object_list",
-                                      json=payload) as response:
-            response_json: Dict[Any, Any] = await response.json()
+        async with aiohttp.ClientSession() as session:
+            async with session.post("https://api.wyzecam.com/app/v2/home_page/get_object_list",
+                                          json=payload) as response:
+                response_json: Dict[Any, Any] = await response.json()
 
-            self.check_for_errors(response_json)
+                self.check_for_errors(response_json)
 
-            return response_json
+                return response_json
 
     async def get_property_list(self, device: Device) -> Dict[Any, Any]:
         payload = {
@@ -377,11 +378,12 @@ class NetClient:
             "access_token": self.access_token
         }
 
-        async with self._session.post("https://api.wyzecam.com/app/v2/device/get_event_list",
-                                      json=payload) as response:
-            response_json = await response.json()
+        async with aiohttp.ClientSession() as session:
+            async with session.post("https://api.wyzecam.com/app/v2/device/get_event_list",
+                                          json=payload) as response:
+                response_json = await response.json()
 
-            return response_json
+                return response_json
 
     async def get_event_list(self, device: Device, count: int) -> Dict[str, Any]:
 

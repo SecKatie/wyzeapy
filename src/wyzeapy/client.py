@@ -151,7 +151,7 @@ class Client:
             self._subscribers.append((callback, sensor))
 
     def sensor_update_worker(self):
-        loop = asyncio.get_event_loop()
+        loop = asyncio.new_event_loop()
         loop.run_until_complete(self.sensor_update_publisher())
 
     async def sensor_update_publisher(self):
@@ -168,7 +168,7 @@ class Client:
                 raise RuntimeError(f"Unable to find sensor with mac: {sensor.mac}")
 
     def event_update_worker(self):
-        loop = asyncio.get_event_loop()
+        loop = asyncio.new_event_loop()
         loop.run_until_complete(self.register_for_event_updates())
 
     async def register_for_event_updates(self, callback, device):

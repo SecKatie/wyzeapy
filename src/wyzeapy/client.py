@@ -106,10 +106,14 @@ class Client:
         return self._latest_sensors
 
     async def get_sensor_state(self, sensor: Sensor) -> Sensor:
+        _LOGGER.debug(f"Getting latest cached sensor")
+
         async with self.sensor_lock:
             current_update_time = time.time()  # Time value to check if the current value is fresh
 
             if current_update_time - self._last_sensor_update >= self.sensor_update_interval:
+                _LOGGER.debug(f"Refreshing sensor information")
+
                 start_time = time.time()
                 self._latest_sensors = await self.get_sensors(force_update=True)
                 end_time = time.time()
@@ -124,6 +128,8 @@ class Client:
                 _LOGGER.debug(f"Current event update interval: {self.sensor_update_interval}")
 
                 self._last_sensor_update = current_update_time
+            else:
+                _LOGGER.debug(f"Returning old info")
 
             for i in self._latest_sensors:
                 if i.mac == sensor.mac:
@@ -258,10 +264,13 @@ class Client:
         return None
 
     async def get_cached_latest_event(self, device: Device) -> Optional[Event]:
+        _LOGGER.debug(f"Getting latest cached event")
         async with self.event_lock:
             current_update_time = time.time()  # Time value to check if the current value is fresh
 
             if self._latest_events is None or current_update_time - self._last_event_update > self.event_update_interval:
+                _LOGGER.debug(f"Refreshing data")
+
                 start_time = time.time()
                 raw_events = (await self.net_client.get_full_event_list(10))['data']['event_list']
                 self._latest_events = [Event(raw_event) for raw_event in raw_events]
@@ -280,6 +289,7 @@ class Client:
 
                 return self.return_event_for_device(device, self._latest_events)
 
+            _LOGGER.debug(f"Providing old device info")
             return self.return_event_for_device(device, self._latest_events)
 
 

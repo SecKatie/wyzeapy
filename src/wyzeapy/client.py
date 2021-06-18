@@ -14,10 +14,7 @@ from .types import ThermostatProps, Device, DeviceTypes, PropertyIDs, Event, Gro
 
 _LOGGER = logging.getLogger(__name__)
 
-EVENT_UPDATE_TIME_INTERVAL = 2.5
-SENSOR_UPDATE_TIME_INTERVAL = 2.5
-
-BLINK_TIME = 0.1  # The time it takes (in seconds) for a human to blink
+BLINK_TIME = 0.2  # The time it takes (in seconds) to ensure proper operation
 
 
 class Client:

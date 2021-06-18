@@ -7,6 +7,7 @@ import asyncio
 import logging
 import time
 from asyncio import Task
+from builtins import function
 
 from typing import Any, Optional, List, Tuple, Iterable, Dict
 from .base_client import NetClient
@@ -149,11 +150,13 @@ class Client:
 
     async def sensor_update_publisher(self):
         while True:
+            _LOGGER.debug("Updating sensors")
             sensors = await self.get_sensors(force_update=True)
 
             for callback, sensor in self._subscribers:
                 for i in sensors:
                     if i.mac == sensor.mac:
+                        _LOGGER.debug(f"Updating {i.mac}")
                         callback(i)
 
                 raise RuntimeError(f"Unable to find sensor with mac: {sensor.mac}")
@@ -284,11 +287,13 @@ class Client:
 
     async def event_update_publisher(self):
         while True:
+            _LOGGER.debug("Updating events")
             raw_events = (await self.net_client.get_full_event_list(10))['data']['event_list']
             latest_events = [Event(raw_event) for raw_event in raw_events]
 
             for callback, device in self._event_subscribers:
                 if event := self.return_event_for_device(device, latest_events) is not None:
+                    _LOGGER.debug(f"Updating {device.mac}")
                     callback(event)
 
     async def get_latest_event(self, device: Device) -> Optional[Event]:

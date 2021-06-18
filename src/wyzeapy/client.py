@@ -276,7 +276,7 @@ class Client:
 
         return events
 
-    _event_subscribers: List[Tuple[Any, Device]]
+    _event_subscribers: List[Tuple[Any, Device]] = []
 
     async def register_for_event_updates(self, callback, device):
         if (callback, device) not in self._event_subscribers:

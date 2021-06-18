@@ -165,8 +165,6 @@ class Client:
                         _LOGGER.debug(f"Updating {i.mac}")
                         callback(i)
 
-                raise RuntimeError(f"Unable to find sensor with mac: {sensor.mac}")
-
     def event_update_worker(self):
         loop = asyncio.new_event_loop()
         loop.run_until_complete(self.event_update_publisher())

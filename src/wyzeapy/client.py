@@ -7,7 +7,6 @@ import asyncio
 import logging
 import time
 from asyncio import Task
-from builtins import function
 
 from typing import Any, Optional, List, Tuple, Iterable, Dict
 from .base_client import NetClient

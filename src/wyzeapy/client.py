@@ -105,34 +105,33 @@ class Client:
     async def get_sensor_state(self, sensor: Sensor) -> Sensor:
         _LOGGER.debug(f"Getting latest cached sensor")
 
-        async with self.sensor_lock:
-            current_update_time = time.time()  # Time value to check if the current value is fresh
+        current_update_time = time.time()  # Time value to check if the current value is fresh
 
-            if current_update_time - self._last_sensor_update >= self.sensor_update_interval:
-                _LOGGER.debug(f"Refreshing sensor information")
+        if current_update_time - self._last_sensor_update >= self.sensor_update_interval:
+            _LOGGER.debug(f"Refreshing sensor information")
 
-                start_time = time.time()
-                self._latest_sensors = await self.get_sensors(force_update=True)
-                end_time = time.time()
-                sensor_update_time = end_time - start_time
-                self.previous_sensor_update_times.append(sensor_update_time)
-                if len(self.previous_sensor_update_times) >= 11:
-                    self.previous_sensor_update_times.pop(0)
+            start_time = time.time()
+            self._latest_sensors = await self.get_sensors(force_update=True)
+            end_time = time.time()
+            sensor_update_time = end_time - start_time
+            self.previous_sensor_update_times.append(sensor_update_time)
+            if len(self.previous_sensor_update_times) >= 11:
+                self.previous_sensor_update_times.pop(0)
 
-                self.sensor_update_interval = (sum(self.previous_sensor_update_times) / len(
-                    self.previous_sensor_update_times)) + BLINK_TIME  # Freshness calculation
+            self.sensor_update_interval = (sum(self.previous_sensor_update_times) / len(
+                self.previous_sensor_update_times)) + BLINK_TIME  # Freshness calculation
 
-                _LOGGER.debug(f"Current sensor update interval: {self.sensor_update_interval}")
+            _LOGGER.debug(f"Current sensor update interval: {self.sensor_update_interval}")
 
-                self._last_sensor_update = current_update_time
-            else:
-                _LOGGER.debug(f"Returning old sensor info")
+            self._last_sensor_update = current_update_time
+        else:
+            _LOGGER.debug(f"Returning old sensor info")
 
-            for i in self._latest_sensors:
-                if i.mac == sensor.mac:
-                    return i
+        for i in self._latest_sensors:
+            if i.mac == sensor.mac:
+                return i
 
-            raise RuntimeError(f"Unable to find sensor with mac: {sensor.mac}")
+        raise RuntimeError(f"Unable to find sensor with mac: {sensor.mac}")
 
     async def get_devices(self) -> List[Device]:
         object_list: Dict[Any, Any] = await self.net_client.get_object_list()
@@ -262,32 +261,31 @@ class Client:
 
     async def get_cached_latest_event(self, device: Device) -> Optional[Event]:
         _LOGGER.debug(f"Getting latest cached event")
-        async with self.event_lock:
-            current_update_time = time.time()  # Time value to check if the current value is fresh
+        current_update_time = time.time()  # Time value to check if the current value is fresh
 
-            if self._latest_events is None or current_update_time - self._last_event_update > self.event_update_interval:
-                _LOGGER.debug(f"Refreshing data")
+        if self._latest_events is None or current_update_time - self._last_event_update > self.event_update_interval:
+            _LOGGER.debug(f"Refreshing data")
 
-                start_time = time.time()
-                raw_events = (await self.net_client.get_full_event_list(10))['data']['event_list']
-                self._latest_events = [Event(raw_event) for raw_event in raw_events]
-                end_time = time.time()
-                event_update_time = end_time - start_time
-                self.previous_event_update_times.append(event_update_time)
-                if len(self.previous_event_update_times) >= 11:
-                    self.previous_event_update_times.pop(0)
+            start_time = time.time()
+            raw_events = (await self.net_client.get_full_event_list(10))['data']['event_list']
+            self._latest_events = [Event(raw_event) for raw_event in raw_events]
+            end_time = time.time()
+            event_update_time = end_time - start_time
+            self.previous_event_update_times.append(event_update_time)
+            if len(self.previous_event_update_times) >= 11:
+                self.previous_event_update_times.pop(0)
 
-                self.event_update_interval = (sum(self.previous_event_update_times) / len(
-                    self.previous_event_update_times)) + BLINK_TIME  # Freshness calculation
+            self.event_update_interval = (sum(self.previous_event_update_times) / len(
+                self.previous_event_update_times)) + BLINK_TIME  # Freshness calculation
 
-                _LOGGER.debug(f"Current event update interval: {self.event_update_interval}")
+            _LOGGER.debug(f"Current event update interval: {self.event_update_interval}")
 
-                self._last_event_update = current_update_time
+            self._last_event_update = current_update_time
 
-                return self.return_event_for_device(device, self._latest_events)
-
-            _LOGGER.debug(f"Providing old device info")
             return self.return_event_for_device(device, self._latest_events)
+
+        _LOGGER.debug(f"Providing old device info")
+        return self.return_event_for_device(device, self._latest_events)
 
 
 

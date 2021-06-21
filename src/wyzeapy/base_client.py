@@ -7,12 +7,13 @@ import datetime
 import hashlib
 import json
 import logging
+import os
 import time
-from typing import Any, Dict, Optional, List
+from typing import Any, Dict, Optional, List, Coroutine
 
 import aiohttp
 import asyncio
-from aiohttp import ClientSession
+from aiohttp import ClientSession, ClientResponse
 
 from .const import (
     API_KEY,
@@ -124,14 +125,13 @@ class NetClient:
             "app_name": APP_NAME
         }
 
-        async with aiohttp.ClientSession() as session:
-            async with session.post("https://api.wyzecam.com/app/v2/home_page/get_object_list",
-                                          json=payload) as response:
-                response_json: Dict[Any, Any] = await response.json()
+        async with self._session.post("https://api.wyzecam.com/app/v2/home_page/get_object_list",
+                                      json=payload) as response:
+            response_json: Dict[Any, Any] = await response.json()
 
-                self.check_for_errors(response_json)
+            self.check_for_errors(response_json)
 
-                return response_json
+            return response_json
 
     async def get_property_list(self, device: Device) -> Dict[Any, Any]:
         payload = {
@@ -237,8 +237,8 @@ class NetClient:
         }
 
         loop = asyncio.get_event_loop()
-        loop.create_task(self._session.post("https://api.wyzecam.com/app/v2/auto/run_action_list",
-                                            json=payload))
+        loop.create_task(self.send_request(self._session.post("https://api.wyzecam.com/app/v2/auto/run_action_list",
+                                            json=payload)))
 
     async def auto_group_run(self, group: Group) -> None:
         payload = {
@@ -255,8 +255,8 @@ class NetClient:
         }
 
         loop = asyncio.get_event_loop()
-        loop.create_task(self._session.post("https://api.wyzecam.com/app/v2/auto_group/run",
-                                            json=payload))
+        loop.create_task(self.send_request(self._session.post("https://api.wyzecam.com/app/v2/auto_group/run",
+                                            json=payload)))
 
     async def run_action(self, device: Device, action: str) -> None:
 
@@ -283,8 +283,8 @@ class NetClient:
         }
 
         loop = asyncio.get_event_loop()
-        loop.create_task(self._session.post("https://api.wyzecam.com/app/v2/auto/run_action",
-                                            json=payload))
+        loop.create_task(self.send_request(self._session.post("https://api.wyzecam.com/app/v2/auto/run_action",
+                                            json=payload)))
 
     async def set_property_list(self, device: Device, plist: List[Dict[str, str]]) -> None:
 
@@ -309,8 +309,8 @@ class NetClient:
         }
 
         loop = asyncio.get_event_loop()
-        loop.create_task(self._session.post("https://api.wyzecam.com/app/v2/device/set_property_list",
-                                            json=payload))
+        loop.create_task(self.send_request(self._session.post("https://api.wyzecam.com/app/v2/device/set_property_list",
+                                            json=payload)))
 
     async def set_property(self, device: Device, pid: str, pvalue: str) -> None:
 
@@ -347,11 +347,10 @@ class NetClient:
         }
 
         loop = asyncio.get_event_loop()
-        loop.create_task(self._session.post("https://api.wyzecam.com/app/v2/device/set_property",
-                                            json=payload))
+        loop.create_task(self.send_request(self._session.post("https://api.wyzecam.com/app/v2/device/set_property",
+                                            json=payload)))
 
     async def get_full_event_list(self, count: int) -> Dict[Any, Any]:
-
         payload = {
             "phone_id": PHONE_ID,
             "begin_time": int((time.time() - (60 * 60)) * 1000),
@@ -381,9 +380,7 @@ class NetClient:
         async with aiohttp.ClientSession() as session:
             async with session.post("https://api.wyzecam.com/app/v2/device/get_event_list",
                                           json=payload) as response:
-                response_json = await response.json()
-
-                return response_json
+                return await response.json()
 
     async def get_event_list(self, device: Device, count: int) -> Dict[str, Any]:
 
@@ -444,7 +441,7 @@ class NetClient:
         url = "https://yd-saas-toc.wyzecam.com/openapi/lock/v1/control"
 
         loop = asyncio.get_event_loop()
-        loop.create_task(self._session.post(url, json=payload))
+        loop.create_task(self.send_request(self._session.post(url, json=payload)))
 
     async def thermostat_get_iot_prop(self, device: Device) -> Dict[Any, Any]:
         payload = olive_create_get_payload(device.mac)
@@ -491,7 +488,7 @@ class NetClient:
         req.body = payload_str.encode('utf-8')
 
         loop = asyncio.get_event_loop()
-        loop.create_task(req.send(None))
+        loop.create_task(self.send_request(req.send(None)))
 
     @staticmethod
     def check_for_errors_thermostat(response_json: Dict[Any, Any]) -> None:
@@ -512,9 +509,8 @@ class NetClient:
             'signature2': signature
         }
 
-        response_json: Dict[Any, Any] = await (await self._session.get(url, headers=headers, params=payload)).json()
-
-        return response_json
+        async with self._session.get(url, headers=headers, params=payload) as response:
+            return await response.json()
 
     async def get_hms_id(self) -> Optional[str]:
         if self._hms_id is not None:
@@ -557,10 +553,8 @@ class NetClient:
             }
         ]
 
-        response_json: Dict[Any, Any] = await (
-            await self._session.patch(url, headers=headers, params=query, json=payload)).json()
-
-        return response_json
+        loop = asyncio.get_event_loop()
+        loop.create_task(self.send_request(self._session.patch(url, headers=headers, params=query, json=payload)))
 
     async def disable_reme_alarm(self, hms_id: str) -> None:
         url = "https://hms.api.wyze.com/api/v1/reme-alarm"
@@ -573,7 +567,7 @@ class NetClient:
         }
 
         loop = asyncio.get_event_loop()
-        loop.create_task(self._session.delete(url, headers=headers, json=payload))
+        loop.create_task(self.send_request(self._session.delete(url, headers=headers, json=payload)))
 
     async def monitoring_profile_state_status(self, hms_id: str) -> Dict[Any, Any]:
         url = "https://hms.api.wyze.com/api/v1/monitoring/v1/profile/state-status"
@@ -593,3 +587,9 @@ class NetClient:
         async with self._session.get(url, headers=headers, params=query) as response:
             response_json = await response.json()
             return response_json
+
+    async def send_request(self, request):
+        async with request as response:
+            if os.getenv("DEBUG"):
+                print(f"Request response: {await response.json()}")
+            pass

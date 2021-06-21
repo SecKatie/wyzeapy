@@ -3,31 +3,14 @@
 #  of the attached license. You should have received a copy of
 #  the license with this file. If not, please write to:
 #  joshua@mulliken.net to receive a copy
-
+import asyncio
 import os
+import time
 import unittest
 from typing import List
 
 from src.wyzeapy.client import Client
 from src.wyzeapy.types import Device, ThermostatProps, HMSStatus, Sensor
-
-
-class TestLogin(unittest.IsolatedAsyncioTestCase):
-    async def test_can_login(self):
-        client = Client(os.getenv("WYZE_EMAIL"), os.getenv("WYZE_PASSWORD"))
-        await client.async_init()
-
-        self.assertTrue(client.valid_login)
-
-        await client.async_close()
-
-    async def test_bad_login(self):
-        client = Client("BadEmail@example.com", "BadPassword123")
-        await client.async_init()
-
-        self.assertFalse(client.valid_login)
-
-        await client.async_close()
 
 
 class TestFunctions(unittest.IsolatedAsyncioTestCase):
@@ -98,6 +81,8 @@ class TestFunctions(unittest.IsolatedAsyncioTestCase):
 
         await client.get_info(test_bulb)
 
+        await asyncio.sleep(5)
+
         await client.async_close()
 
     async def test_turn_on_color_bulb(self):
@@ -111,6 +96,8 @@ class TestFunctions(unittest.IsolatedAsyncioTestCase):
         })
 
         await client.turn_on(test_bulb)
+
+        await asyncio.sleep(5)
 
         await client.async_close()
 
@@ -126,6 +113,8 @@ class TestFunctions(unittest.IsolatedAsyncioTestCase):
 
         await client.turn_off(test_bulb)
 
+        await asyncio.sleep(5)
+
         await client.async_close()
 
     async def test_turn_on_bulb(self):
@@ -139,6 +128,8 @@ class TestFunctions(unittest.IsolatedAsyncioTestCase):
         })
 
         await client.turn_on(test_bulb)
+
+        await asyncio.sleep(5)
 
         await client.async_close()
 
@@ -154,6 +145,8 @@ class TestFunctions(unittest.IsolatedAsyncioTestCase):
 
         await client.turn_off(test_bulb)
 
+        await asyncio.sleep(5)
+
         await client.async_close()
 
     async def test_unlock_door(self):
@@ -168,19 +161,21 @@ class TestFunctions(unittest.IsolatedAsyncioTestCase):
 
         await client.turn_off(test_lock)
 
+        await asyncio.sleep(5)
+
         await client.async_close()
 
     async def test_lock_door(self):
         client = Client(os.getenv("WYZE_EMAIL"), os.getenv("WYZE_PASSWORD"))
         await client.async_init()
 
-        test_lock = Device({
-            'mac': 'YD.LO1.46c36fcce6c550e527ff79bd8cef59c2',
-            'product_type': 'Lock',
-            'product_model': 'WLCK1'
-        })
+        locks = await client.get_locks()
+        print(locks)
+        print(locks[0])
 
-        await client.turn_on(test_lock)
+        await client.turn_on(locks[0])
+
+        await asyncio.sleep(5)
 
         await client.async_close()
 
@@ -201,29 +196,6 @@ class TestFunctions(unittest.IsolatedAsyncioTestCase):
             self.assertIsInstance(prop, ThermostatProps)
 
         await client.async_close()
-
-
-class TestSensors(unittest.IsolatedAsyncioTestCase):
-    async def test_can_get_sensors(self):
-        client = Client(os.getenv("WYZE_EMAIL"), os.getenv("WYZE_PASSWORD"))
-        await client.async_init()
-
-        sensors = await client.get_sensors()
-        self.assertIsInstance(sensors, List)
-        self.assertIsInstance(sensors[0], Sensor)
-
-        await client.async_close()
-
-    async def test_can_update_sensors(self):
-        client = Client(os.getenv("WYZE_EMAIL"), os.getenv("WYZE_PASSWORD"))
-        await client.async_init()
-
-        sensors = await client.get_sensors()
-
-        await client.get_sensor_state(sensors[0])
-
-        await client.async_close()
-
 
 class TestHMS(unittest.IsolatedAsyncioTestCase):
     async def test_can_get_hms_id(self):
@@ -251,6 +223,8 @@ class TestHMS(unittest.IsolatedAsyncioTestCase):
 
         await client.set_hms_status(HMSStatus.DISARMED)
 
+        await asyncio.sleep(5)
+
         await client.async_close()
 
     async def test_set_hms_status_home(self):
@@ -258,6 +232,8 @@ class TestHMS(unittest.IsolatedAsyncioTestCase):
         await client.async_init()
 
         await client.set_hms_status(HMSStatus.HOME)
+
+        await asyncio.sleep(5)
 
         await client.async_close()
 
@@ -267,13 +243,19 @@ class TestHMS(unittest.IsolatedAsyncioTestCase):
 
         await client.set_hms_status(HMSStatus.AWAY)
 
+        await asyncio.sleep(5)
+
         await client.async_close()
 
     async def test_has_hms(self):
         client = Client(os.getenv("WYZE_EMAIL"), os.getenv("WYZE_PASSWORD"))
         await client.async_init()
 
-        self.assertTrue(client.has_hms())
+        has_hms = await client.has_hms()
+
+        await asyncio.sleep(5)
+
+        self.assertTrue(has_hms)
 
         await client.async_close()
 

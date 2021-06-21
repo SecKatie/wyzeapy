@@ -180,7 +180,7 @@ class Client:
             latest_events = [Event(raw_event) for raw_event in raw_events]
 
             for callback, device in self._event_subscribers:
-                if event := self.return_event_for_device(device, latest_events) is not None:
+                if (event := self.return_event_for_device(device, latest_events)) is not None:
                     _LOGGER.debug(f"Updating {device.mac}")
                     callback(event)
 

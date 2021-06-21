@@ -269,3 +269,14 @@ class TestEvents(unittest.IsolatedAsyncioTestCase):
         await client.get_cached_latest_event(devices[0])
 
         await client.async_close()
+
+class TestThermostat(unittest.IsolatedAsyncioTestCase):
+    async def test_thermostat(self):
+        client = Client(os.getenv("WYZE_EMAIL"), os.getenv("WYZE_PASSWORD"))
+        await client.async_init()
+
+        thermostats = await client.get_thermostats()
+
+        await client.set_thermostat_prop(thermostats[0], ThermostatProps.COOL_SP, 72)
+
+        await asyncio.sleep(5)

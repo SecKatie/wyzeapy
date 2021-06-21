@@ -471,6 +471,7 @@ class NetClient:
         signature = olive_create_signature(json.dumps(payload, separators=(',', ':')), self.access_token)
         headers = {
             'Accept-Encoding': 'gzip',
+            'Content-Type': 'application/json',
             'User-Agent': 'myapp',
             'appid': OLIVE_APP_ID,
             'appinfo': APP_INFO,
@@ -479,16 +480,10 @@ class NetClient:
             'signature2': signature
         }
 
-        self._session.headers.update(headers)
-
-        req = self._session.request('POST', url, json=payload)  # type: ignore
-
         payload_str = json.dumps(payload, separators=(',', ':'))
 
-        req.body = payload_str.encode('utf-8')
-
         loop = asyncio.get_event_loop()
-        loop.create_task(self.send_request(req.send(None)))
+        loop.create_task(self.send_request(self._session.post(url, headers=headers, data=payload_str)))
 
     @staticmethod
     def check_for_errors_thermostat(response_json: Dict[Any, Any]) -> None:

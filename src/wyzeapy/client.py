@@ -51,9 +51,11 @@ class Client:
 
         self._valid_login = await self.net_client.login(self.email, self.password)
 
-        self._sensor_thread = Thread(target=self.sensor_update_worker)
+        event_loop = asyncio.get_event_loop()
+
+        self._sensor_thread = Thread(target=self.sensor_update_worker, args=(event_loop,), daemon=True)
         self._sensor_thread.start()
-        self._event_thread = Thread(target=self.event_update_worker)
+        self._event_thread = Thread(target=self.event_update_worker, args=(event_loop,), daemon=True)
         self._event_thread.start()
 
     async def async_close(self):
@@ -150,14 +152,10 @@ class Client:
         if (callback, sensor) not in self._subscribers:
             self._subscribers.append((callback, sensor))
 
-    def sensor_update_worker(self):
-        loop = asyncio.new_event_loop()
-        loop.run_until_complete(self.sensor_update_publisher())
-
-    async def sensor_update_publisher(self):
+    def sensor_update_worker(self, loop):
         while True:
             _LOGGER.debug("Updating sensors")
-            sensors = await self.get_sensors(force_update=True)
+            sensors = asyncio.run_coroutine_threadsafe(self.get_sensors(force_update=True), loop).result()
 
             for callback, sensor in self._subscribers:
                 for i in sensors:
@@ -165,24 +163,21 @@ class Client:
                         _LOGGER.debug(f"Updating {i.mac}")
                         callback(i)
 
-    def event_update_worker(self):
-        loop = asyncio.new_event_loop()
-        loop.run_until_complete(self.event_update_publisher())
-
-    async def register_for_event_updates(self, callback, device):
-        if (callback, device) not in self._event_subscribers:
-            self._event_subscribers.append((callback, device))
-
-    async def event_update_publisher(self):
+    def event_update_worker(self, loop):
         while True:
             _LOGGER.debug("Updating events")
-            raw_events = (await self.net_client.get_full_event_list(10))['data']['event_list']
+            response = asyncio.run_coroutine_threadsafe(self.net_client.get_full_event_list(10), loop).result()
+            raw_events = response['data']['event_list']
             latest_events = [Event(raw_event) for raw_event in raw_events]
 
             for callback, device in self._event_subscribers:
                 if (event := self.return_event_for_device(device, latest_events)) is not None:
                     _LOGGER.debug(f"Updating {device.mac}")
                     callback(event)
+
+    async def register_for_event_updates(self, callback, device):
+        if (callback, device) not in self._event_subscribers:
+            self._event_subscribers.append((callback, device))
 
     async def get_devices(self) -> List[Device]:
         object_list: Dict[Any, Any] = await self.net_client.get_object_list()

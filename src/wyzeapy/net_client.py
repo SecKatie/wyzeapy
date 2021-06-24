@@ -13,7 +13,7 @@ from typing import Any, Dict, Optional, List, Coroutine
 
 import aiohttp
 import asyncio
-from aiohttp import ClientSession, ClientResponse
+from aiohttp import ClientSession, TCPConnector
 
 from .const import (
     API_KEY,
@@ -49,13 +49,15 @@ class NetClient:
     access_token = ""
     refresh_token = ""
     _session: ClientSession
+    _conn: TCPConnector
     _hms_id: Optional[str]
 
     def __init__(self):
         self._hms_id = None
 
     async def async_init(self):
-        self._session = aiohttp.ClientSession()
+        self._conn = aiohttp.TCPConnector(ttl_dns_cache=(30 * 60))  # Set DNS cache to 30 minutes
+        self._session = aiohttp.ClientSession(connector=self._conn)
 
     async def async_close(self):
         await self._session.close()

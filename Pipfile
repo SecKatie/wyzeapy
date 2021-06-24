@@ -4,11 +4,11 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-requests = "*"
-cachecontrol = "*"
 mypy = "*"
 coverage = "*"
 aiohttp = "*"
+aiodns = "*"
+cchardet = "*"
 
 [dev-packages]
 

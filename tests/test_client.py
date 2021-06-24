@@ -9,8 +9,8 @@ import time
 import unittest
 from typing import List
 
-from src.wyzeapy.client import Client
-from src.wyzeapy.types import Device, ThermostatProps, HMSStatus, Sensor
+from wyzeapy.client import Client
+from wyzeapy.types import Device, ThermostatProps, HMSStatus
 
 
 class TestFunctions(unittest.IsolatedAsyncioTestCase):

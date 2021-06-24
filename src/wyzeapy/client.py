@@ -10,7 +10,7 @@ from asyncio import Task
 from threading import Thread
 
 from typing import Any, Optional, List, Tuple, Iterable, Dict
-from .base_client import NetClient
+from .net_client import NetClient
 from .exceptions import ActionNotSupported, UnknownApiError
 from .types import ThermostatProps, Device, DeviceTypes, PropertyIDs, Event, Group, HMSStatus, Sensor
 

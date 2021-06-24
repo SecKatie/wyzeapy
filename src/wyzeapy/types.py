@@ -4,7 +4,7 @@
 #  the license with this file. If not, please write to:
 #  joshua@mulliken.net to receive a copy
 from enum import Enum
-from typing import Union, List, Optional, Dict, Any
+from typing import Union, List, Dict, Any
 
 
 class Group:

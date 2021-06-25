@@ -11,7 +11,7 @@ from threading import Thread
 
 from typing import Any, Optional, List, Tuple, Iterable, Dict
 from .net_client import NetClient
-from .exceptions import ActionNotSupported, UnknownApiError
+from .exceptions import ActionNotSupported, UnknownApiError, AccessTokenError
 from .types import ThermostatProps, Device, DeviceTypes, PropertyIDs, Event, Group, HMSStatus, Sensor
 
 _LOGGER = logging.getLogger(__name__)
@@ -155,7 +155,11 @@ class Client:
     def sensor_update_worker(self, loop):
         while True:
             _LOGGER.debug("Updating sensors")
-            sensors = asyncio.run_coroutine_threadsafe(self.get_sensors(force_update=True), loop).result()
+            try:
+                sensors = asyncio.run_coroutine_threadsafe(self.get_sensors(force_update=True), loop).result()
+            except AccessTokenError:
+                asyncio.run_coroutine_threadsafe(self.reauthenticate(), loop).result()
+                sensors = asyncio.run_coroutine_threadsafe(self.get_sensors(force_update=True), loop).result()
 
             for callback, sensor in self._subscribers:
                 for i in sensors:
@@ -166,7 +170,12 @@ class Client:
     def event_update_worker(self, loop):
         while True:
             _LOGGER.debug("Updating events")
-            response = asyncio.run_coroutine_threadsafe(self.net_client.get_full_event_list(10), loop).result()
+            try:
+                response = asyncio.run_coroutine_threadsafe(self.net_client.get_full_event_list(10), loop).result()
+            except AccessTokenError:
+                asyncio.run_coroutine_threadsafe(self.reauthenticate(), loop).result()
+                response = asyncio.run_coroutine_threadsafe(self.net_client.get_full_event_list(10), loop).result()
+
             raw_events = response['data']['event_list']
             latest_events = [Event(raw_event) for raw_event in raw_events]
 

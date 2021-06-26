@@ -197,6 +197,7 @@ class TestFunctions(unittest.IsolatedAsyncioTestCase):
 
         await client.async_close()
 
+
 class TestHMS(unittest.IsolatedAsyncioTestCase):
     async def test_can_get_hms_id(self):
         client = Client(os.getenv("WYZE_EMAIL"), os.getenv("WYZE_PASSWORD"))
@@ -259,6 +260,7 @@ class TestHMS(unittest.IsolatedAsyncioTestCase):
 
         await client.async_close()
 
+
 class TestEvents(unittest.IsolatedAsyncioTestCase):
     async def test_get_latest_cached_event(self):
         client = Client(os.getenv("WYZE_EMAIL"), os.getenv("WYZE_PASSWORD"))
@@ -269,6 +271,7 @@ class TestEvents(unittest.IsolatedAsyncioTestCase):
         await client.get_cached_latest_event(devices[0])
 
         await client.async_close()
+
 
 class TestThermostat(unittest.IsolatedAsyncioTestCase):
     async def test_thermostat(self):

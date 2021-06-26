@@ -154,35 +154,41 @@ class Client:
 
     def sensor_update_worker(self, loop):
         while True:
-            _LOGGER.debug("Updating sensors")
             try:
-                sensors = asyncio.run_coroutine_threadsafe(self.get_sensors(force_update=True), loop).result()
-            except AccessTokenError:
-                asyncio.run_coroutine_threadsafe(self.reauthenticate(), loop).result()
-                sensors = asyncio.run_coroutine_threadsafe(self.get_sensors(force_update=True), loop).result()
+                _LOGGER.debug("Updating sensors")
+                try:
+                    sensors = asyncio.run_coroutine_threadsafe(self.get_sensors(force_update=True), loop).result()
+                except AccessTokenError:
+                    asyncio.run_coroutine_threadsafe(self.reauthenticate(), loop).result()
+                    sensors = asyncio.run_coroutine_threadsafe(self.get_sensors(force_update=True), loop).result()
 
-            for callback, sensor in self._subscribers:
-                for i in sensors:
-                    if i.mac == sensor.mac:
-                        _LOGGER.debug(f"Updating {i.mac}")
-                        callback(i)
+                for callback, sensor in self._subscribers:
+                    for i in sensors:
+                        if i.mac == sensor.mac:
+                            _LOGGER.debug(f"Updating {i.mac}")
+                            callback(i)
+            except Exception as e:
+                _LOGGER.error(e)
 
     def event_update_worker(self, loop):
         while True:
-            _LOGGER.debug("Updating events")
             try:
-                response = asyncio.run_coroutine_threadsafe(self.net_client.get_full_event_list(10), loop).result()
-            except AccessTokenError:
-                asyncio.run_coroutine_threadsafe(self.reauthenticate(), loop).result()
-                response = asyncio.run_coroutine_threadsafe(self.net_client.get_full_event_list(10), loop).result()
+                _LOGGER.debug("Updating events")
+                try:
+                    response = asyncio.run_coroutine_threadsafe(self.net_client.get_full_event_list(10), loop).result()
+                except AccessTokenError:
+                    asyncio.run_coroutine_threadsafe(self.reauthenticate(), loop).result()
+                    response = asyncio.run_coroutine_threadsafe(self.net_client.get_full_event_list(10), loop).result()
 
-            raw_events = response['data']['event_list']
-            latest_events = [Event(raw_event) for raw_event in raw_events]
+                raw_events = response['data']['event_list']
+                latest_events = [Event(raw_event) for raw_event in raw_events]
 
-            for callback, device in self._event_subscribers:
-                if (event := self.return_event_for_device(device, latest_events)) is not None:
-                    _LOGGER.debug(f"Updating {device.mac}")
-                    callback(event)
+                for callback, device in self._event_subscribers:
+                    if (event := self.return_event_for_device(device, latest_events)) is not None:
+                        _LOGGER.debug(f"Updating {device.mac}")
+                        callback(event)
+            except Exception as e:
+                _LOGGER.error(e)
 
     async def register_for_event_updates(self, callback, device):
         if (callback, device) not in self._event_subscribers:

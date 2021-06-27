@@ -4,17 +4,16 @@
 #  the license with this file. If not, please write to:
 #  joshua@mulliken.net to receive a copy
 import asyncio
-import os
-import time
 import unittest
-from typing import List
 
-from wyzeapy import Wyzeapy, BulbService, SwitchService, CameraService, ThermostatService, HMSService
-from wyzeapy.client import Client
-from wyzeapy.services import HVACMode, FanMode, HMSMode
-from wyzeapy.services.bulb_service import Bulb
-from wyzeapy.services.switch_service import Switch
-from wyzeapy.types import Device, ThermostatProps, HMSStatus, DeviceTypes
+from wyzeapy import Wyzeapy
+from wyzeapy.services.bulb_service import Bulb, BulbService
+from wyzeapy.services.camera_service import Camera, CameraService
+from wyzeapy.services.hms_service import HMSService, HMSMode
+from wyzeapy.services.sensor_service import Sensor, SensorService
+from wyzeapy.services.switch_service import Switch, SwitchService
+from wyzeapy.services.thermostat_service import Thermostat, Preset, HVACState, ThermostatService, HVACMode, FanMode
+from wyzeapy.types import DeviceTypes
 
 
 async def login() -> Wyzeapy:
@@ -126,7 +125,7 @@ class TestBulbService(unittest.IsolatedAsyncioTestCase):
     async def test_update(self):
         client = await login()
         bulb_service = await client.bulb_service
-        bulbs = [Bulb(bulb.raw_dict) for bulb in await bulb_service.get_bulbs()]
+        bulbs = await bulb_service.get_bulbs()
         for bulb in bulbs:
             updated_bulb = await bulb_service.update(bulb)
             self.assertIsInstance(updated_bulb, Bulb)
@@ -201,6 +200,16 @@ class TestCameraService(unittest.IsolatedAsyncioTestCase):
             await camera_service.turn_off(camera)
         await client.async_close()
 
+    async def test_update(self):
+        client = await login()
+        camera_service = await client.camera_service
+        cameras = await camera_service.get_cameras()
+        for camera in cameras:
+            updated_camera = await camera_service.update(camera)
+            self.assertIsInstance(updated_camera, Camera)
+
+        await client.async_close()
+
 
 class TestThermostatService(unittest.IsolatedAsyncioTestCase):
     async def test_get_thermostat(self):
@@ -248,6 +257,34 @@ class TestThermostatService(unittest.IsolatedAsyncioTestCase):
 
         await client.async_close()
 
+    async def test_set_preset(self):
+        client = await login()
+        thermostat_service = await client.thermostat_service
+        thermostats = await thermostat_service.get_thermostats()
+        for thermostat in thermostats:
+            await thermostat_service.set_preset(thermostat, Preset.HOME)
+
+        await client.async_close()
+
+    async def test_update(self):
+        client = await login()
+        thermostat_service = await client.thermostat_service
+        thermostats = await thermostat_service.get_thermostats()
+        for thermostat in thermostats:
+            updated_thermostat = await thermostat_service.update(thermostat)
+            self.assertIsInstance(updated_thermostat, Thermostat)
+            self.assertIsInstance(updated_thermostat.cool_set_point, int)
+            self.assertIsInstance(updated_thermostat.heat_set_point, int)
+            self.assertIsInstance(updated_thermostat.fan_mode, FanMode)
+            self.assertIsInstance(updated_thermostat.hvac_mode, HVACMode)
+            self.assertIsInstance(updated_thermostat.preset, Preset)
+            self.assertIsInstance(updated_thermostat.temperature, float)
+            self.assertIsInstance(updated_thermostat.available, bool)
+            self.assertIsInstance(updated_thermostat.humidity, int)
+            self.assertIsInstance(updated_thermostat.hvac_state, HVACState)
+
+        await client.async_close()
+
 
 class TestHMSService(unittest.IsolatedAsyncioTestCase):
     async def test_get_hms_id(self):
@@ -273,6 +310,13 @@ class TestHMSService(unittest.IsolatedAsyncioTestCase):
 
         await client.async_close()
 
+    async def test_update(self):
+        client = await login()
+        hms_service = await client.hms_service
+        hms_mode = await hms_service.update(await hms_service.hms_id)
+        self.assertIsInstance(hms_mode, HMSMode)
+        await client.async_close()
+
 
 class TestSensorService(unittest.IsolatedAsyncioTestCase):
     async def test_get_sensors(self):
@@ -281,5 +325,16 @@ class TestSensorService(unittest.IsolatedAsyncioTestCase):
         sensors = await sensor_service.get_sensors()
         for sensor in sensors:
             print(sensor.nickname)
+
+        await client.async_close()
+
+    async def test_update(self):
+        client = await login()
+        sensor_service = await client.sensor_service
+        sensors = await sensor_service.get_sensors()
+        for sensor in sensors:
+            sensor = await sensor_service.update(sensor)
+            self.assertIsInstance(sensor, Sensor)
+            self.assertIsInstance(sensor.detected, bool)
 
         await client.async_close()

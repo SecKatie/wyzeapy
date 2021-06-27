@@ -4,21 +4,23 @@
 #  the license with this file. If not, please write to:
 #  joshua@mulliken.net to receive a copy
 from enum import Enum
-from typing import Any, Optional
+from typing import Optional
 
 from wyzeapy import Client
 from wyzeapy.services.base_service import BaseService
 
 
 class HMSMode(Enum):
-    DISARMED = 0
-    AWAY = 1
-    HOME = 2
+    CHANGING = 'changing'
+    DISARMED = 'disarm'
+    AWAY = 'away'
+    HOME = 'home'
 
 
 class HMSService(BaseService):
-    async def update(self, device: Any):
-        pass
+    async def update(self, hms_id: str):
+        hms_mode = await self._client.net_client.monitoring_profile_state_status(hms_id)
+        return HMSMode(hms_mode['message'])
 
     def __init__(self, client: Client):
         super().__init__(client)

@@ -4,7 +4,7 @@
 #  the license with this file. If not, please write to:
 #  joshua@mulliken.net to receive a copy
 import re
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List
 
 from wyzeapy.services.base_service import BaseService
 from wyzeapy.types import Device, PropertyIDs, DeviceTypes
@@ -14,6 +14,7 @@ class Bulb(Device):
     _brightness: int = 0
     _color_temp: int = 1800
     _color: Optional[str]
+
     def __init__(self, dictionary: Dict[Any, Any]):
         super().__init__(dictionary)
 
@@ -69,10 +70,10 @@ class BulbService(BaseService):
                 bulb.color = value
         return bulb
 
-    async def get_bulbs(self):
-        return await self._client.get_bulbs()
+    async def get_bulbs(self) -> List[Bulb]:
+        return [Bulb(bulb.raw_dict) for bulb in await self._client.get_bulbs()]
 
-    async def turn_on(self, bulb: Device, options=None):
+    async def turn_on(self, bulb: Bulb, options=None):
         if bulb.type in [
             DeviceTypes.LIGHT
         ]:
@@ -94,7 +95,7 @@ class BulbService(BaseService):
 
             await self._client.net_client.run_action_list(bulb, plist)
 
-    async def turn_off(self, bulb: Device):
+    async def turn_off(self, bulb: Bulb):
         print(f"Turning off {bulb.nickname}")
         if bulb.type in [
             DeviceTypes.LIGHT
@@ -113,7 +114,7 @@ class BulbService(BaseService):
 
             await self._client.net_client.run_action_list(bulb, plist)
 
-    async def set_color_temp(self, bulb, color_temp):
+    async def set_color_temp(self, bulb: Bulb, color_temp: int):
         if bulb.type in [
             DeviceTypes.LIGHT
         ]:
@@ -131,7 +132,7 @@ class BulbService(BaseService):
 
             await self._client.net_client.run_action_list(bulb, plist)
 
-    async def set_color(self, bulb, color):
+    async def set_color(self, bulb: Bulb, color: str):
         if bulb.type in [
             DeviceTypes.MESH_LIGHT
         ]:
@@ -141,7 +142,7 @@ class BulbService(BaseService):
 
             await self._client.net_client.run_action_list(bulb, plist)
 
-    async def set_brightness(self, bulb: Device, brightness):
+    async def set_brightness(self, bulb: Device, brightness: int):
         if bulb.type in [
             DeviceTypes.LIGHT
         ]:

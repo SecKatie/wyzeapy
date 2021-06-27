@@ -348,7 +348,7 @@ class NetClient:
         }
 
         await self.send_request(self._session.post("https://api.wyzecam.com/app/v2/device/set_property",
-                                                              json=payload))
+                                                   json=payload))
 
     async def get_full_event_list(self, count: int) -> Dict[Any, Any]:
         payload = {

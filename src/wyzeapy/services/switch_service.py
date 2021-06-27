@@ -3,7 +3,7 @@
 #  of the attached license. You should have received a copy of
 #  the license with this file. If not, please write to:
 #  joshua@mulliken.net to receive a copy
-from typing import Any
+from typing import List
 
 from wyzeapy.services.base_service import BaseService
 from wyzeapy.types import Device, DeviceTypes, PropertyIDs
@@ -23,8 +23,10 @@ class SwitchService(BaseService):
             elif property_id == PropertyIDs.AVAILABLE:
                 switch.available = value == "1"
 
-    async def get_switches(self):
-        return await self._client.get_plugs()
+        return switch
+
+    async def get_switches(self) -> List[Switch]:
+        return [Switch(switch.raw_dict) for switch in await self._client.get_plugs()]
 
     async def turn_on(self, switch: Device):
         if switch.type in [

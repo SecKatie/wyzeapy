@@ -6,11 +6,17 @@
 from typing import Dict
 
 from wyzeapy.client import Client
-from wyzeapy.services import BulbService, SwitchService, CameraService, ThermostatService, HMSService, SensorService
+from wyzeapy.services.bulb_service import BulbService
+from wyzeapy.services.camera_service import CameraService
+from wyzeapy.services.hms_service import HMSService
+from wyzeapy.services.sensor_service import SensorService
+from wyzeapy.services.switch_service import SwitchService
+from wyzeapy.services.thermostat_service import ThermostatService
 
 
 class Wyzeapy:
     _client: Client
+
     def __init__(self):
         self._token: Dict[str, str] = {}
         self._bulb_service = None
@@ -75,6 +81,3 @@ class Wyzeapy:
         if self._sensor_service is None:
             self._sensor_service = SensorService(self._client)
         return self._sensor_service
-
-
-

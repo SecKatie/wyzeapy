@@ -3,18 +3,55 @@
 #  of the attached license. You should have received a copy of
 #  the license with this file. If not, please write to:
 #  joshua@mulliken.net to receive a copy
-from typing import Any
+import asyncio
+import time
+from threading import Thread
+from typing import Any, List, Optional, Dict, Callable, Tuple
 
 from wyzeapy.services.base_service import BaseService
-from wyzeapy.types import Device, DeviceTypes
+from wyzeapy.types import Device, DeviceTypes, Event
+
+
+class Camera(Device):
+    def __init__(self, dictionary: Dict[Any, Any]):
+        super().__init__(dictionary)
+
+        self.last_event: Optional[Event] = None
+        self.last_event_ts: int = int(time.time() * 1000)
 
 
 class CameraService(BaseService):
-    async def update(self, device: Any):
-        pass
+    _updater_thread: Optional[Thread]
+    _subscribers: List[Tuple[Camera, Callable[[Camera], None]]] = []
 
-    async def get_cameras(self):
-        return await self._client.get_cameras()
+    async def update(self, camera: Camera):
+        response = await self._client.net_client.get_full_event_list(10)
+        raw_events = response['data']['event_list']
+        latest_events = [Event(raw_event) for raw_event in raw_events]
+
+        if (event := self._client.return_event_for_device(camera, latest_events)) is not None:
+            camera.last_event = event
+            camera.last_event_ts = event.event_ts
+
+        return camera
+
+    async def register_for_updates(self, camera: Camera, callback: Callable[[Camera], None]):
+        if self._updater_thread is None:
+            self._updater_thread = Thread(target=self.update_worker, daemon=True)
+
+        self._subscribers.append((camera, callback))
+
+    def update_worker(self):
+        loop = asyncio.get_event_loop()
+        while True:
+            if len(self._subscribers) < 1:
+                time.sleep(0.1)
+            else:
+                for camera, callback in self._subscribers:
+                    callback(asyncio.run_coroutine_threadsafe(self.update(camera), loop).result())
+
+    async def get_cameras(self) -> List[Camera]:
+        return [Camera(camera.raw_dict) for camera in await self._client.get_cameras()]
 
     async def turn_on(self, camera: Device):
         if camera.type in [

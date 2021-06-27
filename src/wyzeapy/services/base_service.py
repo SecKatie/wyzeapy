@@ -14,5 +14,5 @@ class BaseService(ABC):
         self._client = client
 
     @abstractmethod
-    async def update(self, device: Any) -> Any:
+    async def update(self, device):
         pass

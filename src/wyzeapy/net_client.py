@@ -3,16 +3,16 @@
 #  of the attached license. You should have received a copy of
 #  the license with this file. If not, please write to:
 #  joshua@mulliken.net to receive a copy
+import asyncio
 import datetime
 import hashlib
 import json
 import logging
 import os
 import time
-from typing import Any, Dict, Optional, List, Coroutine
+from typing import Any, Dict, Optional, List
 
 import aiohttp
-import asyncio
 from aiohttp import ClientSession, TCPConnector
 
 from .const import (
@@ -240,7 +240,7 @@ class NetClient:
 
         loop = asyncio.get_event_loop()
         loop.create_task(self.send_request(self._session.post("https://api.wyzecam.com/app/v2/auto/run_action_list",
-                                            json=payload)))
+                                                              json=payload)))
 
     async def auto_group_run(self, group: Group) -> None:
         payload = {
@@ -258,7 +258,7 @@ class NetClient:
 
         loop = asyncio.get_event_loop()
         loop.create_task(self.send_request(self._session.post("https://api.wyzecam.com/app/v2/auto_group/run",
-                                            json=payload)))
+                                                              json=payload)))
 
     async def run_action(self, device: Device, action: str) -> None:
 
@@ -286,7 +286,7 @@ class NetClient:
 
         loop = asyncio.get_event_loop()
         loop.create_task(self.send_request(self._session.post("https://api.wyzecam.com/app/v2/auto/run_action",
-                                            json=payload)))
+                                                              json=payload)))
 
     async def set_property_list(self, device: Device, plist: List[Dict[str, str]]) -> None:
 
@@ -310,9 +310,8 @@ class NetClient:
             "device_mac": device.mac
         }
 
-        loop = asyncio.get_event_loop()
-        loop.create_task(self.send_request(self._session.post("https://api.wyzecam.com/app/v2/device/set_property_list",
-                                            json=payload)))
+        await self.send_request(self._session.post("https://api.wyzecam.com/app/v2/device/set_property_list",
+                                                   json=payload))
 
     async def set_property(self, device: Device, pid: str, pvalue: str) -> None:
 
@@ -348,9 +347,8 @@ class NetClient:
             "device_mac": device.mac
         }
 
-        loop = asyncio.get_event_loop()
-        loop.create_task(self.send_request(self._session.post("https://api.wyzecam.com/app/v2/device/set_property",
-                                            json=payload)))
+        await self.send_request(self._session.post("https://api.wyzecam.com/app/v2/device/set_property",
+                                                              json=payload))
 
     async def get_full_event_list(self, count: int) -> Dict[Any, Any]:
         payload = {
@@ -381,7 +379,7 @@ class NetClient:
 
         async with aiohttp.ClientSession() as session:
             async with session.post("https://api.wyzecam.com/app/v2/device/get_event_list",
-                                          json=payload) as response:
+                                    json=payload) as response:
                 return await response.json()
 
     async def get_event_list(self, device: Device, count: int) -> Dict[str, Any]:
@@ -442,8 +440,7 @@ class NetClient:
 
         url = "https://yd-saas-toc.wyzecam.com/openapi/lock/v1/control"
 
-        loop = asyncio.get_event_loop()
-        loop.create_task(self.send_request(self._session.post(url, json=payload)))
+        await self.send_request(self._session.post(url, json=payload))
 
     async def thermostat_get_iot_prop(self, device: Device) -> Dict[Any, Any]:
         payload = olive_create_get_payload(device.mac)
@@ -484,8 +481,7 @@ class NetClient:
 
         payload_str = json.dumps(payload, separators=(',', ':'))
 
-        loop = asyncio.get_event_loop()
-        loop.create_task(self.send_request(self._session.post(url, headers=headers, data=payload_str)))
+        await self.send_request(self._session.post(url, headers=headers, data=payload_str))
 
     @staticmethod
     def check_for_errors_thermostat(response_json: Dict[Any, Any]) -> None:
@@ -525,7 +521,7 @@ class NetClient:
 
         return None
 
-    async def monitoring_profile_active(self, hms_id: str, home: int, away: int) -> Dict[Any, Any]:
+    async def monitoring_profile_active(self, hms_id: str, home: int, away: int) -> None:
         url = "https://hms.api.wyze.com/api/v1/monitoring/v1/profile/active"
         query = olive_create_hms_patch_payload(hms_id)
         signature = olive_create_signature(query, self.access_token)
@@ -550,8 +546,7 @@ class NetClient:
             }
         ]
 
-        loop = asyncio.get_event_loop()
-        loop.create_task(self.send_request(self._session.patch(url, headers=headers, params=query, json=payload)))
+        await self.send_request(self._session.patch(url, headers=headers, params=query, json=payload))
 
     async def disable_reme_alarm(self, hms_id: str) -> None:
         url = "https://hms.api.wyze.com/api/v1/reme-alarm"
@@ -563,8 +558,7 @@ class NetClient:
             "Authorization": self.access_token
         }
 
-        loop = asyncio.get_event_loop()
-        loop.create_task(self.send_request(self._session.delete(url, headers=headers, json=payload)))
+        await self.send_request(self._session.delete(url, headers=headers, json=payload))
 
     async def monitoring_profile_state_status(self, hms_id: str) -> Dict[Any, Any]:
         url = "https://hms.api.wyze.com/api/v1/monitoring/v1/profile/state-status"
@@ -585,7 +579,8 @@ class NetClient:
             response_json = await response.json()
             return response_json
 
-    async def send_request(self, request):
+    @staticmethod
+    async def send_request(request):
         async with request as response:
             if os.getenv("DEBUG"):
                 print(f"Request response: {await response.json()}")

@@ -9,277 +9,277 @@ import time
 import unittest
 from typing import List
 
+from wyzeapy import Wyzeapy, BulbService, SwitchService, CameraService, ThermostatService, HMSService
 from wyzeapy.client import Client
-from wyzeapy.types import Device, ThermostatProps, HMSStatus
+from wyzeapy.services import HVACMode, FanMode, HMSMode
+from wyzeapy.services.bulb_service import Bulb
+from wyzeapy.services.switch_service import Switch
+from wyzeapy.types import Device, ThermostatProps, HMSStatus, DeviceTypes
 
 
-class TestFunctions(unittest.IsolatedAsyncioTestCase):
-    async def test_get_devices_return_type(self):
-        client = Client(os.getenv("WYZE_EMAIL"), os.getenv("WYZE_PASSWORD"))
-        await client.async_init()
+async def login() -> Wyzeapy:
+    client = await Wyzeapy.create()
+    await client.login("jocoder6@gmail.com", "3w__6w_@7w@WLvctF*XL")
+    return client
 
-        devices = await client.get_devices()
-        self.assertIsInstance(devices, List)
-        for device in devices:
-            self.assertIsInstance(device, Device)
 
+class TestWyzeClient(unittest.IsolatedAsyncioTestCase):
+    async def test_login(self):
+        client = await Wyzeapy.create()
+        await client.login("jocoder6@gmail.com", "3w__6w_@7w@WLvctF*XL")
         await client.async_close()
 
-    async def test_get_plugs(self):
-        client = Client(os.getenv("WYZE_EMAIL"), os.getenv("WYZE_PASSWORD"))
-        await client.async_init()
-
-        devices = await client.get_plugs()
-        self.assertIsInstance(devices, List)
-        for device in devices:
-            self.assertIsInstance(device, Device)
-
+    async def test_valid_login(self):
+        client = await Wyzeapy.create()
+        assert client.valid_login is not True
+        await client.login("jocoder6@gmail.com", "3w__6w_@7w@WLvctF*XL")
+        assert await client.valid_login
         await client.async_close()
 
-    async def test_get_cameras(self):
-        client = Client(os.getenv("WYZE_EMAIL"), os.getenv("WYZE_PASSWORD"))
-        await client.async_init()
-
-        devices = await client.get_cameras()
-        self.assertIsInstance(devices, List)
-        for device in devices:
-            self.assertIsInstance(device, Device)
-
+    async def test_bulb_service(self):
+        client = await login()
+        assert type(await client.bulb_service) is BulbService
         await client.async_close()
 
-    async def test_get_locks(self):
-        client = Client(os.getenv("WYZE_EMAIL"), os.getenv("WYZE_PASSWORD"))
-        await client.async_init()
-
-        devices = await client.get_locks()
-        self.assertIsInstance(devices, List)
-        for device in devices:
-            self.assertIsInstance(device, Device)
-
+    async def test_switch_service(self):
+        client = await login()
+        assert type(await client.switch_service) is SwitchService
         await client.async_close()
 
+    async def test_camera_service(self):
+        client = await login()
+        assert type(await client.camera_service) is CameraService
+        await client.async_close()
+
+    async def test_thermostat_service(self):
+        client = await login()
+        assert type(await client.thermostat_service) is ThermostatService
+        await client.async_close()
+
+    async def hms_service(self):
+        client = await login()
+        assert type(await client.hms_service) is HMSService
+        await client.async_close()
+
+    async def sensor_service(self):
+        client = await login()
+        assert type(await client.sensor_service) is SensorService
+        await client.async_close()
+
+
+class TestBulbService(unittest.IsolatedAsyncioTestCase):
     async def test_get_bulbs(self):
-        client = Client(os.getenv("WYZE_EMAIL"), os.getenv("WYZE_PASSWORD"))
-        await client.async_init()
-
-        devices = await client.get_bulbs()
-        self.assertIsInstance(devices, List)
-        for device in devices:
-            self.assertIsInstance(device, Device)
-
-        await client.async_close()
-
-    async def test_get_info(self):
-        client = Client(os.getenv("WYZE_EMAIL"), os.getenv("WYZE_PASSWORD"))
-        await client.async_init()
-
-        test_bulb = Device({
-            'mac': '7C78B214CF40',
-            'product_type': 'MeshLight',
-            'product_model': 'WLPA19C'
-        })
-
-        await client.get_info(test_bulb)
-
-        await asyncio.sleep(5)
-
-        await client.async_close()
-
-    async def test_turn_on_color_bulb(self):
-        client = Client(os.getenv("WYZE_EMAIL"), os.getenv("WYZE_PASSWORD"))
-        await client.async_init()
-
-        test_bulb = Device({
-            'mac': '7C78B214CF40',
-            'product_type': 'MeshLight',
-            'product_model': 'WLPA19C'
-        })
-
-        await client.turn_on(test_bulb)
-
-        await asyncio.sleep(5)
-
-        await client.async_close()
-
-    async def test_turn_off_color_bulb(self):
-        client = Client(os.getenv("WYZE_EMAIL"), os.getenv("WYZE_PASSWORD"))
-        await client.async_init()
-
-        test_bulb = Device({
-            'mac': '7C78B214CF40',
-            'product_type': 'MeshLight',
-            'product_model': 'WLPA19C'
-        })
-
-        await client.turn_off(test_bulb)
-
-        await asyncio.sleep(5)
+        client = await login()
+        bulb_service = await client.bulb_service
+        bulbs = await bulb_service.get_bulbs()
+        for bulb in bulbs:
+            print(bulb)
 
         await client.async_close()
 
     async def test_turn_on_bulb(self):
-        client = Client(os.getenv("WYZE_EMAIL"), os.getenv("WYZE_PASSWORD"))
-        await client.async_init()
-
-        test_bulb = Device({
-            'mac': '2CAA8E325C52',
-            'product_type': 'Light',
-            'product_model': 'WLPA19'
-        })
-
-        await client.turn_on(test_bulb)
-
-        await asyncio.sleep(5)
+        client = await login()
+        bulb_service = await client.bulb_service
+        bulbs = await bulb_service.get_bulbs()
+        for bulb in bulbs:
+            await bulb_service.turn_on(bulb)
 
         await client.async_close()
 
     async def test_turn_off_bulb(self):
-        client = Client(os.getenv("WYZE_EMAIL"), os.getenv("WYZE_PASSWORD"))
-        await client.async_init()
-
-        test_bulb = Device({
-            'mac': '2CAA8E325C52',
-            'product_type': 'Light',
-            'product_model': 'WLPA19'
-        })
-
-        await client.turn_off(test_bulb)
-
-        await asyncio.sleep(5)
-
+        client = await login()
+        bulb_service = await client.bulb_service
+        bulbs = await bulb_service.get_bulbs()
+        for bulb in bulbs:
+            await bulb_service.turn_off(bulb)
         await client.async_close()
 
-    async def test_unlock_door(self):
-        client = Client(os.getenv("WYZE_EMAIL"), os.getenv("WYZE_PASSWORD"))
-        await client.async_init()
-
-        test_lock = Device({
-            'mac': 'YD.LO1.46c36fcce6c550e527ff79bd8cef59c2',
-            'product_type': 'Lock',
-            'product_model': 'WLCK1'
-        })
-
-        await client.turn_off(test_lock)
-
-        await asyncio.sleep(5)
-
+    async def test_set_color_temp(self):
+        client = await login()
+        bulb_service = await client.bulb_service
+        bulbs = await bulb_service.get_bulbs()
+        for bulb in bulbs:
+            await bulb_service.set_color_temp(bulb, 1800)
         await client.async_close()
 
-    async def test_lock_door(self):
-        client = Client(os.getenv("WYZE_EMAIL"), os.getenv("WYZE_PASSWORD"))
-        await client.async_init()
-
-        locks = await client.get_locks()
-        print(locks)
-        print(locks[0])
-
-        await client.turn_on(locks[0])
-
-        await asyncio.sleep(5)
-
+    async def test_set_color(self):
+        client = await login()
+        bulb_service = await client.bulb_service
+        bulbs = await bulb_service.get_bulbs()
+        for bulb in bulbs:
+            if bulb.type == DeviceTypes.MESH_LIGHT:
+                await bulb_service.set_color(bulb, "0000FF")
         await client.async_close()
 
-    async def test_can_read_thermostat(self):
-        client = Client(os.getenv("WYZE_EMAIL"), os.getenv("WYZE_PASSWORD"))
-        await client.async_init()
+    async def test_set_brightness(self):
+        client = await login()
+        bulb_service = await client.bulb_service
+        bulbs = await bulb_service.get_bulbs()
+        brightness_tasks = []
+        for bulb in bulbs:
+            print(bulb.nickname)
+            brightness_tasks.append(bulb_service.set_brightness(bulb, 50))
 
-        test_thermostat = Device({
-            'mac': 'CO_EA1_31304635143637394a414e75',
-            'product_type': 'Thermostat',
-            'product_model': 'CO_EA1'
-        })
+        await asyncio.gather(*brightness_tasks)
+        await client.async_close()
 
-        info = await client.get_thermostat_info(test_thermostat)
-
-        self.assertIsInstance(info, List)
-        for prop, value in info:
-            self.assertIsInstance(prop, ThermostatProps)
+    async def test_update(self):
+        client = await login()
+        bulb_service = await client.bulb_service
+        bulbs = [Bulb(bulb.raw_dict) for bulb in await bulb_service.get_bulbs()]
+        for bulb in bulbs:
+            updated_bulb = await bulb_service.update(bulb)
+            self.assertIsInstance(updated_bulb, Bulb)
 
         await client.async_close()
 
 
-class TestHMS(unittest.IsolatedAsyncioTestCase):
-    async def test_can_get_hms_id(self):
-        client = Client(os.getenv("WYZE_EMAIL"), os.getenv("WYZE_PASSWORD"))
-        await client.async_init()
-
-        device_id = await client.net_client.get_hms_id()
-
-        self.assertEqual(device_id, "c35aecadc9d24e42b799e0be9c2ffc2f")
-
-        await client.async_close()
-
-    async def test_get_hms_status(self):
-        client = Client(os.getenv("WYZE_EMAIL"), os.getenv("WYZE_PASSWORD"))
-        await client.async_init()
-
-        status = await client.get_hms_info()
-        self.assertIsInstance(status, HMSStatus)
+class TestSwitchService(unittest.IsolatedAsyncioTestCase):
+    async def test_get_switches(self):
+        client = await login()
+        switch_service = await client.switch_service
+        switches = await switch_service.get_switches()
+        for switch in switches:
+            print(switch.nickname)
 
         await client.async_close()
 
-    async def test_set_hms_status_disarmed(self):
-        client = Client(os.getenv("WYZE_EMAIL"), os.getenv("WYZE_PASSWORD"))
-        await client.async_init()
-
-        await client.set_hms_status(HMSStatus.DISARMED)
-
-        await asyncio.sleep(5)
-
-        await client.async_close()
-
-    async def test_set_hms_status_home(self):
-        client = Client(os.getenv("WYZE_EMAIL"), os.getenv("WYZE_PASSWORD"))
-        await client.async_init()
-
-        await client.set_hms_status(HMSStatus.HOME)
-
-        await asyncio.sleep(5)
+    async def test_turn_on_switch(self):
+        client = await login()
+        switch_service = await client.switch_service
+        switches = await switch_service.get_switches()
+        for switch in switches:
+            if switch.nickname != 'Air Conditioner':
+                await switch_service.turn_on(switch)
 
         await client.async_close()
 
-    async def test_set_hms_status_away(self):
-        client = Client(os.getenv("WYZE_EMAIL"), os.getenv("WYZE_PASSWORD"))
-        await client.async_init()
+    async def test_turn_off_switch(self):
+        client = await login()
+        switch_service = await client.switch_service
+        switches = await switch_service.get_switches()
+        for switch in switches:
+            if switch.nickname != 'Air Conditioner':
+                await switch_service.turn_off(switch)
 
-        await client.set_hms_status(HMSStatus.AWAY)
+        await client.async_close()
 
-        await asyncio.sleep(5)
+    async def test_update(self):
+        client = await login()
+        switch_service = await client.switch_service
+        switches = await switch_service.get_switches()
+        for switch in switches:
+            updated_switch = await switch_service.update(switch)
+            self.assertIsInstance(updated_switch, Switch)
+
+        await client.async_close()
+
+
+class TestCameraService(unittest.IsolatedAsyncioTestCase):
+    async def test_get_cameras(self):
+        client = await login()
+        camera_service = await client.camera_service
+        cameras = await camera_service.get_cameras()
+        for camera in cameras:
+            print(camera.nickname)
+
+        await client.async_close()
+
+    async def test_turn_on_cameras(self):
+        client = await login()
+        camera_service = await client.camera_service
+        cameras = await camera_service.get_cameras()
+        for camera in cameras:
+            await camera_service.turn_on(camera)
+        await client.async_close()
+
+    async def test_turn_off_cameras(self):
+        client = await login()
+        camera_service = await client.camera_service
+        cameras = await camera_service.get_cameras()
+        for camera in cameras:
+            await camera_service.turn_off(camera)
+        await client.async_close()
+
+
+class TestThermostatService(unittest.IsolatedAsyncioTestCase):
+    async def test_get_thermostat(self):
+        client = await login()
+        thermostat_service = await client.thermostat_service
+        thermostats = await thermostat_service.get_thermostats()
+        for thermostat in thermostats:
+            print(thermostat.nickname)
+
+        await client.async_close()
+
+    async def test_set_cool_point(self):
+        client = await login()
+        thermostat_service = await client.thermostat_service
+        thermostats = await thermostat_service.get_thermostats()
+        for thermostat in thermostats:
+            await thermostat_service.set_cool_point(thermostat, 74)
+
+        await client.async_close()
+
+    async def test_set_heat_point(self):
+        client = await login()
+        thermostat_service = await client.thermostat_service
+        thermostats = await thermostat_service.get_thermostats()
+        for thermostat in thermostats:
+            await thermostat_service.set_heat_point(thermostat, 64)
+
+        await client.async_close()
+
+    async def test_set_hvac_mode(self):
+        client = await login()
+        thermostat_service = await client.thermostat_service
+        thermostats = await thermostat_service.get_thermostats()
+        for thermostat in thermostats:
+            await thermostat_service.set_hvac_mode(thermostat, HVACMode.AUTO)
+
+        await client.async_close()
+
+    async def test_set_fan_mode(self):
+        client = await login()
+        thermostat_service = await client.thermostat_service
+        thermostats = await thermostat_service.get_thermostats()
+        for thermostat in thermostats:
+            await thermostat_service.set_fan_mode(thermostat, FanMode.AUTO)
+
+        await client.async_close()
+
+
+class TestHMSService(unittest.IsolatedAsyncioTestCase):
+    async def test_get_hms_id(self):
+        client = await login()
+        hms_service = await client.hms_service
+        hms_id = await hms_service.hms_id
+        assert hms_id == "c35aecadc9d24e42b799e0be9c2ffc2f"
 
         await client.async_close()
 
     async def test_has_hms(self):
-        client = Client(os.getenv("WYZE_EMAIL"), os.getenv("WYZE_PASSWORD"))
-        await client.async_init()
+        client = await login()
+        hms_service = await client.hms_service
+        hms = await hms_service.has_hms
+        assert hms
 
-        has_hms = await client.has_hms()
+        await client.async_close()
 
-        await asyncio.sleep(5)
-
-        self.assertTrue(has_hms)
+    async def test_set_hms_disabled(self):
+        client = await login()
+        hms_service = await client.hms_service
+        await hms_service.set_mode(HMSMode.DISARMED)
 
         await client.async_close()
 
 
-class TestEvents(unittest.IsolatedAsyncioTestCase):
-    async def test_get_latest_cached_event(self):
-        client = Client(os.getenv("WYZE_EMAIL"), os.getenv("WYZE_PASSWORD"))
-        await client.async_init()
-
-        devices = await client.get_cameras()
-
-        await client.get_cached_latest_event(devices[0])
+class TestSensorService(unittest.IsolatedAsyncioTestCase):
+    async def test_get_sensors(self):
+        client = await login()
+        sensor_service = await client.sensor_service
+        sensors = await sensor_service.get_sensors()
+        for sensor in sensors:
+            print(sensor.nickname)
 
         await client.async_close()
-
-
-class TestThermostat(unittest.IsolatedAsyncioTestCase):
-    async def test_thermostat(self):
-        client = Client(os.getenv("WYZE_EMAIL"), os.getenv("WYZE_PASSWORD"))
-        await client.async_init()
-
-        thermostats = await client.get_thermostats()
-
-        await client.set_thermostat_prop(thermostats[0], ThermostatProps.COOL_SP, 72)
-
-        await asyncio.sleep(5)

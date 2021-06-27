@@ -52,6 +52,8 @@ class Device:
     raw_dict: Dict[str, Any]
 
     def __init__(self, dictionary: Dict[Any, Any]):
+        self.available = False
+
         self.raw_dict = dictionary
         for k, v in dictionary.items():
             setattr(self, k, v)

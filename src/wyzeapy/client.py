@@ -6,12 +6,11 @@
 import asyncio
 import logging
 import time
-from asyncio import Task
 from threading import Thread
-
 from typing import Any, Optional, List, Tuple, Iterable, Dict
-from .net_client import NetClient
+
 from .exceptions import ActionNotSupported, UnknownApiError, AccessTokenError
+from .net_client import NetClient
 from .types import ThermostatProps, Device, DeviceTypes, PropertyIDs, Event, Group, HMSStatus, Sensor
 
 _LOGGER = logging.getLogger(__name__)
@@ -21,7 +20,11 @@ BLINK_TIME = 0.2  # The time it takes (in seconds) to ensure proper operation
 
 class Client:
     _devices: Optional[List[Device]] = None
-    _valid_login: bool
+    _valid_login: bool = False
+    _sensor_subscribers: List[Tuple[Any, Sensor]] = []
+    _event_subscribers: List[Tuple[Any, Device]] = []
+    _sensor_thread: Thread
+    _event_thread: Thread
 
     def __init__(self, email: str, password: str):
         self._last_sensor_update = time.time()
@@ -43,26 +46,23 @@ class Client:
 
         self.net_client = NetClient()
 
-    _event_task: Task
-    _sensor_task: Task
-
     async def async_init(self):
         await self.net_client.async_init()
 
         self._valid_login = await self.net_client.login(self.email, self.password)
 
-        event_loop = asyncio.get_event_loop()
-
-        self._sensor_thread = Thread(target=self.sensor_update_worker, args=(event_loop,), daemon=True)
-        self._sensor_thread.start()
-        self._event_thread = Thread(target=self.event_update_worker, args=(event_loop,), daemon=True)
-        self._event_thread.start()
+        # event_loop = asyncio.get_event_loop()
+        #
+        # self._sensor_thread = Thread(target=self.sensor_update_worker, args=(event_loop,), daemon=True)
+        # self._sensor_thread.start()
+        # self._event_thread = Thread(target=self.event_update_worker, args=(event_loop,), daemon=True)
+        # self._event_thread.start()
 
     async def async_close(self):
         await self.net_client.async_close()
 
-        self._event_thread.join(timeout=0)
-        self._sensor_thread.join(timeout=0)
+        # self._event_thread.join(timeout=0)
+        # self._sensor_thread.join(timeout=0)
 
     @property
     def valid_login(self) -> bool:
@@ -116,83 +116,6 @@ class Client:
                                 device.type is DeviceTypes.CONTACT_SENSOR]
 
         return self._latest_sensors
-
-    async def get_sensor_state(self, sensor: Sensor) -> Sensor:
-        _LOGGER.debug(f"Sensor: Getting latest")
-
-        current_update_time = time.time()  # Time value to check if the current value is fresh
-
-        if current_update_time - self._last_sensor_update >= self.sensor_update_interval:
-            _LOGGER.debug(f"Sensor: Refreshing information")
-
-            start_time = time.time()
-            self._latest_sensors = await self.get_sensors(force_update=True)
-            end_time = time.time()
-            sensor_update_time = end_time - start_time
-            self.previous_sensor_update_times.append(sensor_update_time)
-            if len(self.previous_sensor_update_times) >= 11:
-                self.previous_sensor_update_times.pop(0)
-
-            self.sensor_update_interval = (sum(self.previous_sensor_update_times) / len(
-                self.previous_sensor_update_times)) + BLINK_TIME  # Freshness calculation
-
-            _LOGGER.debug(f"Sensor: Update interval: {self.sensor_update_interval}")
-
-            self._last_sensor_update = current_update_time
-
-        for i in self._latest_sensors:
-            if i.mac == sensor.mac:
-                return i
-
-        raise RuntimeError(f"Unable to find sensor with mac: {sensor.mac}")
-
-    _subscribers: List[Tuple[Any, Sensor]] = []
-
-    async def register_for_sensor_updates(self, callback, sensor):
-        if (callback, sensor) not in self._subscribers:
-            self._subscribers.append((callback, sensor))
-
-    def sensor_update_worker(self, loop):
-        while True:
-            try:
-                _LOGGER.debug("Updating sensors")
-                try:
-                    sensors = asyncio.run_coroutine_threadsafe(self.get_sensors(force_update=True), loop).result()
-                except AccessTokenError:
-                    asyncio.run_coroutine_threadsafe(self.reauthenticate(), loop).result()
-                    sensors = asyncio.run_coroutine_threadsafe(self.get_sensors(force_update=True), loop).result()
-
-                for callback, sensor in self._subscribers:
-                    for i in sensors:
-                        if i.mac == sensor.mac:
-                            _LOGGER.debug(f"Updating {i.mac}")
-                            callback(i)
-            except Exception as e:
-                _LOGGER.error(e)
-
-    def event_update_worker(self, loop):
-        while True:
-            try:
-                _LOGGER.debug("Updating events")
-                try:
-                    response = asyncio.run_coroutine_threadsafe(self.net_client.get_full_event_list(10), loop).result()
-                except AccessTokenError:
-                    asyncio.run_coroutine_threadsafe(self.reauthenticate(), loop).result()
-                    response = asyncio.run_coroutine_threadsafe(self.net_client.get_full_event_list(10), loop).result()
-
-                raw_events = response['data']['event_list']
-                latest_events = [Event(raw_event) for raw_event in raw_events]
-
-                for callback, device in self._event_subscribers:
-                    if (event := self.return_event_for_device(device, latest_events)) is not None:
-                        _LOGGER.debug(f"Updating {device.mac}")
-                        callback(event)
-            except Exception as e:
-                _LOGGER.error(e)
-
-    async def register_for_event_updates(self, callback, device):
-        if (callback, device) not in self._event_subscribers:
-            self._event_subscribers.append((callback, device))
 
     async def get_devices(self) -> List[Device]:
         object_list: Dict[Any, Any] = await self.net_client.get_object_list()
@@ -301,54 +224,6 @@ class Client:
 
         return property_list
 
-    async def get_events(self, device: Device) -> List[Event]:
-        raw_events = (await self.net_client.get_event_list(device, 10))['data']['event_list']
-
-        events = []
-        if len(raw_events) > 0:
-            for raw_event in raw_events:
-                event = Event(raw_event)
-                events.append(event)
-
-        return events
-
-    _event_subscribers: List[Tuple[Any, Device]] = []
-
-    async def get_latest_event(self, device: Device) -> Optional[Event]:
-        raw_events = (await self.net_client.get_event_list(device, 10))['data']['event_list']
-
-        if len(raw_events) > 0:
-            return Event(raw_events[0])
-
-        return None
-
-    async def get_cached_latest_event(self, device: Device) -> Optional[Event]:
-        _LOGGER.debug(f"Event: Getting latest")
-        current_update_time = time.time()  # Time value to check if the current value is fresh
-
-        if self._latest_events is None or current_update_time - self._last_event_update > self.event_update_interval:
-            _LOGGER.debug(f"Event: Refreshing information")
-
-            start_time = time.time()
-            raw_events = (await self.net_client.get_full_event_list(10))['data']['event_list']
-            self._latest_events = [Event(raw_event) for raw_event in raw_events]
-            end_time = time.time()
-            event_update_time = end_time - start_time
-            self.previous_event_update_times.append(event_update_time)
-            if len(self.previous_event_update_times) >= 11:
-                self.previous_event_update_times.pop(0)
-
-            self.event_update_interval = (sum(self.previous_event_update_times) / len(
-                self.previous_event_update_times)) + BLINK_TIME  # Freshness calculation
-
-            _LOGGER.debug(f"Event: Update interval: {self.event_update_interval}")
-
-            self._last_event_update = current_update_time
-
-            return self.return_event_for_device(device, self._latest_events)
-
-        return self.return_event_for_device(device, self._latest_events)
-
     @staticmethod
     def return_event_for_device(device: Device, events: List[Event]) -> Optional[Event]:
         for event in events:
@@ -420,3 +295,49 @@ class Client:
             await self.net_client.monitoring_profile_active(hms_id, 0, 1)
         else:
             raise AttributeError("Status must be one of HMSStatus values")
+
+    async def register_for_sensor_updates(self, callback, sensor):
+        if (callback, sensor) not in self._sensor_subscribers:
+            self._sensor_subscribers.append((callback, sensor))
+
+    def sensor_update_worker(self, loop):
+        while True:
+            try:
+                _LOGGER.debug("Updating sensors")
+                try:
+                    sensors = asyncio.run_coroutine_threadsafe(self.get_sensors(force_update=True), loop).result()
+                except AccessTokenError:
+                    asyncio.run_coroutine_threadsafe(self.reauthenticate(), loop).result()
+                    sensors = asyncio.run_coroutine_threadsafe(self.get_sensors(force_update=True), loop).result()
+
+                for callback, sensor in self._sensor_subscribers:
+                    for i in sensors:
+                        if i.mac == sensor.mac:
+                            _LOGGER.debug(f"Updating {i.mac}")
+                            callback(i)
+            except Exception as e:
+                _LOGGER.error(e)
+
+    def event_update_worker(self, loop):
+        while True:
+            try:
+                _LOGGER.debug("Updating events")
+                try:
+                    response = asyncio.run_coroutine_threadsafe(self.net_client.get_full_event_list(10), loop).result()
+                except AccessTokenError:
+                    asyncio.run_coroutine_threadsafe(self.reauthenticate(), loop).result()
+                    response = asyncio.run_coroutine_threadsafe(self.net_client.get_full_event_list(10), loop).result()
+
+                raw_events = response['data']['event_list']
+                latest_events = [Event(raw_event) for raw_event in raw_events]
+
+                for callback, device in self._event_subscribers:
+                    if (event := self.return_event_for_device(device, latest_events)) is not None:
+                        _LOGGER.debug(f"Updating {device.mac}")
+                        callback(event)
+            except Exception as e:
+                _LOGGER.error(e)
+
+    async def register_for_event_updates(self, callback, device):
+        if (callback, device) not in self._event_subscribers:
+            self._event_subscribers.append((callback, device))

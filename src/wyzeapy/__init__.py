@@ -9,6 +9,7 @@ from wyzeapy.client import Client
 from wyzeapy.services.bulb_service import BulbService
 from wyzeapy.services.camera_service import CameraService
 from wyzeapy.services.hms_service import HMSService
+from wyzeapy.services.lock_service import LockService
 from wyzeapy.services.sensor_service import SensorService
 from wyzeapy.services.switch_service import SwitchService
 from wyzeapy.services.thermostat_service import ThermostatService
@@ -24,7 +25,7 @@ class Wyzeapy:
         self._camera_service = None
         self._thermostat_service = None
         self._hms_service = None
-        self._sensor_service = None
+        self._lock_service = None
 
     @classmethod
     async def create(cls):
@@ -54,9 +55,9 @@ class Wyzeapy:
 
     @property
     async def switch_service(self) -> SwitchService:
-        if self._sensor_service is None:
-            self._sensor_service = SwitchService(self._client)
-        return self._sensor_service
+        if self._lock_service is None:
+            self._lock_service = SwitchService(self._client)
+        return self._lock_service
 
     @property
     async def camera_service(self) -> CameraService:
@@ -77,7 +78,7 @@ class Wyzeapy:
         return self._hms_service
 
     @property
-    async def sensor_service(self) -> SensorService:
-        if self._sensor_service is None:
-            self._sensor_service = SensorService(self._client)
-        return self._sensor_service
+    async def lock_service(self) -> LockService:
+        if self._lock_service is None:
+            self._lock_service = LockService(self._client)
+        return self._lock_service

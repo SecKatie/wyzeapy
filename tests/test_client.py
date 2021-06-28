@@ -10,6 +10,7 @@ from wyzeapy import Wyzeapy
 from wyzeapy.services.bulb_service import Bulb, BulbService
 from wyzeapy.services.camera_service import Camera, CameraService
 from wyzeapy.services.hms_service import HMSService, HMSMode
+from wyzeapy.services.lock_service import Lock
 from wyzeapy.services.sensor_service import Sensor, SensorService
 from wyzeapy.services.switch_service import Switch, SwitchService
 from wyzeapy.services.thermostat_service import Thermostat, Preset, HVACState, ThermostatService, HVACMode, FanMode
@@ -336,5 +337,47 @@ class TestSensorService(unittest.IsolatedAsyncioTestCase):
             sensor = await sensor_service.update(sensor)
             self.assertIsInstance(sensor, Sensor)
             self.assertIsInstance(sensor.detected, bool)
+
+        await client.async_close()
+
+
+class TestLockService(unittest.IsolatedAsyncioTestCase):
+    async def test_get_locks(self):
+        client = await login()
+        lock_service = await client.lock_service
+        sensors = await lock_service.get_locks()
+        for sensor in sensors:
+            print(sensor.nickname)
+
+        await client.async_close()
+
+    async def test_update(self):
+        client = await login()
+        lock_service = await client.lock_service
+        locks = await lock_service.get_locks()
+        for lock in locks:
+            lock = await lock_service.update(lock)
+            self.assertIsInstance(lock, Lock)
+            self.assertIsInstance(lock.unlocked, bool)
+            self.assertIsInstance(lock.available, bool)
+            self.assertIsInstance(lock.door_open, bool)
+
+        await client.async_close()
+
+    async def test_lock(self):
+        client = await login()
+        lock_service = await client.lock_service
+        locks = await lock_service.get_locks()
+        for lock in locks:
+            await lock_service.lock(lock)
+
+        await client.async_close()
+
+    async def test_unlock(self):
+        client = await login()
+        lock_service = await client.lock_service
+        locks = await lock_service.get_locks()
+        for lock in locks:
+            await lock_service.unlock(lock)
 
         await client.async_close()

@@ -15,6 +15,8 @@ class Bulb(Device):
     _color_temp: int = 1800
     _color: Optional[str]
 
+    on: bool = False
+
     def __init__(self, dictionary: Dict[Any, Any]):
         super().__init__(dictionary)
 

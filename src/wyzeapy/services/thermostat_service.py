@@ -14,12 +14,12 @@ class HVACMode(Enum):
     AUTO = "auto"
     HEAT = "heat"
     COOL = "cool"
+    OFF = "off"
 
 
-class FanMode(Enum):  # auto, on, off
+class FanMode(Enum):  # auto, on
     AUTO = "auto"
     ON = "on"
-    OFF = "off"
 
 
 class TemperatureUnit(Enum):

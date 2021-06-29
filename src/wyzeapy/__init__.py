@@ -36,9 +36,10 @@ class Wyzeapy:
 
         :return: An instance of the Wyzeapy class
         """
-        cls._client = Client("", "")
-        await cls._client.async_init()
-        return cls
+        self = cls()
+        self._client = Client("", "")
+        await self._client.async_init()
+        return self
 
     async def async_close(self):
         await self._client.async_close()

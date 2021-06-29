@@ -27,6 +27,7 @@ class Wyzeapy:
         self._thermostat_service = None
         self._hms_service = None
         self._lock_service = None
+        self._sensor_service = None
 
     @classmethod
     async def create(cls):
@@ -88,3 +89,9 @@ class Wyzeapy:
         if self._lock_service is None:
             self._lock_service = LockService(self._client)
         return self._lock_service
+
+    @property
+    async def sensor_service(self) -> SensorService:
+        if self._sensor_service is None:
+            self._sensor_service = SensorService(self._client)
+        return self._sensor_service

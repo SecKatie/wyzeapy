@@ -18,6 +18,7 @@ class Camera(Device):
 
         self.last_event: Optional[Event] = None
         self.last_event_ts: int = int(time.time() * 1000)
+        self.on: bool = True
 
 
 class CameraService(BaseService):

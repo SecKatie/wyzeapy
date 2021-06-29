@@ -3,14 +3,16 @@
 #  of the attached license. You should have received a copy of
 #  the license with this file. If not, please write to:
 #  joshua@mulliken.net to receive a copy
-from typing import List
+from typing import List, Dict, Any
 
 from wyzeapy.services.base_service import BaseService
 from wyzeapy.types import Device, DeviceTypes, PropertyIDs
 
 
 class Switch(Device):
-    pass
+    def __init__(self, dictionary: Dict[Any, Any]):
+        super().__init__(dictionary)
+        self.on: bool = False
 
 
 class SwitchService(BaseService):

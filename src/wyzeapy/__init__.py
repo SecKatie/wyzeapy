@@ -16,6 +16,7 @@ from wyzeapy.services.thermostat_service import ThermostatService
 
 
 class Wyzeapy:
+    """A module to assist developers in interacting with the Wyze service"""
     _client: Client
 
     def __init__(self):
@@ -29,6 +30,11 @@ class Wyzeapy:
 
     @classmethod
     async def create(cls):
+        """
+        Creates the Wyzeapy class
+
+        :return: An instance of the Wyzeapy class
+        """
         self = Wyzeapy()
         self._client = Client("", "")
         return self

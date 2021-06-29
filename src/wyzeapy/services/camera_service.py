@@ -22,7 +22,7 @@ class Camera(Device):
 
 
 class CameraService(BaseService):
-    _updater_thread: Optional[Thread]
+    _updater_thread: Optional[Thread] = None
     _subscribers: List[Tuple[Camera, Callable[[Camera], None]]] = []
 
     async def update(self, camera: Camera):

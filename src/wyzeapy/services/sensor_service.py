@@ -17,7 +17,7 @@ class Sensor(Device):
 
 
 class SensorService(BaseService):
-    _updater_thread: Optional[Thread]
+    _updater_thread: Optional[Thread] = None
     _subscribers: List[Tuple[Sensor, Callable[[Sensor], None]]] = []
 
     async def update(self, sensor: Sensor) -> Sensor:

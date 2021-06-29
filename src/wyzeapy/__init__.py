@@ -65,7 +65,7 @@ class Wyzeapy:
     async def switch_service(self) -> SwitchService:
         if self._switch_service is None:
             self._switch_service = SwitchService(self._client)
-        return self._lock_service
+        return self._switch_service
 
     @property
     async def camera_service(self) -> CameraService:

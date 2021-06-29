@@ -38,7 +38,7 @@ class SensorService(BaseService):
         return sensor
 
     async def register_for_updates(self, sensor: Sensor, callback: Callable[[Sensor], None]):
-        if self._updater_thread is None:
+        if not self._updater_thread:
             self._updater_thread = Thread(target=self.update_worker, daemon=True)
 
         self._subscribers.append((sensor, callback))

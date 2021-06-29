@@ -4,7 +4,6 @@
 #  the license with this file. If not, please write to:
 #  joshua@mulliken.net to receive a copy
 from abc import abstractmethod, ABC
-from typing import Any
 
 from wyzeapy import Client
 

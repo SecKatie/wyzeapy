@@ -6,7 +6,7 @@
 from enum import Enum
 from typing import Optional
 
-from wyzeapy import Client, Wyzeapy
+from wyzeapy import Client
 from wyzeapy.services.base_service import BaseService
 
 
@@ -41,16 +41,16 @@ class HMSService(BaseService):
     @property
     async def has_hms(self):
         if self._hms_id is None:
-            self._hms_id = await self.hms_id
+            self._hms_id = self.hms_id
 
         return self._hms_id is not None
 
     async def set_mode(self, mode: HMSMode):
         if mode == HMSMode.DISARMED:
-            await self._client.net_client.disable_reme_alarm(await self.hms_id)
-            await self._client.net_client.monitoring_profile_active(await self.hms_id, 0, 0)
+            await self._client.net_client.disable_reme_alarm(self.hms_id)
+            await self._client.net_client.monitoring_profile_active(self.hms_id, 0, 0)
         elif mode == HMSMode.AWAY:
-            await self._client.net_client.monitoring_profile_active(await self.hms_id, 0, 1)
+            await self._client.net_client.monitoring_profile_active(self.hms_id, 0, 1)
         elif mode == HMSMode.HOME:
-            await self._client.net_client.monitoring_profile_active(await self.hms_id, 1, 0)
+            await self._client.net_client.monitoring_profile_active(self.hms_id, 1, 0)
 

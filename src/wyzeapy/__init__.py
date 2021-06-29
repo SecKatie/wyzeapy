@@ -63,8 +63,8 @@ class Wyzeapy:
 
     @property
     async def switch_service(self) -> SwitchService:
-        if self._lock_service is None:
-            self._lock_service = SwitchService(self._client)
+        if self._switch_service is None:
+            self._switch_service = SwitchService(self._client)
         return self._lock_service
 
     @property

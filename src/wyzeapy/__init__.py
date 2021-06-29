@@ -38,6 +38,7 @@ class Wyzeapy:
         """
         self = Wyzeapy()
         self._client = Client("", "")
+        await self._client.async_init()
         return self
 
     async def async_close(self):

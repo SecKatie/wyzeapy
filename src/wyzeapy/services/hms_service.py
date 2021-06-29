@@ -6,7 +6,7 @@
 from enum import Enum
 from typing import Optional
 
-from wyzeapy import Client
+from wyzeapy import Client, Wyzeapy
 from wyzeapy.services.base_service import BaseService
 
 
@@ -27,10 +27,15 @@ class HMSService(BaseService):
 
         self._hms_id = None
 
-    @property
-    async def hms_id(self) -> Optional[str]:
-        self._hms_id = await self._client.net_client.get_hms_id()
+    @classmethod
+    async def create(cls, client: Client):
+        hms_service = cls(client)
+        hms_service._hms_id = await hms_service._client.net_client.get_hms_id()
 
+        return hms_service
+
+    @property
+    def hms_id(self) -> Optional[str]:
         return self._hms_id
 
     @property
@@ -48,3 +53,4 @@ class HMSService(BaseService):
             await self._client.net_client.monitoring_profile_active(await self.hms_id, 0, 1)
         elif mode == HMSMode.HOME:
             await self._client.net_client.monitoring_profile_active(await self.hms_id, 1, 0)
+

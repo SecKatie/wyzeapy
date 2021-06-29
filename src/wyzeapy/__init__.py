@@ -82,7 +82,7 @@ class Wyzeapy:
     @property
     async def hms_service(self) -> HMSService:
         if self._hms_service is None:
-            self._hms_service = HMSService(self._client)
+            self._hms_service = await HMSService.create(self._client)
         return self._hms_service
 
     @property

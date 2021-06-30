@@ -51,12 +51,9 @@ class SensorService(BaseService):
     def update_worker(self):
         loop = asyncio.new_event_loop()
         while True:
-            if len(self._subscribers) < 1:
-                time.sleep(0.1)
-            else:
-                for sensor, callback in self._subscribers:
-                    _LOGGER.debug(f"Providing update for {sensor.nickname}")
-                    callback(asyncio.run_coroutine_threadsafe(self.update(sensor), loop).result())
+            for sensor, callback in self._subscribers:
+                _LOGGER.debug(f"Providing update for {sensor.nickname}")
+                callback(asyncio.run_coroutine_threadsafe(self.update(sensor), loop).result())
 
     async def get_sensors(self) -> List[Sensor]:
         return [Sensor(sensor.raw_dict) for sensor in await self._client.get_sensors()]

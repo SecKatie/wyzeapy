@@ -49,7 +49,7 @@ class Bulb(Device):
 
     @color.setter
     def color(self, value) -> None:
-        assert re.match(r"^([A-F\d]{6}|[A-F\d]{3})$", value) is not None
+        assert re.match(r"^([A-Fa-f\d]{6}|[A-Fa-f\d]{3})$", value) is not None
         self._color = value
 
 

@@ -291,7 +291,7 @@ class TestHMSService(unittest.IsolatedAsyncioTestCase):
     async def test_get_hms_id(self):
         client = await login()
         hms_service = await client.hms_service
-        hms_id = await hms_service.hms_id
+        hms_id = hms_service.hms_id
         assert hms_id == "c35aecadc9d24e42b799e0be9c2ffc2f"
 
         await client.async_close()

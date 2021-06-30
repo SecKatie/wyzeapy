@@ -13,7 +13,8 @@ from wyzeapy.services.hms_service import HMSService, HMSMode
 from wyzeapy.services.lock_service import Lock
 from wyzeapy.services.sensor_service import Sensor, SensorService
 from wyzeapy.services.switch_service import Switch, SwitchService
-from wyzeapy.services.thermostat_service import Thermostat, Preset, HVACState, ThermostatService, HVACMode, FanMode
+from wyzeapy.services.thermostat_service import Thermostat, Preset, HVACState, ThermostatService, HVACMode, FanMode, \
+    TemperatureUnit
 from wyzeapy.types import DeviceTypes
 
 
@@ -283,6 +284,7 @@ class TestThermostatService(unittest.IsolatedAsyncioTestCase):
             self.assertIsInstance(updated_thermostat.available, bool)
             self.assertIsInstance(updated_thermostat.humidity, int)
             self.assertIsInstance(updated_thermostat.hvac_state, HVACState)
+            self.assertIsInstance(updated_thermostat.temp_unit, TemperatureUnit)
 
         await client.async_close()
 
@@ -314,7 +316,7 @@ class TestHMSService(unittest.IsolatedAsyncioTestCase):
     async def test_update(self):
         client = await login()
         hms_service = await client.hms_service
-        hms_mode = await hms_service.update(await hms_service.hms_id)
+        hms_mode = await hms_service.update(hms_service.hms_id)
         self.assertIsInstance(hms_mode, HMSMode)
         await client.async_close()
 

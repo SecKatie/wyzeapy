@@ -23,8 +23,8 @@ class FanMode(Enum):  # auto, on
 
 
 class TemperatureUnit(Enum):
-    FAHRENHEIT = 1
-    CELSIUS = 2
+    FAHRENHEIT = "F"
+    CELSIUS = "C"
 
 
 class Preset(Enum):
@@ -60,7 +60,7 @@ class ThermostatService(BaseService):
         thermostat_props = await self._client.get_thermostat_info(thermostat)
         for prop, value in thermostat_props:
             if prop == ThermostatProps.TEMP_UNIT:
-                thermostat.temp_unit = value
+                thermostat.temp_unit = TemperatureUnit(value)
             elif prop == ThermostatProps.COOL_SP:
                 thermostat.cool_set_point = int(value)
             elif prop == ThermostatProps.HEAT_SP:

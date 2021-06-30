@@ -44,6 +44,7 @@ class SensorService(BaseService):
         _LOGGER.debug(f"Registering sensor: {sensor.nickname} for updates")
         if not self._updater_thread:
             self._updater_thread = Thread(target=self.update_worker, daemon=True)
+            self._updater_thread.start()
 
         self._subscribers.append((sensor, callback))
 

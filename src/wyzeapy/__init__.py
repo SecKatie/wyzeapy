@@ -51,8 +51,11 @@ class Wyzeapy:
         self._token['access_token'] = self._client.net_client.access_token
         self._token['refresh_token'] = self._client.net_client.refresh_token
 
-    @property
-    async def valid_login(self):
+    @classmethod
+    async def valid_login(cls, email: str, password: str) -> bool:
+        self = cls()
+        self._client = Client(email, password)
+        await self._client.async_init()
         return self._client.valid_login
 
     @property

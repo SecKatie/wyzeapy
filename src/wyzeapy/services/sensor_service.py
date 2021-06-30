@@ -49,7 +49,7 @@ class SensorService(BaseService):
         self._subscribers.append((sensor, callback))
 
     def update_worker(self):
-        loop = asyncio.get_event_loop()
+        loop = asyncio.new_event_loop()
         while True:
             if len(self._subscribers) < 1:
                 time.sleep(0.1)

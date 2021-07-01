@@ -5,12 +5,13 @@
 #  joshua@mulliken.net to receive a copy
 import logging
 import time
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 import aiohttp
 from aiohttp import TCPConnector, ClientSession
 
 from wyzeapy.const import API_KEY, PHONE_ID, APP_NAME, APP_VERSION, SC, SV, PHONE_SYSTEM_TYPE, APP_VER
+from wyzeapy.exceptions import UnknownApiError
 from wyzeapy.utils import create_password, check_for_errors_standard
 
 _LOGGER = logging.getLogger(__name__)
@@ -24,7 +25,7 @@ class Token:
 
 
 class WyzeAuthLib:
-    token: Token = None
+    token: Optional[Token] = None
     _conn: TCPConnector
     _session: ClientSession
 
@@ -41,7 +42,7 @@ class WyzeAuthLib:
         self._session = aiohttp.ClientSession(connector=self._conn)
 
         if self._username is None and self._password is None and self.token is None:
-            raise Exception("Must provide a username, password or token")
+            raise AttributeError("Must provide a username, password or token")
         elif self.token is None and self._username is not None and self._password is not None:
             assert self._username != ""
             assert self._password != ""
@@ -67,7 +68,7 @@ class WyzeAuthLib:
 
         if response_json.get('errorCode') is not None:
             _LOGGER.error(f"Unable to login with response from Wyze: {response_json}")
-            raise Exception(f"Unable to login with response from Wyze: {response_json}")
+            raise UnknownApiError(response_json)
 
         return Token(response_json['access_token'], response_json['refresh_token'], time.time())
 

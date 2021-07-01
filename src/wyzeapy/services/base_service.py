@@ -5,7 +5,7 @@
 #  joshua@mulliken.net to receive a copy
 import time
 from abc import abstractmethod, ABC
-from typing import List, Tuple, Any, Dict
+from typing import List, Tuple, Any, Dict, Optional
 
 from wyzeapy.wyze_auth_lib import WyzeAuthLib
 from wyzeapy.const import PHONE_SYSTEM_TYPE, APP_VERSION, APP_VER, PHONE_ID, APP_NAME
@@ -15,7 +15,7 @@ from wyzeapy.utils import check_for_errors_standard
 
 
 class BaseService(ABC):
-    _devices: List[Device] = None
+    _devices: Optional[List[Device]] = None
 
     def __init__(self, auth_lib: WyzeAuthLib):
         self._auth_lib = auth_lib

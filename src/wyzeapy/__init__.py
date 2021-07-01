@@ -48,7 +48,6 @@ class Wyzeapy:
     async def async_close(self):
         # await self._client.async_close()
         await self._auth_lib.close()
-        pass
 
     async def login(self, email, password):
         _LOGGER.debug(f"Email: {email}")

@@ -4,6 +4,7 @@
 #  the license with this file. If not, please write to:
 #  joshua@mulliken.net to receive a copy
 import asyncio
+import os
 import time
 import unittest
 
@@ -18,25 +19,28 @@ from wyzeapy.services.thermostat_service import Thermostat, Preset, HVACState, T
     TemperatureUnit
 from wyzeapy.types import DeviceTypes
 
+USERNAME = os.getenv("WYZE_EMAIL")
+PASSWORD = os.getenv("WYZE_PASSWORD")
+
 
 async def login() -> Wyzeapy:
     client = await Wyzeapy.create()
-    await client.login("jocoder6@gmail.com", "3w__6w_@7w@WLvctF*XL")
+    await client.login(USERNAME, PASSWORD)
     return client
 
 
 class TestWyzeClient(unittest.IsolatedAsyncioTestCase):
     async def test_login(self):
         client = await Wyzeapy.create()
-        await client.login("jocoder6@gmail.com", "3w__6w_@7w@WLvctF*XL")
+        await client.login(USERNAME, PASSWORD)
         await client.async_close()
 
     async def test_valid_login(self):
-        assert await Wyzeapy.valid_login("jocoder6@gmail.com", "3w__6w_@7w@WLvctF*XL")
+        assert await Wyzeapy.valid_login(USERNAME, PASSWORD)
 
     async def test_refresh(self):
         client = await Wyzeapy.create()
-        await client.login("jocoder6@gmail.com", "3w__6w_@7w@WLvctF*XL")
+        await client.login(USERNAME, PASSWORD)
         client._auth_lib.token.last_login_time = time.time() - (65 * 60 * 60)
         bulb_service = await client.bulb_service
         for bulb in await bulb_service.get_bulbs():

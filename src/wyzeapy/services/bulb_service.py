@@ -3,11 +3,15 @@
 #  of the attached license. You should have received a copy of
 #  the license with this file. If not, please write to:
 #  joshua@mulliken.net to receive a copy
+import logging
 import re
 from typing import Any, Dict, Optional, List
 
 from wyzeapy.services.base_service import BaseService
 from wyzeapy.types import Device, PropertyIDs, DeviceTypes
+from wyzeapy.utils import create_pid_pair
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class Bulb(Device):
@@ -55,7 +59,7 @@ class Bulb(Device):
 
 class BulbService(BaseService):
     async def update(self, bulb: Bulb) -> Bulb:
-        device_info = await self._client.get_info(bulb)
+        device_info = await self.get_info(bulb)
         for property_id, value in device_info:
             if property_id == PropertyIDs.BRIGHTNESS:
                 bulb.brightness = int(value)
@@ -73,91 +77,97 @@ class BulbService(BaseService):
         return bulb
 
     async def get_bulbs(self) -> List[Bulb]:
-        return [Bulb(bulb.raw_dict) for bulb in await self._client.get_bulbs()]
+        if self._devices is None:
+            self._devices = await self.get_devices()
+
+        bulbs = [device for device in self._devices if device.type is DeviceTypes.LIGHT or
+                 device.type is DeviceTypes.MESH_LIGHT]
+
+        return [Bulb(bulb.raw_dict) for bulb in bulbs]
 
     async def turn_on(self, bulb: Bulb, options=None):
         if bulb.type in [
             DeviceTypes.LIGHT
         ]:
             plist = [
-                self._client.create_pid_pair(PropertyIDs.ON, "1")
+                create_pid_pair(PropertyIDs.ON, "1")
             ]
             if options is not None:
                 plist.extend(options)
 
-            await self._client.net_client.set_property_list(bulb, plist)
+            await self.set_property_list(bulb, plist)
         elif bulb.type in [
             DeviceTypes.MESH_LIGHT
         ]:
             plist = [
-                self._client.create_pid_pair(PropertyIDs.ON, "1")
+                create_pid_pair(PropertyIDs.ON, "1")
             ]
             if options is not None:
                 plist.extend(options)
 
-            await self._client.net_client.run_action_list(bulb, plist)
+            await self.run_action_list(bulb, plist)
 
     async def turn_off(self, bulb: Bulb):
-        print(f"Turning off {bulb.nickname}")
+        _LOGGER.debug(f"Turning off {bulb.nickname}")
         if bulb.type in [
             DeviceTypes.LIGHT
         ]:
             plist = [
-                self._client.create_pid_pair(PropertyIDs.ON, "0")
+                create_pid_pair(PropertyIDs.ON, "0")
             ]
 
-            await self._client.net_client.set_property_list(bulb, plist)
+            await self.set_property_list(bulb, plist)
         elif bulb.type in [
             DeviceTypes.MESH_LIGHT
         ]:
             plist = [
-                self._client.create_pid_pair(PropertyIDs.ON, "0")
+                create_pid_pair(PropertyIDs.ON, "0")
             ]
 
-            await self._client.net_client.run_action_list(bulb, plist)
+            await self.run_action_list(bulb, plist)
 
     async def set_color_temp(self, bulb: Bulb, color_temp: int):
         if bulb.type in [
             DeviceTypes.LIGHT
         ]:
             plist = [
-                self._client.create_pid_pair(PropertyIDs.COLOR_TEMP, str(color_temp))
+                create_pid_pair(PropertyIDs.COLOR_TEMP, str(color_temp))
             ]
 
-            await self._client.net_client.set_property_list(bulb, plist)
+            await self.set_property_list(bulb, plist)
         elif bulb.type in [
             DeviceTypes.MESH_LIGHT
         ]:
             plist = [
-                self._client.create_pid_pair(PropertyIDs.COLOR_TEMP, str(color_temp))
+                create_pid_pair(PropertyIDs.COLOR_TEMP, str(color_temp))
             ]
 
-            await self._client.net_client.run_action_list(bulb, plist)
+            await self.run_action_list(bulb, plist)
 
     async def set_color(self, bulb: Bulb, color: str):
         if bulb.type in [
             DeviceTypes.MESH_LIGHT
         ]:
             plist = [
-                self._client.create_pid_pair(PropertyIDs.COLOR, str(color))
+                create_pid_pair(PropertyIDs.COLOR, str(color))
             ]
 
-            await self._client.net_client.run_action_list(bulb, plist)
+            await self.run_action_list(bulb, plist)
 
     async def set_brightness(self, bulb: Device, brightness: int):
         if bulb.type in [
             DeviceTypes.LIGHT
         ]:
             plist = [
-                self._client.create_pid_pair(PropertyIDs.BRIGHTNESS, str(brightness))
+                create_pid_pair(PropertyIDs.BRIGHTNESS, str(brightness))
             ]
 
-            await self._client.net_client.set_property_list(bulb, plist)
+            await self.set_property_list(bulb, plist)
         if bulb.type in [
             DeviceTypes.MESH_LIGHT
         ]:
             plist = [
-                self._client.create_pid_pair(PropertyIDs.BRIGHTNESS, str(brightness))
+                create_pid_pair(PropertyIDs.BRIGHTNESS, str(brightness))
             ]
 
-            await self._client.net_client.run_action_list(bulb, plist)
+            await self.run_action_list(bulb, plist)

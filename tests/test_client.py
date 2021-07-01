@@ -4,6 +4,7 @@
 #  the license with this file. If not, please write to:
 #  joshua@mulliken.net to receive a copy
 import asyncio
+import time
 import unittest
 
 from wyzeapy import Wyzeapy
@@ -31,10 +32,16 @@ class TestWyzeClient(unittest.IsolatedAsyncioTestCase):
         await client.async_close()
 
     async def test_valid_login(self):
+        assert await Wyzeapy.valid_login("jocoder6@gmail.com", "3w__6w_@7w@WLvctF*XL")
+
+    async def test_refresh(self):
         client = await Wyzeapy.create()
-        assert client.valid_login is not True
         await client.login("jocoder6@gmail.com", "3w__6w_@7w@WLvctF*XL")
-        assert await client.valid_login
+        client._auth_lib.token.last_login_time = time.time() - (65 * 60 * 60)
+        bulb_service = await client.bulb_service
+        for bulb in await bulb_service.get_bulbs():
+            print(bulb.nickname)
+
         await client.async_close()
 
     async def test_bulb_service(self):
@@ -373,6 +380,8 @@ class TestLockService(unittest.IsolatedAsyncioTestCase):
         for lock in locks:
             await lock_service.lock(lock)
 
+        await asyncio.sleep(5)
+
         await client.async_close()
 
     async def test_unlock(self):
@@ -381,5 +390,7 @@ class TestLockService(unittest.IsolatedAsyncioTestCase):
         locks = await lock_service.get_locks()
         for lock in locks:
             await lock_service.unlock(lock)
+
+        await asyncio.sleep(5)
 
         await client.async_close()

@@ -10,6 +10,7 @@ from typing import Any, List, Optional, Dict, Callable, Tuple
 
 from wyzeapy.services.base_service import BaseService
 from wyzeapy.types import Device, DeviceTypes, Event
+from wyzeapy.utils import return_event_for_device
 
 
 class Camera(Device):
@@ -26,11 +27,11 @@ class CameraService(BaseService):
     _subscribers: List[Tuple[Camera, Callable[[Camera], None]]] = []
 
     async def update(self, camera: Camera):
-        response = await self._client.net_client.get_full_event_list(10)
+        response = await self.get_full_event_list(10)
         raw_events = response['data']['event_list']
         latest_events = [Event(raw_event) for raw_event in raw_events]
 
-        if (event := self._client.return_event_for_device(camera, latest_events)) is not None:
+        if (event := return_event_for_device(camera, latest_events)) is not None:
             camera.last_event = event
             camera.last_event_ts = event.event_ts
 
@@ -52,16 +53,21 @@ class CameraService(BaseService):
                     callback(asyncio.run_coroutine_threadsafe(self.update(camera), loop).result())
 
     async def get_cameras(self) -> List[Camera]:
-        return [Camera(camera.raw_dict) for camera in await self._client.get_cameras()]
+        if self._devices is None:
+            self._devices = await self.get_devices()
+
+        cameras = [device for device in self._devices if device.type is DeviceTypes.CAMERA]
+
+        return [Camera(camera.raw_dict) for camera in cameras]
 
     async def turn_on(self, camera: Device):
         if camera.type in [
             DeviceTypes.CAMERA
         ]:
-            await self._client.net_client.run_action(camera, "power_on")
+            await self.run_action(camera, "power_on")
 
     async def turn_off(self, camera: Device):
         if camera.type in [
             DeviceTypes.CAMERA
         ]:
-            await self._client.net_client.run_action(camera, "power_off")
+            await self.run_action(camera, "power_off")

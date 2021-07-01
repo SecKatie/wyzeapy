@@ -12,7 +12,7 @@ from wyzeapy.services.hms_service import HMSService
 from wyzeapy.services.lock_service import LockService
 from wyzeapy.services.sensor_service import SensorService
 from wyzeapy.services.switch_service import SwitchService
-from wyzeapy.services.thermostat_service import ThermostatService
+from wyzeapy.services.thermostat_2_service import ThermostatService
 from wyzeapy.wyze_auth_lib import WyzeAuthLib
 
 _LOGGER = logging.getLogger(__name__)

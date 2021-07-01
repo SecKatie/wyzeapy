@@ -163,7 +163,5 @@ class HMSService(BaseService):
                 "active": away
             }
         ]
-
         response_json = await self._auth_lib.patch(url, headers=headers, params=query, json=payload)
-
         check_for_errors_hms(response_json)

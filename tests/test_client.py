@@ -14,7 +14,7 @@ from wyzeapy.services.hms_service import HMSService, HMSMode
 from wyzeapy.services.lock_service import Lock
 from wyzeapy.services.sensor_service import Sensor, SensorService
 from wyzeapy.services.switch_service import Switch, SwitchService
-from wyzeapy.services.thermostat_2_service import Thermostat, Preset, HVACState, ThermostatService, HVACMode, FanMode, \
+from wyzeapy.services.thermostat_service import Thermostat, Preset, HVACState, ThermostatService, HVACMode, FanMode, \
     TemperatureUnit
 from wyzeapy.types import DeviceTypes
 

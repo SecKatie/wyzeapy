@@ -52,6 +52,8 @@ class Device:
     raw_dict: Dict[str, Any]
 
     def __init__(self, dictionary: Dict[Any, Any]):
+        self.available = False
+
         self.raw_dict = dictionary
         for k, v in dictionary.items():
             setattr(self, k, v)
@@ -92,6 +94,8 @@ class PropertyIDs(Enum):
     COLOR_TEMP = "P1502"  # In Kelvin
     COLOR = "P1507"  # As a hex string RrGgBb
     DOOR_OPEN = "P2001"  # 0 if the door is closed
+    CONTACT_STATE = "P1301"
+    MOTION_STATE = "P1302"
 
 
 class ThermostatProps(Enum):
@@ -129,6 +133,7 @@ class ResponseCodes(Enum):
     SUCCESS = "1"
     PARAMETER_ERROR = "1001"
     ACCESS_TOKEN_ERROR = "2001"
+    DEVICE_OFFLINE = '3019'
 
 
 class ResponseCodesLock(Enum):

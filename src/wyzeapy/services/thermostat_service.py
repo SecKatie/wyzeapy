@@ -175,3 +175,20 @@ class ThermostatService(BaseService):
         response_json = await self._auth_lib.post(url, headers=headers, data=payload_str)
 
         check_for_errors_thermostat(response_json)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

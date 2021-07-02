@@ -9,6 +9,8 @@ coverage = "*"
 aiohttp = "*"
 aiodns = "*"
 cchardet = "*"
+wyzeapy = "*"
+wheel = "*"
 
 [dev-packages]
 

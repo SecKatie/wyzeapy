@@ -47,13 +47,14 @@ class CameraService(BaseService):
         return camera
 
     async def register_for_updates(self, camera: Camera, callback: Callable[[Camera], None]):
+        loop = asyncio.get_event_loop()
         if not self._updater_thread:
-            self._updater_thread = Thread(target=self.update_worker, daemon=True)
+            self._updater_thread = Thread(target=self.update_worker, args=[loop,], daemon=True)
+            self._updater_thread.start()
 
         self._subscribers.append((camera, callback))
 
-    def update_worker(self):
-        loop = asyncio.get_event_loop()
+    def update_worker(self, loop):
         while True:
             if len(self._subscribers) < 1:
                 time.sleep(0.1)

@@ -161,9 +161,6 @@ class File:
         else:
             self.type = "Video"
 
-    def __repr__(self) -> str:
-        return "<File: {}, {}>".format(self.file_id, self.type)
-
 
 class Event:
     event_id: str
@@ -189,9 +186,6 @@ class Event:
         if len(self.file_list) > 0:
             for file in self.file_list:
                 self.typed_file_list.append(File(file))
-
-    def __repr__(self) -> str:
-        return "<Event: {}, {}>".format(self.event_id, self.event_ts)
 
 
 class HMSStatus(Enum):

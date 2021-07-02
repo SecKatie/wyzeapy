@@ -21,10 +21,8 @@ from wyzeapy.services.thermostat_service import Thermostat, Preset, HVACState, T
     TemperatureUnit
 from wyzeapy.types import DeviceTypes, Event
 
-# USERNAME = os.getenv("WYZE_EMAIL")
-# PASSWORD = os.getenv("WYZE_PASSWORD")
-USERNAME = "jocoder6@gmail.com"
-PASSWORD = "3w__6w_@7w@WLvctF*XL"
+USERNAME = os.getenv("WYZE_EMAIL")
+PASSWORD = os.getenv("WYZE_PASSWORD")
 
 
 async def login() -> Wyzeapy:

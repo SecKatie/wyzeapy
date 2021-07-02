@@ -40,8 +40,10 @@ class TestWyzeClient(unittest.IsolatedAsyncioTestCase):
     async def test_valid_login(self):
         assert await Wyzeapy.valid_login(USERNAME, PASSWORD)
 
-    async def test_phone_id_available(self):
-        assert wyzeapy.PHONE_ID is not None
+    async def test_notifications_are_on(self):
+        client = await login()
+        await client.enable_notifications()
+        assert await client.notifications_are_on
 
     async def test_notifications_on(self):
         client = await login()

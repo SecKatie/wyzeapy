@@ -108,7 +108,7 @@ class ThermostatService(BaseService):
 
     async def get_thermostats(self) -> List[Thermostat]:
         if self._devices is None:
-            self._devices = await self.get_devices()
+            self._devices = await self._get_devices()
 
         thermostats = [device for device in self._devices if device.type is DeviceTypes.THERMOSTAT]
 

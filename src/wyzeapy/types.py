@@ -192,3 +192,12 @@ class HMSStatus(Enum):
     DISARMED = 'disarmed'
     HOME = 'home'
     AWAY = 'away'
+
+
+
+
+
+
+
+
+

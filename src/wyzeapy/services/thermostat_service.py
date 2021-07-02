@@ -3,18 +3,12 @@
 #  of the attached license. You should have received a copy of
 #  the license with this file. If not, please write to:
 #  joshua@mulliken.net to receive a copy
-import json
 import logging
 from enum import Enum
 from typing import Any, Dict, List
 
-from wyzeapy.const import OLIVE_APP_ID, APP_INFO, PHONE_ID
-from wyzeapy.crypto import olive_create_signature
-from wyzeapy.exceptions import ActionNotSupported
-from wyzeapy.payload_factory import olive_create_get_payload, olive_create_post_payload
 from wyzeapy.services.base_service import BaseService
 from wyzeapy.types import Device, ThermostatProps, DeviceTypes
-from wyzeapy.utils import check_for_errors_thermostat
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -103,7 +97,7 @@ class ThermostatService(BaseService):
 
     async def get_thermostats(self) -> List[Thermostat]:
         if self._devices is None:
-            self._devices = await self._get_devices()
+            self._devices = await self._get_object_list()
 
         thermostats = [device for device in self._devices if device.type is DeviceTypes.THERMOSTAT]
 
@@ -123,53 +117,6 @@ class ThermostatService(BaseService):
 
     async def set_preset(self, thermostat: Thermostat, preset: Preset):
         await self._thermostat_set_iot_prop(thermostat, ThermostatProps.CONFIG_SCENARIO, preset.value)
-
-    async def _thermostat_get_iot_prop(self, device: Device) -> Dict[Any, Any]:
-        await self._auth_lib.refresh_if_should()
-
-        payload = olive_create_get_payload(device.mac)
-        signature = olive_create_signature(payload, self._auth_lib.token.access_token)
-        headers = {
-            'Accept-Encoding': 'gzip',
-            'User-Agent': 'myapp',
-            'appid': OLIVE_APP_ID,
-            'appinfo': APP_INFO,
-            'phoneid': PHONE_ID,
-            'access_token': self._auth_lib.token.access_token,
-            'signature2': signature
-        }
-
-        url = 'https://wyze-earth-service.wyzecam.com/plugin/earth/get_iot_prop'
-
-        response_json = await self._auth_lib.get(url, headers=headers, params=payload)
-
-        check_for_errors_thermostat(response_json)
-
-        return response_json
-
-    async def _thermostat_set_iot_prop(self, device: Device, prop: ThermostatProps, value: Any) -> None:
-        await self._auth_lib.refresh_if_should()
-
-        url = "https://wyze-earth-service.wyzecam.com/plugin/earth/set_iot_prop_by_topic"
-        payload = olive_create_post_payload(device.mac, device.product_model, prop, value)
-        signature = olive_create_signature(json.dumps(payload, separators=(',', ':')),
-                                           self._auth_lib.token.access_token)
-        headers = {
-            'Accept-Encoding': 'gzip',
-            'Content-Type': 'application/json',
-            'User-Agent': 'myapp',
-            'appid': OLIVE_APP_ID,
-            'appinfo': APP_INFO,
-            'phoneid': PHONE_ID,
-            'access_token': self._auth_lib.token.access_token,
-            'signature2': signature
-        }
-
-        payload_str = json.dumps(payload, separators=(',', ':'))
-
-        response_json = await self._auth_lib.post(url, headers=headers, data=payload_str)
-
-        check_for_errors_thermostat(response_json)
 
 
 

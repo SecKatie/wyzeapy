@@ -88,6 +88,7 @@ class Sensor(Device):
 
 
 class PropertyIDs(Enum):
+    NOTIFICATION = "P1"
     ON = "P3"
     AVAILABLE = "P5"
     BRIGHTNESS = "P1501"  # From 0-100

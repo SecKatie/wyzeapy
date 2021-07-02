@@ -55,6 +55,13 @@ def olive_create_hms_payload() -> Dict[str, str]:
         "nonce": str(nonce)
     }
 
+def olive_create_user_info_payload() -> Dict[str, str]:
+    nonce = int(time.time() * 1000)
+
+    return {
+        "nonce": str(nonce)
+    }
+
 
 def olive_create_hms_get_payload(hms_id: str) -> Dict[str, str]:
     nonce = int(time.time() * 1000)

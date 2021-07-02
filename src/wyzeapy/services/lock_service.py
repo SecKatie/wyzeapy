@@ -16,7 +16,7 @@ class Lock(Device):
 
 class LockService(BaseService):
     async def update(self, lock: Lock):
-        device_info = await self.get_info(lock)
+        device_info = await self._get_info(lock)
 
         for property_id, value in device_info:
             if property_id == PropertyIDs.ON:
@@ -30,7 +30,7 @@ class LockService(BaseService):
 
     async def get_locks(self):
         if self._devices is None:
-            self._devices = await self.get_devices()
+            self._devices = await self._get_devices()
 
         locks = [device for device in self._devices if device.type is DeviceTypes.LOCK]
 

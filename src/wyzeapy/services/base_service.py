@@ -24,7 +24,7 @@ class BaseService(ABC):
     async def update(self, device):
         pass
 
-    async def get_devices(self) -> List[Device]:
+    async def _get_devices(self) -> List[Device]:
         await self._auth_lib.refresh_if_should()
 
         payload = {
@@ -46,7 +46,7 @@ class BaseService(ABC):
 
         return [Device(device) for device in response_json['data']['device_list']]
 
-    async def get_info(self, device: Device) -> List[Tuple[PropertyIDs, Any]]:
+    async def _get_info(self, device: Device) -> List[Tuple[PropertyIDs, Any]]:
         await self._auth_lib.refresh_if_should()
 
         payload = {
@@ -83,7 +83,7 @@ class BaseService(ABC):
 
         return property_list
 
-    async def set_property_list(self, device: Device, plist: List[Dict[str, str]]) -> None:
+    async def _set_property_list(self, device: Device, plist: List[Dict[str, str]]) -> None:
         await self._auth_lib.refresh_if_should()
 
         if DeviceTypes(device.product_type) not in [
@@ -111,7 +111,7 @@ class BaseService(ABC):
 
         check_for_errors_standard(response_json)
 
-    async def run_action_list(self, device: Device, plist: List[Dict[Any, Any]]) -> None:
+    async def _run_action_list(self, device: Device, plist: List[Dict[Any, Any]]) -> None:
         await self._auth_lib.refresh_if_should()
 
         if DeviceTypes(device.product_type) not in [
@@ -151,7 +151,7 @@ class BaseService(ABC):
 
         check_for_errors_standard(response_json)
 
-    async def get_full_event_list(self, count: int) -> Dict[Any, Any]:
+    async def _get_full_event_list(self, count: int) -> Dict[Any, Any]:
         await self._auth_lib.refresh_if_should()
 
         payload = {
@@ -186,7 +186,7 @@ class BaseService(ABC):
         check_for_errors_standard(response_json)
         return response_json
 
-    async def run_action(self, device: Device, action: str) -> None:
+    async def _run_action(self, device: Device, action: str) -> None:
         await self._auth_lib.refresh_if_should()
 
         if DeviceTypes(device.product_type) not in [

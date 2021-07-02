@@ -66,11 +66,6 @@ class Thermostat(Device):
 
 class ThermostatService(BaseService):
     async def update(self, thermostat: Thermostat) -> Thermostat:
-        if DeviceTypes(thermostat.product_type) not in [
-            DeviceTypes.THERMOSTAT
-        ]:
-            raise ActionNotSupported(thermostat.product_type)
-
         properties = (await self._thermostat_get_iot_prop(thermostat))['data']['props']
 
         device_props = []
@@ -98,7 +93,7 @@ class ThermostatService(BaseService):
             elif prop == ThermostatProps.TEMPERATURE:
                 thermostat.temperature = float(value)
             elif prop == ThermostatProps.IOT_STATE:
-                thermostat.available = False if not value == 'connected' else True  # pylint: disable=R1719
+                thermostat.available = value == 'connected'
             elif prop == ThermostatProps.HUMIDITY:
                 thermostat.humidity = int(value)
             elif prop == ThermostatProps.WORKING_STATE:

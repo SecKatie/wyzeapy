@@ -10,7 +10,7 @@ from typing import Any, List, Optional, Dict, Callable, Tuple
 
 from wyzeapy.services.base_service import BaseService
 from wyzeapy.types import Device, DeviceTypes, Event, PropertyIDs
-from wyzeapy.utils import return_event_for_device
+from wyzeapy.utils import return_event_for_device, create_pid_pair
 
 
 class Camera(Device):
@@ -28,7 +28,7 @@ class CameraService(BaseService):
 
     async def update(self, camera: Camera):
         # Get camera events
-        response = await self._get_full_event_list(10)
+        response = await self._get_event_list(10)
         raw_events = response['data']['event_list']
         latest_events = [Event(raw_event) for raw_event in raw_events]
 
@@ -37,7 +37,7 @@ class CameraService(BaseService):
             camera.last_event_ts = event.event_ts
 
         # Update camera state
-        state_response: List[Tuple[PropertyIDs, Any]] = await self._get_info(camera)
+        state_response: List[Tuple[PropertyIDs, Any]] = await self._get_property_list(camera)
         for property, value in state_response:
             if property is PropertyIDs.AVAILABLE:
                 camera.available = value == "1"
@@ -64,20 +64,28 @@ class CameraService(BaseService):
 
     async def get_cameras(self) -> List[Camera]:
         if self._devices is None:
-            self._devices = await self._get_devices()
+            self._devices = await self._get_object_list()
 
         cameras = [device for device in self._devices if device.type is DeviceTypes.CAMERA]
 
         return [Camera(camera.raw_dict) for camera in cameras]
 
-    async def turn_on(self, camera: Device):
-        if camera.type in [
-            DeviceTypes.CAMERA
-        ]:
-            await self._run_action(camera, "power_on")
+    async def turn_on(self, camera: Camera):
+        await self._run_action(camera, "power_on")
 
-    async def turn_off(self, camera: Device):
-        if camera.type in [
-            DeviceTypes.CAMERA
-        ]:
-            await self._run_action(camera, "power_off")
+    async def turn_off(self, camera: Camera):
+        await self._run_action(camera, "power_off")
+
+    async def turn_on_notifications(self, camera: Camera):
+        plist = [
+            create_pid_pair(PropertyIDs.NOTIFICATION, "1")
+        ]
+
+        await self._set_property_list(camera, plist)
+
+    async def turn_off_notifications(self, camera: Camera):
+        plist = [
+            create_pid_pair(PropertyIDs.NOTIFICATION, "0")
+        ]
+
+        await self._set_property_list(camera, plist)

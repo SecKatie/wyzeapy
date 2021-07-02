@@ -20,8 +20,10 @@ from wyzeapy.services.thermostat_service import Thermostat, Preset, HVACState, T
     TemperatureUnit
 from wyzeapy.types import DeviceTypes, Event
 
-USERNAME = os.getenv("WYZE_EMAIL")
-PASSWORD = os.getenv("WYZE_PASSWORD")
+# USERNAME = os.getenv("WYZE_EMAIL")
+# PASSWORD = os.getenv("WYZE_PASSWORD")
+USERNAME = "jocoder6@gmail.com"
+PASSWORD = "3w__6w_@7w@WLvctF*XL"
 
 
 async def login() -> Wyzeapy:
@@ -38,6 +40,14 @@ class TestWyzeClient(unittest.IsolatedAsyncioTestCase):
 
     async def test_valid_login(self):
         assert await Wyzeapy.valid_login(USERNAME, PASSWORD)
+
+    async def test_notifications_on(self):
+        client = await login()
+        await client.enable_notifications()
+
+    async def test_notifications_off(self):
+        client = await login()
+        await client.disable_notifications()
 
     async def test_refresh(self):
         client = await Wyzeapy.create()
@@ -212,6 +222,22 @@ class TestCameraService(unittest.IsolatedAsyncioTestCase):
         cameras = await camera_service.get_cameras()
         for camera in cameras:
             await camera_service.turn_off(camera)
+        await client.async_close()
+
+    async def test_turn_on_notifications(self):
+        client = await login()
+        camera_service = await client.camera_service
+        cameras = await camera_service.get_cameras()
+        for camera in cameras:
+            await camera_service.turn_on_notifications(camera)
+        await client.async_close()
+
+    async def test_turn_off_notifications(self):
+        client = await login()
+        camera_service = await client.camera_service
+        cameras = await camera_service.get_cameras()
+        for camera in cameras:
+            await camera_service.turn_off_notifications(camera)
         await client.async_close()
 
     async def test_update(self):

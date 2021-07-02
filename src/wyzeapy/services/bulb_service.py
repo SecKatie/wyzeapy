@@ -59,7 +59,7 @@ class Bulb(Device):
 
 class BulbService(BaseService):
     async def update(self, bulb: Bulb) -> Bulb:
-        device_info = await self._get_info(bulb)
+        device_info = await self._get_property_list(bulb)
         for property_id, value in device_info:
             if property_id == PropertyIDs.BRIGHTNESS:
                 bulb.brightness = int(value)
@@ -78,7 +78,7 @@ class BulbService(BaseService):
 
     async def get_bulbs(self) -> List[Bulb]:
         if self._devices is None:
-            self._devices = await self._get_devices()
+            self._devices = await self._get_object_list()
 
         bulbs = [device for device in self._devices if device.type is DeviceTypes.LIGHT or
                  device.type is DeviceTypes.MESH_LIGHT]

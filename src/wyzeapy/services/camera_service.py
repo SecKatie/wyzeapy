@@ -4,13 +4,19 @@
 #  the license with this file. If not, please write to:
 #  joshua@mulliken.net to receive a copy
 import asyncio
+import logging
 import time
 from threading import Thread
 from typing import Any, List, Optional, Dict, Callable, Tuple
 
+from aiohttp import ClientOSError
+
+from wyzeapy.exceptions import UnknownApiError
 from wyzeapy.services.base_service import BaseService
 from wyzeapy.types import Device, DeviceTypes, Event, PropertyIDs
 from wyzeapy.utils import return_event_for_device, create_pid_pair
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class Camera(Device):
@@ -49,7 +55,7 @@ class CameraService(BaseService):
     async def register_for_updates(self, camera: Camera, callback: Callable[[Camera], None]):
         loop = asyncio.get_event_loop()
         if not self._updater_thread:
-            self._updater_thread = Thread(target=self.update_worker, args=[loop,], daemon=True)
+            self._updater_thread = Thread(target=self.update_worker, args=[loop, ], daemon=True)
             self._updater_thread.start()
 
         self._subscribers.append((camera, callback))
@@ -60,7 +66,12 @@ class CameraService(BaseService):
                 time.sleep(0.1)
             else:
                 for camera, callback in self._subscribers:
-                    callback(asyncio.run_coroutine_threadsafe(self.update(camera), loop).result())
+                    try:
+                        callback(asyncio.run_coroutine_threadsafe(self.update(camera), loop).result())
+                    except UnknownApiError as e:
+                        _LOGGER.warning(f"The update method detected an UnknownApiError: {e}")
+                    except ClientOSError as e:
+                        _LOGGER.error(f"A network error was detected: {e}")
 
     async def get_cameras(self) -> List[Camera]:
         if self._devices is None:

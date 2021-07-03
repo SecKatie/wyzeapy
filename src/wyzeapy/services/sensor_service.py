@@ -8,6 +8,9 @@ import logging
 from threading import Thread
 from typing import List, Callable, Tuple, Optional
 
+from aiohttp import ClientOSError
+
+from wyzeapy.exceptions import UnknownApiError
 from wyzeapy.services.base_service import BaseService
 from wyzeapy.types import Device, PropertyIDs, DeviceTypes
 
@@ -52,7 +55,12 @@ class SensorService(BaseService):
         while True:
             for sensor, callback in self._subscribers:
                 _LOGGER.debug(f"Providing update for {sensor.nickname}")
-                callback(asyncio.run_coroutine_threadsafe(self.update(sensor), loop).result())
+                try:
+                    callback(asyncio.run_coroutine_threadsafe(self.update(sensor), loop).result())
+                except UnknownApiError as e:
+                    _LOGGER.warning(f"The update method detected an UnknownApiError: {e}")
+                except ClientOSError as e:
+                    _LOGGER.error(f"A network error was detected: {e}")
 
     async def get_sensors(self) -> List[Sensor]:
         if self._devices is None:

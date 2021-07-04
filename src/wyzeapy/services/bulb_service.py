@@ -78,7 +78,7 @@ class BulbService(BaseService):
 
     async def get_bulbs(self) -> List[Bulb]:
         if self._devices is None:
-            self._devices = await self._get_object_list()
+            self._devices = await self.get_object_list()
 
         bulbs = [device for device in self._devices if device.type is DeviceTypes.LIGHT or
                  device.type is DeviceTypes.MESH_LIGHT]

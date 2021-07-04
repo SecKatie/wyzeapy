@@ -8,7 +8,7 @@ import time
 from abc import abstractmethod, ABC
 from typing import List, Tuple, Any, Dict, Optional
 
-from wyzeapy.const import PHONE_SYSTEM_TYPE, APP_VERSION, APP_VER, PHONE_ID, APP_NAME, OLIVE_APP_ID, APP_INFO
+from wyzeapy.const import PHONE_SYSTEM_TYPE, APP_VERSION, APP_VER, PHONE_ID, APP_NAME, OLIVE_APP_ID, APP_INFO, SC, SV
 from wyzeapy.crypto import olive_create_signature
 from wyzeapy.payload_factory import olive_create_hms_patch_payload, olive_create_hms_payload, \
     olive_create_hms_get_payload, ford_create_payload, olive_create_get_payload, olive_create_post_payload
@@ -18,17 +18,55 @@ from wyzeapy.utils import check_for_errors_standard, check_for_errors_hms, check
 from wyzeapy.wyze_auth_lib import WyzeAuthLib
 
 
-class BaseService(ABC):
+class BaseService:
     _devices: Optional[List[Device]] = None
 
     def __init__(self, auth_lib: WyzeAuthLib):
         self._auth_lib = auth_lib
 
-    @abstractmethod
-    async def update(self, device):
-        pass
+    async def set_push_info(self, on: bool) -> None:
+        await self._auth_lib.refresh_if_should()
 
-    async def _get_object_list(self) -> List[Device]:
+        url = "https://api.wyzecam.com/app/user/set_push_info"
+        payload = {
+            "phone_system_type": PHONE_SYSTEM_TYPE,
+            "app_version": APP_VERSION,
+            "app_ver": APP_VER,
+            "push_switch": "1" if on else "2",
+            "sc": SC,
+            "ts": int(time.time()),
+            "sv": SV,
+            "access_token": self._auth_lib.token.access_token,
+            "phone_id": PHONE_ID,
+            "app_name": APP_NAME
+        }
+
+        response_json = await self._auth_lib.post(url, json=payload)
+
+        check_for_errors_standard(response_json)
+
+    async def get_user_profile(self) -> Dict[Any, Any]:
+        await self._auth_lib.refresh_if_should()
+
+        payload = olive_create_user_info_payload()
+        signature = olive_create_signature(payload, self._auth_lib.token.access_token)
+        headers = {
+            'Accept-Encoding': 'gzip',
+            'User-Agent': 'myapp',
+            'appid': OLIVE_APP_ID,
+            'appinfo': APP_INFO,
+            'phoneid': PHONE_ID,
+            'access_token': self._auth_lib.token.access_token,
+            'signature2': signature
+        }
+
+        url = 'https://wyze-platform-service.wyzecam.com/app/v2/platform/get_user_profile'
+
+        response_json = await self._auth_lib.get(url, headers=headers, params=payload)
+
+        return response_json
+
+    async def get_object_list(self) -> List[Device]:
         """
         Wraps the api.wyzecam.com/app/v2/home_page/get_object_list endpoint
 

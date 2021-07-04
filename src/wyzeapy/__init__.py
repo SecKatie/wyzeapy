@@ -5,11 +5,12 @@
 #  joshua@mulliken.net to receive a copy
 import logging
 import time
-from typing import Dict, Any
+from typing import Dict, Any, Optional, Set
 
 from wyzeapy.const import PHONE_SYSTEM_TYPE, APP_VERSION, SC, APP_VER, SV, PHONE_ID, APP_NAME, OLIVE_APP_ID, APP_INFO
 from wyzeapy.crypto import olive_create_signature
 from wyzeapy.payload_factory import olive_create_user_info_payload
+from wyzeapy.services.base_service import BaseService
 from wyzeapy.services.bulb_service import BulbService
 from wyzeapy.services.camera_service import CameraService
 from wyzeapy.services.hms_service import HMSService
@@ -38,6 +39,7 @@ class Wyzeapy:
         self._sensor_service = None
         self._email = None
         self._password = None
+        self._service: Optional[BaseService] = None
 
     @classmethod
     async def create(cls):
@@ -59,59 +61,27 @@ class Wyzeapy:
         _LOGGER.debug(f"Password: {password}")
         self._password = password
         self._auth_lib = await WyzeAuthLib.create(email, password)
+        self._service = BaseService(self._auth_lib)
+
+    @property
+    async def unique_device_ids(self) -> Set[str]:
+        devices = await self._service.get_object_list()
+        device_ids = set()
+        for device in devices:
+            device_ids.add(device.mac)
+
+        return device_ids
 
     @property
     async def notifications_are_on(self) -> bool:
-        response_json = await self._get_user_profile()
+        response_json = await self._service.get_user_profile()
         return response_json['data']['notification']
 
-    async def _get_user_profile(self) -> Dict[Any, Any]:
-        await self._auth_lib.refresh_if_should()
-
-        payload = olive_create_user_info_payload()
-        signature = olive_create_signature(payload, self._auth_lib.token.access_token)
-        headers = {
-            'Accept-Encoding': 'gzip',
-            'User-Agent': 'myapp',
-            'appid': OLIVE_APP_ID,
-            'appinfo': APP_INFO,
-            'phoneid': PHONE_ID,
-            'access_token': self._auth_lib.token.access_token,
-            'signature2': signature
-        }
-
-        url = 'https://wyze-platform-service.wyzecam.com/app/v2/platform/get_user_profile'
-
-        response_json = await self._auth_lib.get(url, headers=headers, params=payload)
-
-        return response_json
-
     async def enable_notifications(self):
-        await self._set_push_info(True)
+        await self._service.set_push_info(True)
 
     async def disable_notifications(self):
-        await self._set_push_info(False)
-
-    async def _set_push_info(self, on: bool) -> None:
-        await self._auth_lib.refresh_if_should()
-
-        url = "https://api.wyzecam.com/app/user/set_push_info"
-        payload = {
-            "phone_system_type": PHONE_SYSTEM_TYPE,
-            "app_version": APP_VERSION,
-            "app_ver": APP_VER,
-            "push_switch": "1" if on else "2",
-            "sc": SC,
-            "ts": int(time.time()),
-            "sv": SV,
-            "access_token": self._auth_lib.token.access_token,
-            "phone_id": PHONE_ID,
-            "app_name": APP_NAME
-        }
-
-        response_json = await self._auth_lib.post(url, json=payload)
-
-        check_for_errors_standard(response_json)
+        await self._service.set_push_info(False)
 
     @classmethod
     async def valid_login(cls, email: str, password: str) -> bool:

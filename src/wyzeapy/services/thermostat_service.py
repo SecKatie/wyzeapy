@@ -51,7 +51,6 @@ class Thermostat(Device):
         self.heat_set_point: int = 64
         self.fan_mode: FanMode = FanMode.AUTO
         self.hvac_mode: HVACMode = HVACMode.AUTO
-        self.preset: Preset = Preset.HOME
         self.temperature: float = 71
         self.available: bool = True
         self.humidity: int = 50
@@ -82,8 +81,6 @@ class ThermostatService(BaseService):
                 thermostat.fan_mode = FanMode(value)
             elif prop == ThermostatProps.MODE_SYS:
                 thermostat.hvac_mode = HVACMode(value)
-            elif prop == ThermostatProps.CONFIG_SCENARIO:
-                thermostat.preset = Preset(value)
             elif prop == ThermostatProps.TEMPERATURE:
                 thermostat.temperature = float(value)
             elif prop == ThermostatProps.IOT_STATE:

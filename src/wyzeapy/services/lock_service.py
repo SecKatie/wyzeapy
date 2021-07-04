@@ -28,7 +28,7 @@ class LockService(BaseService):
 
     async def get_locks(self):
         if self._devices is None:
-            self._devices = await self._get_object_list()
+            self._devices = await self.get_object_list()
 
         locks = [device for device in self._devices if device.type is DeviceTypes.LOCK]
 

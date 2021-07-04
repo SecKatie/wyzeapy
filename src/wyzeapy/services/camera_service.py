@@ -75,7 +75,7 @@ class CameraService(BaseService):
 
     async def get_cameras(self) -> List[Camera]:
         if self._devices is None:
-            self._devices = await self._get_object_list()
+            self._devices = await self.get_object_list()
 
         cameras = [device for device in self._devices if device.type is DeviceTypes.CAMERA]
 

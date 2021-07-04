@@ -5,13 +5,13 @@
 #  joshua@mulliken.net to receive a copy
 import json
 import time
-from abc import abstractmethod, ABC
 from typing import List, Tuple, Any, Dict, Optional
 
 from wyzeapy.const import PHONE_SYSTEM_TYPE, APP_VERSION, APP_VER, PHONE_ID, APP_NAME, OLIVE_APP_ID, APP_INFO, SC, SV
 from wyzeapy.crypto import olive_create_signature
 from wyzeapy.payload_factory import olive_create_hms_patch_payload, olive_create_hms_payload, \
-    olive_create_hms_get_payload, ford_create_payload, olive_create_get_payload, olive_create_post_payload
+    olive_create_hms_get_payload, ford_create_payload, olive_create_get_payload, olive_create_post_payload, \
+    olive_create_user_info_payload
 from wyzeapy.types import PropertyIDs, Device, ThermostatProps
 from wyzeapy.utils import check_for_errors_standard, check_for_errors_hms, check_for_errors_lock, \
     check_for_errors_thermostat

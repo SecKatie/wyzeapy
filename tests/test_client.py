@@ -45,6 +45,12 @@ class TestWyzeClient(unittest.IsolatedAsyncioTestCase):
         await client.enable_notifications()
         assert await client.notifications_are_on
 
+    async def test_get_device_ids(self):
+        client = await login()
+        device_ids = await client.unique_device_ids
+        for id in device_ids:
+            print(id)
+
     async def test_notifications_on(self):
         client = await login()
         await client.enable_notifications()

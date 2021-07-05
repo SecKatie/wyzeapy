@@ -61,6 +61,9 @@ class SensorService(BaseService):
                     _LOGGER.warning(f"The update method detected an UnknownApiError: {e}")
                 except ClientOSError as e:
                     _LOGGER.error(f"A network error was detected: {e}")
+                except RuntimeError as e:
+                    if e == RuntimeError("Session is closed"):
+                        asyncio.run_coroutine_threadsafe(self._auth_lib.gen_session(), loop).result()
 
     async def get_sensors(self) -> List[Sensor]:
         if self._devices is None:

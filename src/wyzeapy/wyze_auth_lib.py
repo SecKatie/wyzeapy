@@ -34,12 +34,15 @@ class WyzeAuthLib:
         self._password = password
         self.token = token
 
+    async def gen_session(self):
+        self._conn = aiohttp.TCPConnector(ttl_dns_cache=(30 * 60))  # Set DNS cache to 30 minutes
+        self._session = aiohttp.ClientSession(connector=self._conn)
+
     @classmethod
     async def create(cls, username=None, password=None, token: Token = None):
         self = cls(username=username, password=password, token=token)
 
-        self._conn = aiohttp.TCPConnector(ttl_dns_cache=(30 * 60))  # Set DNS cache to 30 minutes
-        self._session = aiohttp.ClientSession(connector=self._conn)
+        await self.gen_session()
 
         if self._username is None and self._password is None and self.token is None:
             raise AttributeError("Must provide a username, password or token")

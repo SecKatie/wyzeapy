@@ -8,7 +8,7 @@ import logging
 from threading import Thread
 from typing import List, Callable, Tuple, Optional
 
-from aiohttp import ClientOSError
+from aiohttp import ClientOSError, ContentTypeError
 
 from wyzeapy.exceptions import UnknownApiError
 from wyzeapy.services.base_service import BaseService
@@ -61,6 +61,8 @@ class SensorService(BaseService):
                     _LOGGER.warning(f"The update method detected an UnknownApiError: {e}")
                 except ClientOSError as e:
                     _LOGGER.error(f"A network error was detected: {e}")
+                except ContentTypeError as e:
+                    _LOGGER.error(f"Server returned unexpected ContentType: {e}")
                 except RuntimeError as e:
                     if e == RuntimeError("Session is closed"):
                         asyncio.run_coroutine_threadsafe(self._auth_lib.gen_session(), loop).result()

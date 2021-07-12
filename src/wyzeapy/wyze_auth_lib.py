@@ -11,7 +11,7 @@ import aiohttp
 from aiohttp import TCPConnector, ClientSession
 
 from wyzeapy.const import API_KEY, PHONE_ID, APP_NAME, APP_VERSION, SC, SV, PHONE_SYSTEM_TYPE, APP_VER
-from wyzeapy.exceptions import UnknownApiError
+from wyzeapy.exceptions import UnknownApiError, AccessTokenError
 from wyzeapy.utils import create_password, check_for_errors_standard
 
 _LOGGER = logging.getLogger(__name__)
@@ -82,7 +82,11 @@ class WyzeAuthLib:
     async def refresh_if_should(self):
         if self.should_refresh:
             _LOGGER.debug("Should refresh. Refreshing...")
-            await self.refresh()
+            try:
+                await self.refresh()
+            except AccessTokenError:
+                _LOGGER.warning("Could not refresh. Logging in with the Username and Password...")
+                self.token = await self.get_token_with_username_password(self._username, self._password)
 
     async def refresh(self) -> None:
         payload = {
@@ -105,6 +109,9 @@ class WyzeAuthLib:
                                             json=payload)
         response_json = await response.json()
         check_for_errors_standard(response_json)
+
+        self.token.access_token = response_json['data']['access_token']
+        self.token.refresh_token = response_json['data']['refresh_token']
 
     async def post(self, url, json=None, headers=None, data=None) -> Dict[Any, Any]:
         _LOGGER.debug("Request:")

@@ -1,11 +1,40 @@
-# Wyzeapy: Python wrapper around the Wyze App APIs
 
-This library is primarily designed to be used in the [ha-wyzeapi](https://github.com/JoshuaMulliken/ha-wyzeapi) Home Assistant integration. If you find it useful in another application please let me know so that I can notify you of any breaking changes.
+# Wyzeapy
 
-## Usage
+A python library for the (unofficial) Wyze Labs web APIs.
 
-For now please look at the implementation of ha-wyzeapi. I do not have the time to write significant documentation until both of these projects are at a feature complete and stable place.
+## Used By
 
-## Code Scanning
+This project is used by the [ha-wyzeapi](https://github.com/JoshuaMulliken/ha-wyzeapi) project. Let me know if you are utilizing it so that I can feature your project here!
 
-Analysis is run through: [sonarcloud](https://sonarcloud.io/dashboard?id=JoshuaMulliken_wyzeapy)
+  
+## Usage/Examples
+
+Getting logged in:
+
+```python
+import asyncio
+from wyzeapy import Wyzeapy
+
+
+async def async_main():
+    client = await Wyzeapy.create()
+    await client.login("EMAIL", "PASSWORD")
+
+
+if __name__ == "__main__":
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(async_main())
+```
+
+
+## License
+
+[GNU GPLv3](https://choosealicense.com/licenses/gpl-3.0/)
+
+  
+## Appendix
+
+[Full doc reference](https://joshuamulliken.github.io/wyzeapy/wyzeapy/)
+
+  

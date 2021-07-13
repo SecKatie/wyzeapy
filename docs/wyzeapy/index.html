@@ -72,7 +72,7 @@ class Wyzeapy:
     @classmethod
     async def create(cls):
         &#34;&#34;&#34;
-        Creates the Wyzeapy class
+        Creates the Wyzeapy class in an async way. Although this is not currently utilized
 
         :return: An instance of the Wyzeapy class
         &#34;&#34;&#34;
@@ -80,10 +80,17 @@ class Wyzeapy:
         return self
 
     async def async_close(self):
-        # await self._client.async_close()
+        &#34;&#34;&#34;This cleans up the async network session&#34;&#34;&#34;
         await self._auth_lib.close()
 
     async def login(self, email, password):
+        &#34;&#34;&#34;
+        Logs the user in and retrieves the users token
+
+        :param email: Users email
+        :param password: Users password
+        &#34;&#34;&#34;
+
         _LOGGER.debug(f&#34;Email: {email}&#34;)
         self._email = email
         _LOGGER.debug(f&#34;Password: {password}&#34;)
@@ -93,6 +100,11 @@ class Wyzeapy:
 
     @property
     async def unique_device_ids(self) -&gt; Set[str]:
+        &#34;&#34;&#34;
+        Returns a list of all device ids known to the server
+        :return: A set containing the unique device ids
+        &#34;&#34;&#34;
+
         devices = await self._service.get_object_list()
         device_ids = set()
         for device in devices:
@@ -102,59 +114,91 @@ class Wyzeapy:
 
     @property
     async def notifications_are_on(self) -&gt; bool:
+        &#34;&#34;&#34;
+        Reports the status of the notifications
+
+        :return: True if the notifications are enabled
+        &#34;&#34;&#34;
+
         response_json = await self._service.get_user_profile()
         return response_json[&#39;data&#39;][&#39;notification&#39;]
 
     async def enable_notifications(self):
+        &#34;&#34;&#34;Enables notifications on the account&#34;&#34;&#34;
+
         await self._service.set_push_info(True)
 
     async def disable_notifications(self):
+        &#34;&#34;&#34;Disables notifications on the account&#34;&#34;&#34;
+
         await self._service.set_push_info(False)
 
     @classmethod
     async def valid_login(cls, email: str, password: str) -&gt; bool:
+        &#34;&#34;&#34;
+        Checks to see if a username and password return a valid login
+
+        :param email: The users email
+        :param password: The users password
+        :return: True if the account can connect
+        &#34;&#34;&#34;
+
         self = cls()
         await self.login(email, password)
         return not self._auth_lib.should_refresh
 
     @property
     async def bulb_service(self) -&gt; BulbService:
+        &#34;&#34;&#34;Returns an instance of the bulb service&#34;&#34;&#34;
+
         if self._bulb_service is None:
             self._bulb_service = BulbService(self._auth_lib)
         return self._bulb_service
 
     @property
     async def switch_service(self) -&gt; SwitchService:
+        &#34;&#34;&#34;Returns an instance of the switch service&#34;&#34;&#34;
+
         if self._switch_service is None:
             self._switch_service = SwitchService(self._auth_lib)
         return self._switch_service
 
     @property
     async def camera_service(self) -&gt; CameraService:
+        &#34;&#34;&#34;Returns an instance of the camera service&#34;&#34;&#34;
+
         if self._camera_service is None:
             self._camera_service = CameraService(self._auth_lib)
         return self._camera_service
 
     @property
     async def thermostat_service(self) -&gt; ThermostatService:
+        &#34;&#34;&#34;Returns an instance of the thermostat service&#34;&#34;&#34;
+
         if self._thermostat_service is None:
             self._thermostat_service = ThermostatService(self._auth_lib)
         return self._thermostat_service
 
     @property
     async def hms_service(self) -&gt; HMSService:
+        &#34;&#34;&#34;Returns an instance of the hms service&#34;&#34;&#34;
+
         if self._hms_service is None:
             self._hms_service = await HMSService.create(self._auth_lib)
         return self._hms_service
 
     @property
     async def lock_service(self) -&gt; LockService:
+        &#34;&#34;&#34;Returns an instance of the lock service&#34;&#34;&#34;
+
         if self._lock_service is None:
             self._lock_service = LockService(self._auth_lib)
         return self._lock_service
 
     @property
     async def sensor_service(self) -&gt; SensorService:
+        &#34;&#34;&#34;Returns an instance of the sensor service&#34;&#34;&#34;
+
         if self._sensor_service is None:
             self._sensor_service = SensorService(self._auth_lib)
         return self._sensor_service</code></pre>
@@ -233,7 +277,7 @@ class Wyzeapy:
     @classmethod
     async def create(cls):
         &#34;&#34;&#34;
-        Creates the Wyzeapy class
+        Creates the Wyzeapy class in an async way. Although this is not currently utilized
 
         :return: An instance of the Wyzeapy class
         &#34;&#34;&#34;
@@ -241,10 +285,17 @@ class Wyzeapy:
         return self
 
     async def async_close(self):
-        # await self._client.async_close()
+        &#34;&#34;&#34;This cleans up the async network session&#34;&#34;&#34;
         await self._auth_lib.close()
 
     async def login(self, email, password):
+        &#34;&#34;&#34;
+        Logs the user in and retrieves the users token
+
+        :param email: Users email
+        :param password: Users password
+        &#34;&#34;&#34;
+
         _LOGGER.debug(f&#34;Email: {email}&#34;)
         self._email = email
         _LOGGER.debug(f&#34;Password: {password}&#34;)
@@ -254,6 +305,11 @@ class Wyzeapy:
 
     @property
     async def unique_device_ids(self) -&gt; Set[str]:
+        &#34;&#34;&#34;
+        Returns a list of all device ids known to the server
+        :return: A set containing the unique device ids
+        &#34;&#34;&#34;
+
         devices = await self._service.get_object_list()
         device_ids = set()
         for device in devices:
@@ -263,59 +319,91 @@ class Wyzeapy:
 
     @property
     async def notifications_are_on(self) -&gt; bool:
+        &#34;&#34;&#34;
+        Reports the status of the notifications
+
+        :return: True if the notifications are enabled
+        &#34;&#34;&#34;
+
         response_json = await self._service.get_user_profile()
         return response_json[&#39;data&#39;][&#39;notification&#39;]
 
     async def enable_notifications(self):
+        &#34;&#34;&#34;Enables notifications on the account&#34;&#34;&#34;
+
         await self._service.set_push_info(True)
 
     async def disable_notifications(self):
+        &#34;&#34;&#34;Disables notifications on the account&#34;&#34;&#34;
+
         await self._service.set_push_info(False)
 
     @classmethod
     async def valid_login(cls, email: str, password: str) -&gt; bool:
+        &#34;&#34;&#34;
+        Checks to see if a username and password return a valid login
+
+        :param email: The users email
+        :param password: The users password
+        :return: True if the account can connect
+        &#34;&#34;&#34;
+
         self = cls()
         await self.login(email, password)
         return not self._auth_lib.should_refresh
 
     @property
     async def bulb_service(self) -&gt; BulbService:
+        &#34;&#34;&#34;Returns an instance of the bulb service&#34;&#34;&#34;
+
         if self._bulb_service is None:
             self._bulb_service = BulbService(self._auth_lib)
         return self._bulb_service
 
     @property
     async def switch_service(self) -&gt; SwitchService:
+        &#34;&#34;&#34;Returns an instance of the switch service&#34;&#34;&#34;
+
         if self._switch_service is None:
             self._switch_service = SwitchService(self._auth_lib)
         return self._switch_service
 
     @property
     async def camera_service(self) -&gt; CameraService:
+        &#34;&#34;&#34;Returns an instance of the camera service&#34;&#34;&#34;
+
         if self._camera_service is None:
             self._camera_service = CameraService(self._auth_lib)
         return self._camera_service
 
     @property
     async def thermostat_service(self) -&gt; ThermostatService:
+        &#34;&#34;&#34;Returns an instance of the thermostat service&#34;&#34;&#34;
+
         if self._thermostat_service is None:
             self._thermostat_service = ThermostatService(self._auth_lib)
         return self._thermostat_service
 
     @property
     async def hms_service(self) -&gt; HMSService:
+        &#34;&#34;&#34;Returns an instance of the hms service&#34;&#34;&#34;
+
         if self._hms_service is None:
             self._hms_service = await HMSService.create(self._auth_lib)
         return self._hms_service
 
     @property
     async def lock_service(self) -&gt; LockService:
+        &#34;&#34;&#34;Returns an instance of the lock service&#34;&#34;&#34;
+
         if self._lock_service is None:
             self._lock_service = LockService(self._auth_lib)
         return self._lock_service
 
     @property
     async def sensor_service(self) -&gt; SensorService:
+        &#34;&#34;&#34;Returns an instance of the sensor service&#34;&#34;&#34;
+
         if self._sensor_service is None:
             self._sensor_service = SensorService(self._auth_lib)
         return self._sensor_service</code></pre>
@@ -326,7 +414,7 @@ class Wyzeapy:
 <span>async def <span class="ident">create</span></span>(<span>)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Creates the Wyzeapy class</p>
+<div class="desc"><p>Creates the Wyzeapy class in an async way. Although this is not currently utilized</p>
 <p>:return: An instance of the Wyzeapy class</p></div>
 <details class="source">
 <summary>
@@ -335,7 +423,7 @@ class Wyzeapy:
 <pre><code class="python">@classmethod
 async def create(cls):
     &#34;&#34;&#34;
-    Creates the Wyzeapy class
+    Creates the Wyzeapy class in an async way. Although this is not currently utilized
 
     :return: An instance of the Wyzeapy class
     &#34;&#34;&#34;
@@ -347,13 +435,24 @@ async def create(cls):
 <span>async def <span class="ident">valid_login</span></span>(<span>email: str, password: str) ‑> bool</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Checks to see if a username and password return a valid login</p>
+<p>:param email: The users email
+:param password: The users password
+:return: True if the account can connect</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@classmethod
 async def valid_login(cls, email: str, password: str) -&gt; bool:
+    &#34;&#34;&#34;
+    Checks to see if a username and password return a valid login
+
+    :param email: The users email
+    :param password: The users password
+    :return: True if the account can connect
+    &#34;&#34;&#34;
+
     self = cls()
     await self.login(email, password)
     return not self._auth_lib.should_refresh</code></pre>
@@ -364,13 +463,15 @@ async def valid_login(cls, email: str, password: str) -&gt; bool:
 <dl>
 <dt id="wyzeapy.Wyzeapy.bulb_service"><code class="name">var <span class="ident">bulb_service</span> : <a title="wyzeapy.services.bulb_service.BulbService" href="services/bulb_service.html#wyzeapy.services.bulb_service.BulbService">BulbService</a></code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Returns an instance of the bulb service</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
 async def bulb_service(self) -&gt; BulbService:
+    &#34;&#34;&#34;Returns an instance of the bulb service&#34;&#34;&#34;
+
     if self._bulb_service is None:
         self._bulb_service = BulbService(self._auth_lib)
     return self._bulb_service</code></pre>
@@ -378,13 +479,15 @@ async def bulb_service(self) -&gt; BulbService:
 </dd>
 <dt id="wyzeapy.Wyzeapy.camera_service"><code class="name">var <span class="ident">camera_service</span> : <a title="wyzeapy.services.camera_service.CameraService" href="services/camera_service.html#wyzeapy.services.camera_service.CameraService">CameraService</a></code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Returns an instance of the camera service</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
 async def camera_service(self) -&gt; CameraService:
+    &#34;&#34;&#34;Returns an instance of the camera service&#34;&#34;&#34;
+
     if self._camera_service is None:
         self._camera_service = CameraService(self._auth_lib)
     return self._camera_service</code></pre>
@@ -392,13 +495,15 @@ async def camera_service(self) -&gt; CameraService:
 </dd>
 <dt id="wyzeapy.Wyzeapy.hms_service"><code class="name">var <span class="ident">hms_service</span> : <a title="wyzeapy.services.hms_service.HMSService" href="services/hms_service.html#wyzeapy.services.hms_service.HMSService">HMSService</a></code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Returns an instance of the hms service</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
 async def hms_service(self) -&gt; HMSService:
+    &#34;&#34;&#34;Returns an instance of the hms service&#34;&#34;&#34;
+
     if self._hms_service is None:
         self._hms_service = await HMSService.create(self._auth_lib)
     return self._hms_service</code></pre>
@@ -406,13 +511,15 @@ async def hms_service(self) -&gt; HMSService:
 </dd>
 <dt id="wyzeapy.Wyzeapy.lock_service"><code class="name">var <span class="ident">lock_service</span> : <a title="wyzeapy.services.lock_service.LockService" href="services/lock_service.html#wyzeapy.services.lock_service.LockService">LockService</a></code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Returns an instance of the lock service</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
 async def lock_service(self) -&gt; LockService:
+    &#34;&#34;&#34;Returns an instance of the lock service&#34;&#34;&#34;
+
     if self._lock_service is None:
         self._lock_service = LockService(self._auth_lib)
     return self._lock_service</code></pre>
@@ -420,26 +527,35 @@ async def lock_service(self) -&gt; LockService:
 </dd>
 <dt id="wyzeapy.Wyzeapy.notifications_are_on"><code class="name">var <span class="ident">notifications_are_on</span> : bool</code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Reports the status of the notifications</p>
+<p>:return: True if the notifications are enabled</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
 async def notifications_are_on(self) -&gt; bool:
+    &#34;&#34;&#34;
+    Reports the status of the notifications
+
+    :return: True if the notifications are enabled
+    &#34;&#34;&#34;
+
     response_json = await self._service.get_user_profile()
     return response_json[&#39;data&#39;][&#39;notification&#39;]</code></pre>
 </details>
 </dd>
 <dt id="wyzeapy.Wyzeapy.sensor_service"><code class="name">var <span class="ident">sensor_service</span> : <a title="wyzeapy.services.sensor_service.SensorService" href="services/sensor_service.html#wyzeapy.services.sensor_service.SensorService">SensorService</a></code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Returns an instance of the sensor service</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
 async def sensor_service(self) -&gt; SensorService:
+    &#34;&#34;&#34;Returns an instance of the sensor service&#34;&#34;&#34;
+
     if self._sensor_service is None:
         self._sensor_service = SensorService(self._auth_lib)
     return self._sensor_service</code></pre>
@@ -447,13 +563,15 @@ async def sensor_service(self) -&gt; SensorService:
 </dd>
 <dt id="wyzeapy.Wyzeapy.switch_service"><code class="name">var <span class="ident">switch_service</span> : <a title="wyzeapy.services.switch_service.SwitchService" href="services/switch_service.html#wyzeapy.services.switch_service.SwitchService">SwitchService</a></code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Returns an instance of the switch service</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
 async def switch_service(self) -&gt; SwitchService:
+    &#34;&#34;&#34;Returns an instance of the switch service&#34;&#34;&#34;
+
     if self._switch_service is None:
         self._switch_service = SwitchService(self._auth_lib)
     return self._switch_service</code></pre>
@@ -461,13 +579,15 @@ async def switch_service(self) -&gt; SwitchService:
 </dd>
 <dt id="wyzeapy.Wyzeapy.thermostat_service"><code class="name">var <span class="ident">thermostat_service</span> : <a title="wyzeapy.services.thermostat_service.ThermostatService" href="services/thermostat_service.html#wyzeapy.services.thermostat_service.ThermostatService">ThermostatService</a></code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Returns an instance of the thermostat service</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
 async def thermostat_service(self) -&gt; ThermostatService:
+    &#34;&#34;&#34;Returns an instance of the thermostat service&#34;&#34;&#34;
+
     if self._thermostat_service is None:
         self._thermostat_service = ThermostatService(self._auth_lib)
     return self._thermostat_service</code></pre>
@@ -475,13 +595,19 @@ async def thermostat_service(self) -&gt; ThermostatService:
 </dd>
 <dt id="wyzeapy.Wyzeapy.unique_device_ids"><code class="name">var <span class="ident">unique_device_ids</span> : Set[str]</code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Returns a list of all device ids known to the server
+:return: A set containing the unique device ids</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
 async def unique_device_ids(self) -&gt; Set[str]:
+    &#34;&#34;&#34;
+    Returns a list of all device ids known to the server
+    :return: A set containing the unique device ids
+    &#34;&#34;&#34;
+
     devices = await self._service.get_object_list()
     device_ids = set()
     for device in devices:
@@ -497,13 +623,13 @@ async def unique_device_ids(self) -&gt; Set[str]:
 <span>async def <span class="ident">async_close</span></span>(<span>self)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>This cleans up the async network session</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">async def async_close(self):
-    # await self._client.async_close()
+    &#34;&#34;&#34;This cleans up the async network session&#34;&#34;&#34;
     await self._auth_lib.close()</code></pre>
 </details>
 </dd>
@@ -511,12 +637,14 @@ async def unique_device_ids(self) -&gt; Set[str]:
 <span>async def <span class="ident">disable_notifications</span></span>(<span>self)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Disables notifications on the account</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">async def disable_notifications(self):
+    &#34;&#34;&#34;Disables notifications on the account&#34;&#34;&#34;
+
     await self._service.set_push_info(False)</code></pre>
 </details>
 </dd>
@@ -524,12 +652,14 @@ async def unique_device_ids(self) -&gt; Set[str]:
 <span>async def <span class="ident">enable_notifications</span></span>(<span>self)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Enables notifications on the account</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">async def enable_notifications(self):
+    &#34;&#34;&#34;Enables notifications on the account&#34;&#34;&#34;
+
     await self._service.set_push_info(True)</code></pre>
 </details>
 </dd>
@@ -537,12 +667,21 @@ async def unique_device_ids(self) -&gt; Set[str]:
 <span>async def <span class="ident">login</span></span>(<span>self, email, password)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Logs the user in and retrieves the users token</p>
+<p>:param email: Users email
+:param password: Users password</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">async def login(self, email, password):
+    &#34;&#34;&#34;
+    Logs the user in and retrieves the users token
+
+    :param email: Users email
+    :param password: Users password
+    &#34;&#34;&#34;
+
     _LOGGER.debug(f&#34;Email: {email}&#34;)
     self._email = email
     _LOGGER.debug(f&#34;Password: {password}&#34;)

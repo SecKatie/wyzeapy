@@ -4,14 +4,14 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-mypy = "*"
-coverage = "*"
 aiohttp = "*"
 aiodns = "*"
 cchardet = "*"
-wheel = "*"
 
 [dev-packages]
+mypy = "*"
+coverage = "*"
+wheel = "*"
 
 [requires]
 python_version = "3.8"

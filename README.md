@@ -35,6 +35,7 @@ if __name__ == "__main__":
   
 ## Appendix
 
-[Full doc reference](https://joshuamulliken.github.io/wyzeapy/wyzeapy/)
+[Full doc reference](https://joshuamulliken.github.io/wyzeapy/wyzeapy/) - Please note that I am still working on doc 
+strings so please be patient
 
   

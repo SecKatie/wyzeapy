@@ -44,7 +44,7 @@ class Wyzeapy:
     @classmethod
     async def create(cls):
         """
-        Creates the Wyzeapy class
+        Creates the Wyzeapy class in an async way. Although this is not currently utilized
 
         :return: An instance of the Wyzeapy class
         """
@@ -52,10 +52,17 @@ class Wyzeapy:
         return self
 
     async def async_close(self):
-        # await self._client.async_close()
+        """This cleans up the async network session"""
         await self._auth_lib.close()
 
     async def login(self, email, password):
+        """
+        Logs the user in and retrieves the users token
+
+        :param email: Users email
+        :param password: Users password
+        """
+
         _LOGGER.debug(f"Email: {email}")
         self._email = email
         _LOGGER.debug(f"Password: {password}")
@@ -65,6 +72,11 @@ class Wyzeapy:
 
     @property
     async def unique_device_ids(self) -> Set[str]:
+        """
+        Returns a list of all device ids known to the server
+        :return: A set containing the unique device ids
+        """
+
         devices = await self._service.get_object_list()
         device_ids = set()
         for device in devices:
@@ -74,59 +86,91 @@ class Wyzeapy:
 
     @property
     async def notifications_are_on(self) -> bool:
+        """
+        Reports the status of the notifications
+
+        :return: True if the notifications are enabled
+        """
+
         response_json = await self._service.get_user_profile()
         return response_json['data']['notification']
 
     async def enable_notifications(self):
+        """Enables notifications on the account"""
+
         await self._service.set_push_info(True)
 
     async def disable_notifications(self):
+        """Disables notifications on the account"""
+
         await self._service.set_push_info(False)
 
     @classmethod
     async def valid_login(cls, email: str, password: str) -> bool:
+        """
+        Checks to see if a username and password return a valid login
+
+        :param email: The users email
+        :param password: The users password
+        :return: True if the account can connect
+        """
+
         self = cls()
         await self.login(email, password)
         return not self._auth_lib.should_refresh
 
     @property
     async def bulb_service(self) -> BulbService:
+        """Returns an instance of the bulb service"""
+
         if self._bulb_service is None:
             self._bulb_service = BulbService(self._auth_lib)
         return self._bulb_service
 
     @property
     async def switch_service(self) -> SwitchService:
+        """Returns an instance of the switch service"""
+
         if self._switch_service is None:
             self._switch_service = SwitchService(self._auth_lib)
         return self._switch_service
 
     @property
     async def camera_service(self) -> CameraService:
+        """Returns an instance of the camera service"""
+
         if self._camera_service is None:
             self._camera_service = CameraService(self._auth_lib)
         return self._camera_service
 
     @property
     async def thermostat_service(self) -> ThermostatService:
+        """Returns an instance of the thermostat service"""
+
         if self._thermostat_service is None:
             self._thermostat_service = ThermostatService(self._auth_lib)
         return self._thermostat_service
 
     @property
     async def hms_service(self) -> HMSService:
+        """Returns an instance of the hms service"""
+
         if self._hms_service is None:
             self._hms_service = await HMSService.create(self._auth_lib)
         return self._hms_service
 
     @property
     async def lock_service(self) -> LockService:
+        """Returns an instance of the lock service"""
+
         if self._lock_service is None:
             self._lock_service = LockService(self._auth_lib)
         return self._lock_service
 
     @property
     async def sensor_service(self) -> SensorService:
+        """Returns an instance of the sensor service"""
+
         if self._sensor_service is None:
             self._sensor_service = SensorService(self._auth_lib)
         return self._sensor_service

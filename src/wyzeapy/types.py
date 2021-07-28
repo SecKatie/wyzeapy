@@ -175,7 +175,6 @@ class Event:
     is_feedback_face: int
     is_feedback_person: int
     file_list: List[Dict[Any, Any]]
-    typed_file_list: List[File] = []
     event_params: Dict[Any, Any]
     recognized_instance_list: List[Any]
     tag_list: List[Any]
@@ -184,9 +183,6 @@ class Event:
     def __init__(self, dictionary: Dict[Any, Any]):
         for k, v in dictionary.items():
             setattr(self, k, v)
-        if len(self.file_list) > 0:
-            for file in self.file_list:
-                self.typed_file_list.append(File(file))
 
 
 class HMSStatus(Enum):

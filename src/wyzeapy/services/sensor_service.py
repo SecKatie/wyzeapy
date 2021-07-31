@@ -51,6 +51,9 @@ class SensorService(BaseService):
 
         self._subscribers.append((sensor, callback))
 
+    async def deregister_for_updates(self, sensor: Sensor):
+        self._subscribers = [(sense, callback) for sense, callback in self._subscribers if sense.mac != sensor.mac]
+
     def update_worker(self, loop):
         while True:
             for sensor, callback in self._subscribers:

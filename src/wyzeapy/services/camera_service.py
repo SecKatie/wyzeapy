@@ -60,6 +60,9 @@ class CameraService(BaseService):
 
         self._subscribers.append((camera, callback))
 
+    async def deregister_for_updates(self, camera: Camera):
+        self._subscribers = [(cam, callback) for cam, callback in self._subscribers if cam.mac != camera.mac]
+
     def update_worker(self, loop):
         while True:
             if len(self._subscribers) < 1:

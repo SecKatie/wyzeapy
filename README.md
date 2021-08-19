@@ -27,6 +27,10 @@ if __name__ == "__main__":
     loop.run_until_complete(async_main())
 ```
 
+## Thanks to:
+
+- [@shauntarves](https://github.com/shauntarves): for contributing the App ID and Signing Secret
+
 
 ## License
 

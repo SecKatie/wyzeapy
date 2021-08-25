@@ -20,6 +20,7 @@ from wyzeapy.services.switch_service import SwitchService
 from wyzeapy.services.thermostat_service import ThermostatService
 from wyzeapy.utils import check_for_errors_standard
 from wyzeapy.wyze_auth_lib import WyzeAuthLib
+from wyzeapy.exceptions import TwoFactorAuthenticationEnabled
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -61,6 +62,9 @@ class Wyzeapy:
 
         :param email: Users email
         :param password: Users password
+
+        :raises:
+            TwoFactorAuthenticationEnabled: indicates that the account has 2fa enabled
         """
 
         _LOGGER.debug(f"Email: {email}")
@@ -68,6 +72,23 @@ class Wyzeapy:
         _LOGGER.debug(f"Password: {password}")
         self._password = password
         self._auth_lib = await WyzeAuthLib.create(email, password)
+        try:
+            await self._auth_lib.get_token_with_username_password(email, password)
+            self._service = BaseService(self._auth_lib)
+        except TwoFactorAuthenticationEnabled as error:
+            raise error
+
+    async def login_with_2fa(self, verification_code):
+        """
+        Logs the user in and retrieves the users token
+
+        :param verification_code: Users 2fa verification code
+
+        """
+
+        _LOGGER.debug(f"Email: {verification_code}")
+
+        await self._auth_lib.get_token_with_2fa(verification_code)
         self._service = BaseService(self._auth_lib)
 
     @property

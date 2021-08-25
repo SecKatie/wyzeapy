@@ -67,10 +67,10 @@ class WyzeAuthLib:
         }
 
         headers = {
-                    'Phone-Id': PHONE_ID,
-                    'User-Agent': APP_INFO,
-                    'X-API-Key': API_KEY,
-                }
+            'Phone-Id': PHONE_ID,
+            'User-Agent': APP_INFO,
+            'X-API-Key': API_KEY,
+        }
 
         response_json = await self.post("https://auth-prod.api.wyze.com/user/login", headers=headers,
                                         json=login_payload)

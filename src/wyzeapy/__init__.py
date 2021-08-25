@@ -86,7 +86,7 @@ class Wyzeapy:
 
         """
 
-        _LOGGER.debug(f"Email: {verification_code}")
+        _LOGGER.debug(f"Verification Code: {verification_code}")
 
         await self._auth_lib.get_token_with_2fa(verification_code)
         self._service = BaseService(self._auth_lib)

@@ -102,7 +102,7 @@ class WyzeAuthLib:
         return Token(response_json['access_token'], response_json['refresh_token'])
 
     @property
-    async def should_refresh(self) -> bool:
+    def should_refresh(self) -> bool:
         return time.time() >= self.token.refresh_time
 
     async def refresh_if_should(self):

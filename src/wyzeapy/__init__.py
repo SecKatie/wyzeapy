@@ -19,7 +19,7 @@ from wyzeapy.services.sensor_service import SensorService
 from wyzeapy.services.switch_service import SwitchService
 from wyzeapy.services.thermostat_service import ThermostatService
 from wyzeapy.utils import check_for_errors_standard
-from wyzeapy.wyze_auth_lib import WyzeAuthLib
+from wyzeapy.wyze_auth_lib import WyzeAuthLib, Token
 from wyzeapy.exceptions import TwoFactorAuthenticationEnabled
 
 _LOGGER = logging.getLogger(__name__)
@@ -56,12 +56,13 @@ class Wyzeapy:
         """This cleans up the async network session"""
         await self._auth_lib.close()
 
-    async def login(self, email, password):
+    async def login(self, email, password, token: Token = None):
         """
         Logs the user in and retrieves the users token
 
         :param email: Users email
         :param password: Users password
+        :param token: Users existing token from a previous session
 
         :raises:
             TwoFactorAuthenticationEnabled: indicates that the account has 2fa enabled
@@ -71,10 +72,15 @@ class Wyzeapy:
         self._email = email
         _LOGGER.debug(f"Password: {password}")
         self._password = password
-        self._auth_lib = await WyzeAuthLib.create(email, password)
         try:
-            await self._auth_lib.get_token_with_username_password(email, password)
-            self._service = BaseService(self._auth_lib)
+            if token:
+                # User token supplied, lets go ahead and use it and refresh the access token if needed.
+                self._auth_lib = await WyzeAuthLib.create(email, password, token)
+                await self._auth_lib.refresh_if_should()
+            else:
+                self._auth_lib = await WyzeAuthLib.create(email, password)
+                await self._auth_lib.get_token_with_username_password(email, password)
+                self._service = BaseService(self._auth_lib)
         except TwoFactorAuthenticationEnabled as error:
             raise error
 

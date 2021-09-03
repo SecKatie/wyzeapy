@@ -3,6 +3,7 @@
 #  of the attached license. You should have received a copy of
 #  the license with this file. If not, please write to:
 #  joshua@mulliken.net to receive a copy
+import asyncio
 import logging
 import time
 from typing import Dict, Any, Optional
@@ -18,10 +19,22 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class Token:
-    def __init__(self, access_token, refresh_token, last_login_time):
+    # Token is good for 216,000 seconds (60 hours) but 48 hours seems like a reasonable refresh interval
+    REFRESH_INTERVAL = 172800
+
+    def __init__(self, access_token, refresh_token):
         self.access_token: str = access_token
         self.refresh_token: str = refresh_token
-        self.last_login_time: float = last_login_time
+        self.refresh_time: float = time.time() + Token.REFRESH_INTERVAL
+
+    @property
+    def access_token(self):
+        return self._access_token
+
+    @access_token.setter
+    def access_token(self, access_token):
+        self._access_token = access_token
+        self._refresh_time = time.time() + Token.REFRESH_INTERVAL
 
 
 class WyzeAuthLib:
@@ -36,6 +49,7 @@ class WyzeAuthLib:
         self.session_id = ""
         self.verification_id = ""
         self.two_factor_type = None
+        self.refresh_lock = asyncio.Lock()
 
     async def gen_session(self):
         self._conn = aiohttp.TCPConnector(ttl_dns_cache=(30 * 60))  # Set DNS cache to 30 minutes
@@ -100,7 +114,7 @@ class WyzeAuthLib:
                 self.session_id = response_json['session_id']
                 raise TwoFactorAuthenticationEnabled
 
-        self.token = Token(response_json['access_token'], response_json['refresh_token'], time.time())
+        self.token = Token(response_json['access_token'], response_json['refresh_token'])
         return self.token
 
     async def get_token_with_2fa(self, verification_code) -> Token:
@@ -132,21 +146,23 @@ class WyzeAuthLib:
             'https://auth-prod.api.wyze.com/user/login',
             headers=headers, json=payload)
 
-        self.token = Token(response_json['access_token'], response_json['refresh_token'], time.time(), True)
+        self.token = Token(response_json['access_token'], response_json['refresh_token'])
         return self.token
 
     @property
-    def should_refresh(self) -> bool:
-        return time.time() - self.token.last_login_time > 59 * 60 * 60
+    async def should_refresh(self) -> bool:
+        return time.time() >= self.token.refresh_time
 
     async def refresh_if_should(self):
         if self.should_refresh:
-            _LOGGER.debug("Should refresh. Refreshing...")
-            try:
-                await self.refresh()
-            except AccessTokenError:
-                _LOGGER.warning("Could not refresh. Logging in with the Username and Password...")
-                self.token = await self.get_token_with_username_password(self._username, self._password)
+            async with self.refresh_lock:
+                if self.should_refresh:
+                    _LOGGER.debug("Should refresh. Refreshing...")
+                    try:
+                        await self.refresh()
+                    except AccessTokenError:
+                        _LOGGER.warning("Could not refresh. Logging in with the Username and Password...")
+                        self.token = await self.get_token_with_username_password(self._username, self._password)
 
     async def refresh(self) -> None:
         payload = {

@@ -39,8 +39,6 @@ class Token:
 
 class WyzeAuthLib:
     token: Optional[Token] = None
-    _conn: TCPConnector
-    _session: ClientSession
 
     def __init__(self, username=None, password=None, token: Token = None, token_callback=None):
         self._username = username
@@ -52,15 +50,9 @@ class WyzeAuthLib:
         self.refresh_lock = asyncio.Lock()
         self.token_callback: function = token_callback
 
-    async def gen_session(self):
-        self._conn = aiohttp.TCPConnector(ttl_dns_cache=(30 * 60))  # Set DNS cache to 30 minutes
-        self._session = aiohttp.ClientSession(connector=self._conn)
-
     @classmethod
     async def create(cls, username=None, password=None, token: Token = None, token_callback: function=None):
         self = cls(username=username, password=password, token=token, token_callbacks=token_callback)
-
-        await self.gen_session()
 
         if self._username is None and self._password is None and self.token is None:
             raise AttributeError("Must provide a username, password or token")
@@ -69,9 +61,6 @@ class WyzeAuthLib:
             assert self._password != ""
 
         return self
-
-    async def close(self):
-        await self._session.close()
 
     async def get_token_with_username_password(self, username, password) -> Token:
         self._username = username
@@ -184,8 +173,9 @@ class WyzeAuthLib:
             "X-API-Key": API_KEY
         }
 
-        response = await self._session.post("https://api.wyzecam.com/app/user/refresh_token", headers=headers,
-                                            json=payload)
+        async with ClientSession(connector=TCPConnector(ttl_dns_cache=(30 * 60))) as _session:
+            response = await _session.post("https://api.wyzecam.com/app/user/refresh_token", headers=headers,
+                                                json=payload)
         response_json = await response.json()
         check_for_errors_standard(response_json)
 
@@ -200,17 +190,21 @@ class WyzeAuthLib:
         _LOGGER.debug(f"headers: {headers}")
         _LOGGER.debug(f"data: {data}")
 
-        response = await self._session.post(url, json=json, headers=headers, data=data)
-        return await response.json()
+        async with ClientSession(connector=TCPConnector(ttl_dns_cache=(30 * 60))) as _session:
+            response = await _session.post(url, json=json, headers=headers, data=data)
+            return await response.json()
 
     async def get(self, url, headers=None, params=None) -> Dict[Any, Any]:
-        response = await self._session.get(url, params=params, headers=headers)
-        return await response.json()
+        async with ClientSession(connector=TCPConnector(ttl_dns_cache=(30 * 60))) as _session:
+            response = await _session.get(url, params=params, headers=headers)
+            return await response.json()
 
     async def patch(self, url, headers=None, params=None, json=None) -> Dict[Any, Any]:
-        response = await self._session.patch(url, headers=headers, params=params, json=json)
-        return await response.json()
+        async with ClientSession(connector=TCPConnector(ttl_dns_cache=(30 * 60))) as _session:
+            response = await _session.patch(url, headers=headers, params=params, json=json)
+            return await response.json()
 
     async def delete(self, url, headers=None, json=None) -> Dict[Any, Any]:
-        response = await self._session.delete(url, headers=headers, json=json)
-        return await response.json()
+        async with ClientSession(connector=TCPConnector(ttl_dns_cache=(30 * 60))) as _session:
+            response = await _session.delete(url, headers=headers, json=json)
+            return await response.json()

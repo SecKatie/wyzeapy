@@ -54,10 +54,6 @@ class Wyzeapy:
         self = cls()
         return self
 
-    async def async_close(self):
-        """This cleans up the async network session"""
-        await self._auth_lib.close()
-
     async def login(self, email, password, token: Token = None):
         """
         Logs the user in and retrieves the users token

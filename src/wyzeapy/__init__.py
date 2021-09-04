@@ -83,7 +83,7 @@ class Wyzeapy:
         except TwoFactorAuthenticationEnabled as error:
             raise error
 
-    async def login_with_2fa(self, verification_code):
+    async def login_with_2fa(self, verification_code) -> Token:
         """
         Logs the user in and retrieves the users token
 
@@ -95,6 +95,7 @@ class Wyzeapy:
 
         await self._auth_lib.get_token_with_2fa(verification_code)
         self._service = BaseService(self._auth_lib)
+        return self._auth_lib.token
 
     async def execute_token_callbacks(self, token: Token):
         """

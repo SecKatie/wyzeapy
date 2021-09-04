@@ -75,6 +75,7 @@ class Wyzeapy:
                 # User token supplied, lets go ahead and use it and refresh the access token if needed.
                 self._auth_lib = await WyzeAuthLib.create(email, password, token, token_callbacks=self.execute_token_callbacks)
                 await self._auth_lib.refresh_if_should()
+                self._service = BaseService(self._auth_lib)
             else:
                 self._auth_lib = await WyzeAuthLib.create(email, password, token_callbacks=self.execute_token_callbacks)
                 await self._auth_lib.get_token_with_username_password(email, password)

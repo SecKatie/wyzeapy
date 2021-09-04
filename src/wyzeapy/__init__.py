@@ -73,11 +73,11 @@ class Wyzeapy:
         try:
             if token:
                 # User token supplied, lets go ahead and use it and refresh the access token if needed.
-                self._auth_lib = await WyzeAuthLib.create(email, password, token, token_callbacks=self.execute_token_callbacks)
+                self._auth_lib = await WyzeAuthLib.create(email, password, token, token_callback=self.execute_token_callbacks)
                 await self._auth_lib.refresh_if_should()
                 self._service = BaseService(self._auth_lib)
             else:
-                self._auth_lib = await WyzeAuthLib.create(email, password, token_callbacks=self.execute_token_callbacks)
+                self._auth_lib = await WyzeAuthLib.create(email, password, token_callback=self.execute_token_callbacks)
                 await self._auth_lib.get_token_with_username_password(email, password)
                 self._service = BaseService(self._auth_lib)
         except TwoFactorAuthenticationEnabled as error:
@@ -110,7 +110,7 @@ class Wyzeapy:
             else:
                 callback(token)
 
-    def register_for_token_callback(self, callback_function: function):
+    def register_for_token_callback(self, callback_function):
         """
         Register a callback to be called whenever the user's token is modified
 
@@ -119,7 +119,7 @@ class Wyzeapy:
         """
         self._token_callbacks.add(callback_function)
 
-    def unregister_for_token_callback(self, callback_function: function):
+    def unregister_for_token_callback(self, callback_function):
         """
         Register a callback to be called whenever the user's token is modified
 

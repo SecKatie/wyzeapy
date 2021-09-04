@@ -55,11 +55,11 @@ class WyzeAuthLib:
         self.verification_id = ""
         self.two_factor_type = None
         self.refresh_lock = asyncio.Lock()
-        self.token_callback: function = token_callback
+        self.token_callback = token_callback
 
     @classmethod
-    async def create(cls, username=None, password=None, token: Token = None, token_callback: function=None):
-        self = cls(username=username, password=password, token=token, token_callbacks=token_callback)
+    async def create(cls, username=None, password=None, token: Token = None, token_callback=None):
+        self = cls(username=username, password=password, token=token, token_callback=token_callback)
 
         if self._username is None and self._password is None and self.token is None:
             raise AttributeError("Must provide a username, password or token")
@@ -112,7 +112,7 @@ class WyzeAuthLib:
                 raise TwoFactorAuthenticationEnabled
 
         self.token = Token(response_json['access_token'], response_json['refresh_token'])
-        self.token_callback(self.token)
+        await self.token_callback(self.token)
         return self.token
 
     async def get_token_with_2fa(self, verification_code) -> Token:
@@ -145,11 +145,11 @@ class WyzeAuthLib:
             headers=headers, json=payload)
 
         self.token = Token(response_json['access_token'], response_json['refresh_token'])
-        self.token_callback(self.token)
+        await self.token_callback(self.token)
         return self.token
 
     @property
-    async def should_refresh(self) -> bool:
+    def should_refresh(self) -> bool:
         return time.time() >= self.token.refresh_time
 
     async def refresh_if_should(self):
@@ -188,7 +188,7 @@ class WyzeAuthLib:
 
         self.token.access_token = response_json['data']['access_token']
         self.token.refresh_token = response_json['data']['refresh_token']
-        self.token_callback(self.token)
+        await self.token_callback(self.token)
 
     async def post(self, url, json=None, headers=None, data=None) -> Dict[Any, Any]:
         _LOGGER.debug("Request:")

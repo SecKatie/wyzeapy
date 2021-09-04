@@ -22,10 +22,13 @@ class Token:
     # Token is good for 216,000 seconds (60 hours) but 48 hours seems like a reasonable refresh interval
     REFRESH_INTERVAL = 172800
 
-    def __init__(self, access_token, refresh_token):
-        self.access_token: str = access_token
+    def __init__(self, access_token, refresh_token, refresh_time: float = None):
+        self._access_token: str = access_token
         self.refresh_token: str = refresh_token
-        self.refresh_time: float = time.time() + Token.REFRESH_INTERVAL
+        if refresh_time:
+            self._refresh_time: float = refresh_time
+        else:
+            self._refresh_time: float = time.time() + Token.REFRESH_INTERVAL
 
     @property
     def access_token(self):
@@ -35,6 +38,10 @@ class Token:
     def access_token(self, access_token):
         self._access_token = access_token
         self._refresh_time = time.time() + Token.REFRESH_INTERVAL
+
+    @property
+    def refresh_time(self):
+        return self._refresh_time
 
 
 class WyzeAuthLib:

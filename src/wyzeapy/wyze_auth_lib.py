@@ -42,7 +42,7 @@ class WyzeAuthLib:
     _conn: TCPConnector
     _session: ClientSession
 
-    def __init__(self, username=None, password=None, token: Token = None):
+    def __init__(self, username=None, password=None, token: Token = None, token_callback=None):
         self._username = username
         self._password = password
         self.token = token
@@ -50,14 +50,15 @@ class WyzeAuthLib:
         self.verification_id = ""
         self.two_factor_type = None
         self.refresh_lock = asyncio.Lock()
+        self.token_callback: function = token_callback
 
     async def gen_session(self):
         self._conn = aiohttp.TCPConnector(ttl_dns_cache=(30 * 60))  # Set DNS cache to 30 minutes
         self._session = aiohttp.ClientSession(connector=self._conn)
 
     @classmethod
-    async def create(cls, username=None, password=None, token: Token = None):
-        self = cls(username=username, password=password, token=token)
+    async def create(cls, username=None, password=None, token: Token = None, token_callback: function=None):
+        self = cls(username=username, password=password, token=token, token_callbacks=token_callback)
 
         await self.gen_session()
 
@@ -115,6 +116,7 @@ class WyzeAuthLib:
                 raise TwoFactorAuthenticationEnabled
 
         self.token = Token(response_json['access_token'], response_json['refresh_token'])
+        self.token_callback(self.token)
         return self.token
 
     async def get_token_with_2fa(self, verification_code) -> Token:
@@ -147,6 +149,7 @@ class WyzeAuthLib:
             headers=headers, json=payload)
 
         self.token = Token(response_json['access_token'], response_json['refresh_token'])
+        self.token_callback(self.token)
         return self.token
 
     @property
@@ -188,6 +191,7 @@ class WyzeAuthLib:
 
         self.token.access_token = response_json['data']['access_token']
         self.token.refresh_token = response_json['data']['refresh_token']
+        self.token_callback(self.token)
 
     async def post(self, url, json=None, headers=None, data=None) -> Dict[Any, Any]:
         _LOGGER.debug("Request:")

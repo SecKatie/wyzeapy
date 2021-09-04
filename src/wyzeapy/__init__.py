@@ -6,6 +6,7 @@
 import logging
 import time
 from typing import Dict, Any, Optional, Set
+from inspect import iscoroutinefunction
 
 from wyzeapy.const import PHONE_SYSTEM_TYPE, APP_VERSION, SC, APP_VER, SV, PHONE_ID, APP_NAME, OLIVE_APP_ID, APP_INFO
 from wyzeapy.crypto import olive_create_signature
@@ -41,6 +42,7 @@ class Wyzeapy:
         self._email = None
         self._password = None
         self._service: Optional[BaseService] = None
+        self._token_callbacks = {}
 
     @classmethod
     async def create(cls):
@@ -75,10 +77,10 @@ class Wyzeapy:
         try:
             if token:
                 # User token supplied, lets go ahead and use it and refresh the access token if needed.
-                self._auth_lib = await WyzeAuthLib.create(email, password, token)
+                self._auth_lib = await WyzeAuthLib.create(email, password, token, token_callbacks=self.execute_token_callbacks)
                 await self._auth_lib.refresh_if_should()
             else:
-                self._auth_lib = await WyzeAuthLib.create(email, password)
+                self._auth_lib = await WyzeAuthLib.create(email, password, token_callbacks=self.execute_token_callbacks)
                 await self._auth_lib.get_token_with_username_password(email, password)
                 self._service = BaseService(self._auth_lib)
         except TwoFactorAuthenticationEnabled as error:
@@ -96,6 +98,37 @@ class Wyzeapy:
 
         await self._auth_lib.get_token_with_2fa(verification_code)
         self._service = BaseService(self._auth_lib)
+
+    async def execute_token_callbacks(self, token: Token):
+        """
+        Sends the token to the registered callback functions.
+
+        :param token: Users token object
+
+        """
+        for callback in self._token_callbacks:
+            if iscoroutinefunction(callback):
+                await callback(token)
+            else:
+                callback(token)
+
+    def register_for_token_callback(self, callback_function: function):
+        """
+        Register a callback to be called whenever the user's token is modified
+
+        :param callback_function: A callback function which expects a token object
+
+        """
+        self._token_callbacks.add(callback_function)
+
+    def unregister_for_token_callback(self, callback_function: function):
+        """
+        Register a callback to be called whenever the user's token is modified
+
+        :param callback_function: A callback function which expects a token object
+
+        """
+        self._token_callbacks.remove(callback_function)
 
     @property
     async def unique_device_ids(self) -> Set[str]:

@@ -24,7 +24,7 @@ class Token:
 
     def __init__(self, access_token, refresh_token, refresh_time: float = None):
         self._access_token: str = access_token
-        self.refresh_token: str = refresh_token
+        self._refresh_token: str = refresh_token
         if refresh_time:
             self._refresh_time: float = refresh_time
         else:
@@ -38,6 +38,14 @@ class Token:
     def access_token(self, access_token):
         self._access_token = access_token
         self._refresh_time = time.time() + Token.REFRESH_INTERVAL
+
+    @property
+    def refresh_token(self):
+        return self._refresh_token
+
+    @refresh_token.setter
+    def refresh_token(self, refresh_token):
+        self._refresh_token = refresh_token
 
     @property
     def refresh_time(self):

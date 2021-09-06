@@ -5,7 +5,7 @@
 #  joshua@mulliken.net to receive a copy
 import logging
 import time
-from typing import Dict, Any, Optional, Set
+from typing import Dict, Any, List, Optional, Set
 from inspect import iscoroutinefunction
 
 from wyzeapy.const import PHONE_SYSTEM_TYPE, APP_VERSION, SC, APP_VER, SV, PHONE_ID, APP_NAME, OLIVE_APP_ID, APP_INFO
@@ -42,7 +42,7 @@ class Wyzeapy:
         self._email = None
         self._password = None
         self._service: Optional[BaseService] = None
-        self._token_callbacks = {}
+        self._token_callbacks: List[function] = []
 
     @classmethod
     async def create(cls):
@@ -117,7 +117,7 @@ class Wyzeapy:
         :param callback_function: A callback function which expects a token object
 
         """
-        self._token_callbacks.add(callback_function)
+        self._token_callbacks.append(callback_function)
 
     def unregister_for_token_callback(self, callback_function):
         """

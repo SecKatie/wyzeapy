@@ -66,9 +66,7 @@ class Wyzeapy:
             TwoFactorAuthenticationEnabled: indicates that the account has 2fa enabled
         """
 
-        _LOGGER.debug(f"Email: {email}")
         self._email = email
-        _LOGGER.debug(f"Password: {password}")
         self._password = password
         try:
             if token:

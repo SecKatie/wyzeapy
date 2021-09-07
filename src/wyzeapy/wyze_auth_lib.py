@@ -54,6 +54,8 @@ class Token:
 
 class WyzeAuthLib:
     token: Optional[Token] = None
+    SANITIZE_FIELDS = ["email", "password", "access_token", "refresh_token"]
+    SANITIZE_STRING = "**Sanitized**"
 
     def __init__(self, username=None, password=None, token: Token = None, token_callback=None):
         self._username = username
@@ -198,15 +200,25 @@ class WyzeAuthLib:
         self.token.refresh_token = response_json['data']['refresh_token']
         await self.token_callback(self.token)
 
-    async def post(self, url, json=None, headers=None, data=None) -> Dict[Any, Any]:
-        _LOGGER.debug("Request:")
-        _LOGGER.debug(f"url: {url}")
-        _LOGGER.debug(f"json: {json}")
-        _LOGGER.debug(f"headers: {headers}")
-        _LOGGER.debug(f"data: {data}")
+    def sanitize(self, data):
+        if data:
+            # value is unused, but it prevents us from having to split the tuple to check against SANITIZE_FIELDS
+            for key, value in data.items():
+                if key in self.SANITIZE_FIELDS:
+                    data[key] = self.SANITIZE_STRING
+        return data
 
+
+    async def post(self, url, json=None, headers=None, data=None) -> Dict[Any, Any]:
         async with ClientSession(connector=TCPConnector(ttl_dns_cache=(30 * 60))) as _session:
             response = await _session.post(url, json=json, headers=headers, data=data)
+            # Relocated these below as the sanitization seems to modify the data before it goes to the post.
+            _LOGGER.debug("Request:")
+            _LOGGER.debug(f"url: {url}")
+            _LOGGER.debug(f"json: {self.sanitize(json)}")
+            _LOGGER.debug(f"headers: {self.sanitize(headers)}")
+            _LOGGER.debug(f"data: {self.sanitize(data)}")
+            _LOGGER.debug(f"Response: {response}")
             return await response.json()
 
     async def get(self, url, headers=None, params=None) -> Dict[Any, Any]:

@@ -167,11 +167,7 @@ class WyzeAuthLib:
             async with self.refresh_lock:
                 if self.should_refresh:
                     _LOGGER.debug("Should refresh. Refreshing...")
-                    try:
-                        await self.refresh()
-                    except AccessTokenError:
-                        _LOGGER.warning("Could not refresh. Logging in with the Username and Password...")
-                        self.token = await self.get_token_with_username_password(self._username, self._password)
+                    await self.refresh()
 
     async def refresh(self) -> None:
         payload = {

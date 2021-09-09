@@ -9,7 +9,7 @@ import time
 from typing import Dict, Any, Optional
 
 import aiohttp
-from aiohttp import TCPConnector, ClientSession
+from aiohttp import TCPConnector, ClientSession, ContentTypeError
 
 from wyzeapy.const import API_KEY, PHONE_ID, APP_NAME, APP_VERSION, SC, SV, PHONE_SYSTEM_TYPE, APP_VER, APP_INFO
 from wyzeapy.exceptions import UnknownApiError, AccessTokenError, TwoFactorAuthenticationEnabled
@@ -214,7 +214,12 @@ class WyzeAuthLib:
             _LOGGER.debug(f"json: {self.sanitize(json)}")
             _LOGGER.debug(f"headers: {self.sanitize(headers)}")
             _LOGGER.debug(f"data: {self.sanitize(data)}")
-            _LOGGER.debug(f"Response: {response}")
+            # Log the response.json() if it exists, if not log the response.
+            try: 
+                response_json = await response.json()
+                _LOGGER.debug(f"Response Json: {response_json}")
+            except ContentTypeError:
+                _LOGGER.debug(f"Response: {response}")
             return await response.json()
 
     async def get(self, url, headers=None, params=None) -> Dict[Any, Any]:

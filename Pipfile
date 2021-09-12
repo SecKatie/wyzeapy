@@ -16,6 +16,3 @@ cchardet = "*"
 mypy = "*"
 coverage = "*"
 wheel = "*"
-
-[requires]
-python_version = "3.8"

@@ -8,7 +8,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-aiohttp = "*"
+aiohttp = ">=3.7.4"
 aiodns = "*"
 cchardet = "*"
 

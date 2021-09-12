@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2021 Mulliken, LLC <joshua@mulliken.net>
+
+SPDX-License-Identifier: GPL-3.0-only
+-->
+
 ---
 description: |
     API documentation for modules: wyzeapy, wyzeapy.const, wyzeapy.crypto, wyzeapy.exceptions, wyzeapy.payload_factory, wyzeapy.services, wyzeapy.services.base_service, wyzeapy.services.bulb_service, wyzeapy.services.camera_service, wyzeapy.services.hms_service, wyzeapy.services.lock_service, wyzeapy.services.sensor_service, wyzeapy.services.switch_service, wyzeapy.services.thermostat_service, wyzeapy.types, wyzeapy.utils, wyzeapy.wyze_auth_lib.

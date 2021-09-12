@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2021 Mulliken, LLC <joshua@mulliken.net>
+
+SPDX-License-Identifier: GPL-3.0-only
+-->
 
 # Wyzeapy
 

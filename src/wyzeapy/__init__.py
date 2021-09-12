@@ -5,7 +5,8 @@
 #  joshua@mulliken.net to receive a copy
 import logging
 import time
-from typing import Dict, Any, Optional, Set
+from typing import Dict, Any, List, Optional, Set
+from inspect import iscoroutinefunction
 
 from wyzeapy.const import PHONE_SYSTEM_TYPE, APP_VERSION, SC, APP_VER, SV, PHONE_ID, APP_NAME, OLIVE_APP_ID, APP_INFO
 from wyzeapy.crypto import olive_create_signature
@@ -41,6 +42,7 @@ class Wyzeapy:
         self._email = None
         self._password = None
         self._service: Optional[BaseService] = None
+        self._token_callbacks: List[function] = []
 
     @classmethod
     async def create(cls):
@@ -51,10 +53,6 @@ class Wyzeapy:
         """
         self = cls()
         return self
-
-    async def async_close(self):
-        """This cleans up the async network session"""
-        await self._auth_lib.close()
 
     async def login(self, email, password, token: Token = None):
         """
@@ -68,23 +66,22 @@ class Wyzeapy:
             TwoFactorAuthenticationEnabled: indicates that the account has 2fa enabled
         """
 
-        _LOGGER.debug(f"Email: {email}")
         self._email = email
-        _LOGGER.debug(f"Password: {password}")
         self._password = password
         try:
             if token:
                 # User token supplied, lets go ahead and use it and refresh the access token if needed.
-                self._auth_lib = await WyzeAuthLib.create(email, password, token)
+                self._auth_lib = await WyzeAuthLib.create(email, password, token, token_callback=self.execute_token_callbacks)
                 await self._auth_lib.refresh_if_should()
+                self._service = BaseService(self._auth_lib)
             else:
-                self._auth_lib = await WyzeAuthLib.create(email, password)
+                self._auth_lib = await WyzeAuthLib.create(email, password, token_callback=self.execute_token_callbacks)
                 await self._auth_lib.get_token_with_username_password(email, password)
                 self._service = BaseService(self._auth_lib)
         except TwoFactorAuthenticationEnabled as error:
             raise error
 
-    async def login_with_2fa(self, verification_code):
+    async def login_with_2fa(self, verification_code) -> Token:
         """
         Logs the user in and retrieves the users token
 
@@ -96,6 +93,38 @@ class Wyzeapy:
 
         await self._auth_lib.get_token_with_2fa(verification_code)
         self._service = BaseService(self._auth_lib)
+        return self._auth_lib.token
+
+    async def execute_token_callbacks(self, token: Token):
+        """
+        Sends the token to the registered callback functions.
+
+        :param token: Users token object
+
+        """
+        for callback in self._token_callbacks:
+            if iscoroutinefunction(callback):
+                await callback(token)
+            else:
+                callback(token)
+
+    def register_for_token_callback(self, callback_function):
+        """
+        Register a callback to be called whenever the user's token is modified
+
+        :param callback_function: A callback function which expects a token object
+
+        """
+        self._token_callbacks.append(callback_function)
+
+    def unregister_for_token_callback(self, callback_function):
+        """
+        Register a callback to be called whenever the user's token is modified
+
+        :param callback_function: A callback function which expects a token object
+
+        """
+        self._token_callbacks.remove(callback_function)
 
     @property
     async def unique_device_ids(self) -> Set[str]:

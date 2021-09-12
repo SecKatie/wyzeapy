@@ -3,12 +3,13 @@
 #  of the attached license. You should have received a copy of
 #  the license with this file. If not, please write to:
 #  joshua@mulliken.net to receive a copy
+import asyncio
 import logging
 import time
 from typing import Dict, Any, Optional
 
 import aiohttp
-from aiohttp import TCPConnector, ClientSession
+from aiohttp import TCPConnector, ClientSession, ContentTypeError
 
 from wyzeapy.const import API_KEY, PHONE_ID, APP_NAME, APP_VERSION, SC, SV, PHONE_SYSTEM_TYPE, APP_VER, APP_INFO
 from wyzeapy.exceptions import UnknownApiError, AccessTokenError, TwoFactorAuthenticationEnabled
@@ -18,34 +19,57 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class Token:
-    def __init__(self, access_token, refresh_token, last_login_time):
-        self.access_token: str = access_token
-        self.refresh_token: str = refresh_token
-        self.last_login_time: float = last_login_time
+    # Token is good for 216,000 seconds (60 hours) but 48 hours seems like a reasonable refresh interval
+    REFRESH_INTERVAL = 172800
+
+    def __init__(self, access_token, refresh_token, refresh_time: float = None):
+        self._access_token: str = access_token
+        self._refresh_token: str = refresh_token
+        if refresh_time:
+            self._refresh_time: float = refresh_time
+        else:
+            self._refresh_time: float = time.time() + Token.REFRESH_INTERVAL
+
+    @property
+    def access_token(self):
+        return self._access_token
+
+    @access_token.setter
+    def access_token(self, access_token):
+        self._access_token = access_token
+        self._refresh_time = time.time() + Token.REFRESH_INTERVAL
+
+    @property
+    def refresh_token(self):
+        return self._refresh_token
+
+    @refresh_token.setter
+    def refresh_token(self, refresh_token):
+        self._refresh_token = refresh_token
+
+    @property
+    def refresh_time(self):
+        return self._refresh_time
 
 
 class WyzeAuthLib:
     token: Optional[Token] = None
-    _conn: TCPConnector
-    _session: ClientSession
+    SANITIZE_FIELDS = ["email", "password", "access_token", "refresh_token"]
+    SANITIZE_STRING = "**Sanitized**"
 
-    def __init__(self, username=None, password=None, token: Token = None):
+    def __init__(self, username=None, password=None, token: Token = None, token_callback=None):
         self._username = username
         self._password = password
         self.token = token
         self.session_id = ""
         self.verification_id = ""
         self.two_factor_type = None
-
-    async def gen_session(self):
-        self._conn = aiohttp.TCPConnector(ttl_dns_cache=(30 * 60))  # Set DNS cache to 30 minutes
-        self._session = aiohttp.ClientSession(connector=self._conn)
+        self.refresh_lock = asyncio.Lock()
+        self.token_callback = token_callback
 
     @classmethod
-    async def create(cls, username=None, password=None, token: Token = None):
-        self = cls(username=username, password=password, token=token)
-
-        await self.gen_session()
+    async def create(cls, username=None, password=None, token: Token = None, token_callback=None):
+        self = cls(username=username, password=password, token=token, token_callback=token_callback)
 
         if self._username is None and self._password is None and self.token is None:
             raise AttributeError("Must provide a username, password or token")
@@ -54,9 +78,6 @@ class WyzeAuthLib:
             assert self._password != ""
 
         return self
-
-    async def close(self):
-        await self._session.close()
 
     async def get_token_with_username_password(self, username, password) -> Token:
         self._username = username
@@ -100,7 +121,8 @@ class WyzeAuthLib:
                 self.session_id = response_json['session_id']
                 raise TwoFactorAuthenticationEnabled
 
-        self.token = Token(response_json['access_token'], response_json['refresh_token'], time.time())
+        self.token = Token(response_json['access_token'], response_json['refresh_token'])
+        await self.token_callback(self.token)
         return self.token
 
     async def get_token_with_2fa(self, verification_code) -> Token:
@@ -132,21 +154,20 @@ class WyzeAuthLib:
             'https://auth-prod.api.wyze.com/user/login',
             headers=headers, json=payload)
 
-        self.token = Token(response_json['access_token'], response_json['refresh_token'], time.time(), True)
+        self.token = Token(response_json['access_token'], response_json['refresh_token'])
+        await self.token_callback(self.token)
         return self.token
 
     @property
     def should_refresh(self) -> bool:
-        return time.time() - self.token.last_login_time > 59 * 60 * 60
+        return time.time() >= self.token.refresh_time
 
     async def refresh_if_should(self):
         if self.should_refresh:
-            _LOGGER.debug("Should refresh. Refreshing...")
-            try:
-                await self.refresh()
-            except AccessTokenError:
-                _LOGGER.warning("Could not refresh. Logging in with the Username and Password...")
-                self.token = await self.get_token_with_username_password(self._username, self._password)
+            async with self.refresh_lock:
+                if self.should_refresh:
+                    _LOGGER.debug("Should refresh. Refreshing...")
+                    await self.refresh()
 
     async def refresh(self) -> None:
         payload = {
@@ -165,32 +186,53 @@ class WyzeAuthLib:
             "X-API-Key": API_KEY
         }
 
-        response = await self._session.post("https://api.wyzecam.com/app/user/refresh_token", headers=headers,
-                                            json=payload)
+        async with ClientSession(connector=TCPConnector(ttl_dns_cache=(30 * 60))) as _session:
+            response = await _session.post("https://api.wyzecam.com/app/user/refresh_token", headers=headers,
+                                                json=payload)
         response_json = await response.json()
         check_for_errors_standard(response_json)
 
         self.token.access_token = response_json['data']['access_token']
         self.token.refresh_token = response_json['data']['refresh_token']
+        await self.token_callback(self.token)
+
+    def sanitize(self, data):
+        if data:
+            # value is unused, but it prevents us from having to split the tuple to check against SANITIZE_FIELDS
+            for key, value in data.items():
+                if key in self.SANITIZE_FIELDS:
+                    data[key] = self.SANITIZE_STRING
+        return data
+
 
     async def post(self, url, json=None, headers=None, data=None) -> Dict[Any, Any]:
-        _LOGGER.debug("Request:")
-        _LOGGER.debug(f"url: {url}")
-        _LOGGER.debug(f"json: {json}")
-        _LOGGER.debug(f"headers: {headers}")
-        _LOGGER.debug(f"data: {data}")
-
-        response = await self._session.post(url, json=json, headers=headers, data=data)
-        return await response.json()
+        async with ClientSession(connector=TCPConnector(ttl_dns_cache=(30 * 60))) as _session:
+            response = await _session.post(url, json=json, headers=headers, data=data)
+            # Relocated these below as the sanitization seems to modify the data before it goes to the post.
+            _LOGGER.debug("Request:")
+            _LOGGER.debug(f"url: {url}")
+            _LOGGER.debug(f"json: {self.sanitize(json)}")
+            _LOGGER.debug(f"headers: {self.sanitize(headers)}")
+            _LOGGER.debug(f"data: {self.sanitize(data)}")
+            # Log the response.json() if it exists, if not log the response.
+            try: 
+                response_json = await response.json()
+                _LOGGER.debug(f"Response Json: {response_json}")
+            except ContentTypeError:
+                _LOGGER.debug(f"Response: {response}")
+            return await response.json()
 
     async def get(self, url, headers=None, params=None) -> Dict[Any, Any]:
-        response = await self._session.get(url, params=params, headers=headers)
-        return await response.json()
+        async with ClientSession(connector=TCPConnector(ttl_dns_cache=(30 * 60))) as _session:
+            response = await _session.get(url, params=params, headers=headers)
+            return await response.json()
 
     async def patch(self, url, headers=None, params=None, json=None) -> Dict[Any, Any]:
-        response = await self._session.patch(url, headers=headers, params=params, json=json)
-        return await response.json()
+        async with ClientSession(connector=TCPConnector(ttl_dns_cache=(30 * 60))) as _session:
+            response = await _session.patch(url, headers=headers, params=params, json=json)
+            return await response.json()
 
     async def delete(self, url, headers=None, json=None) -> Dict[Any, Any]:
-        response = await self._session.delete(url, headers=headers, json=json)
-        return await response.json()
+        async with ClientSession(connector=TCPConnector(ttl_dns_cache=(30 * 60))) as _session:
+            response = await _session.delete(url, headers=headers, json=json)
+            return await response.json()

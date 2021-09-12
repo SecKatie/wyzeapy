@@ -197,7 +197,7 @@ class WyzeAuthLib:
         await self.token_callback(self.token)
 
     def sanitize(self, data):
-        if data:
+        if data and type(data) is dict:
             # value is unused, but it prevents us from having to split the tuple to check against SANITIZE_FIELDS
             for key, value in data.items():
                 if key in self.SANITIZE_FIELDS:

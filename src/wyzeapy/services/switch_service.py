@@ -17,6 +17,10 @@ class Switch(Device):
 
 class SwitchService(BaseService):
     async def update(self, switch: Switch):
+        # Get updated device_params
+        async with BaseService._update_lock:
+            switch.device_params = await self.get_updated_params(switch.mac)
+
         device_info = await self._get_property_list(switch)
 
         for property_id, value in device_info:

@@ -33,6 +33,10 @@ class CameraService(BaseService):
     _subscribers: List[Tuple[Camera, Callable[[Camera], None]]] = []
 
     async def update(self, camera: Camera):
+        # Get updated device_params
+        async with BaseService._update_lock:
+            camera.device_params = await self.get_updated_params(camera.mac)
+
         # Get camera events
         response = await self._get_event_list(10)
         raw_events = response['data']['event_list']

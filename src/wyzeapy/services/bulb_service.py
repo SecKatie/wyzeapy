@@ -59,6 +59,10 @@ class Bulb(Device):
 
 class BulbService(BaseService):
     async def update(self, bulb: Bulb) -> Bulb:
+        # Get updated device_params
+        async with BaseService._update_lock:
+            bulb.device_params = await self.get_updated_params(bulb.mac)
+
         device_info = await self._get_property_list(bulb)
         for property_id, value in device_info:
             if property_id == PropertyIDs.BRIGHTNESS:

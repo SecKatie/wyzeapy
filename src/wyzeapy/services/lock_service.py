@@ -14,6 +14,10 @@ class Lock(Device):
 
 class LockService(BaseService):
     async def update(self, lock: Lock):
+        # Get updated device_params
+        async with BaseService._update_lock:
+            lock.device_params = await self.get_updated_params(lock.mac)
+
         device_info = await self._get_property_list(lock)
 
         for property_id, value in device_info:

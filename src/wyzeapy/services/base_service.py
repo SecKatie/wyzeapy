@@ -6,6 +6,7 @@
 import json
 import time
 from typing import List, Tuple, Any, Dict, Optional
+import asyncio
 
 from wyzeapy.const import PHONE_SYSTEM_TYPE, APP_VERSION, APP_VER, PHONE_ID, APP_NAME, OLIVE_APP_ID, APP_INFO, SC, SV
 from wyzeapy.crypto import olive_create_signature
@@ -20,6 +21,9 @@ from wyzeapy.wyze_auth_lib import WyzeAuthLib
 
 class BaseService:
     _devices: Optional[List[Device]] = None
+    _last_updated_time: time = 0  #  preload a value of 0 so that comparison will succeed on the first run
+    _min_update_time = 1200  #  lets let the device_params update every 20 minutes for now. This could probably reduced signicficantly.
+    _update_lock: asyncio.Lock() = asyncio.Lock()
 
     def __init__(self, auth_lib: WyzeAuthLib):
         self._auth_lib = auth_lib
@@ -90,8 +94,20 @@ class BaseService:
                                                   json=payload)
 
         check_for_errors_standard(response_json)
+        
+        # Cache the devices so that update calls can pull more recent device_params 
+        BaseService._devices = [Device(device) for device in response_json['data']['device_list']]
 
-        return [Device(device) for device in response_json['data']['device_list']]
+        return BaseService._devices
+
+    async def get_updated_params(self, device_mac: str = None) -> Dict[str, Optional[Any]]:
+        if time.time() - BaseService._last_updated_time >= BaseService._min_update_time:
+            await self.get_object_list()
+        ret_params = {}
+        for dev in BaseService._devices:
+            if dev.mac == device_mac:
+                ret_params = dev.device_params
+        return ret_params
 
     async def _get_property_list(self, device: Device) -> List[Tuple[PropertyIDs, Any]]:
         """

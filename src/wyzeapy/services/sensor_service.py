@@ -26,6 +26,9 @@ class SensorService(BaseService):
     _subscribers: List[Tuple[Sensor, Callable[[Sensor], None]]] = []
 
     async def update(self, sensor: Sensor) -> Sensor:
+        # Get updated device_params
+        async with BaseService._update_lock:
+            sensor.device_params = await self.get_updated_params(sensor.mac)
         properties = await self._get_device_info(sensor)
 
         for property in properties['data']['property_list']:

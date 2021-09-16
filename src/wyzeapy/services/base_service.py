@@ -464,6 +464,27 @@ class BaseService:
 
         check_for_errors_lock(response_json)
 
+    async def _get_lock_info(self, device: Device) -> Dict[str, Optional[Any]]:
+        await self._auth_lib.refresh_if_should()
+
+        url_path = "/openapi/lock/v1/info"
+
+        device_uuid = device.mac.split(".")[2]
+
+        payload = {
+            "uuid": device_uuid,
+        }
+
+        payload = ford_create_payload(self._auth_lib.token.access_token, payload, url_path, "get")
+
+        url = "https://yd-saas-toc.wyzecam.com/openapi/lock/v1/info"
+
+        response_json = await self._auth_lib.get(url, params=payload)
+
+        check_for_errors_lock(response_json)
+
+        return response_json
+
     async def _get_device_info(self, device: Device) -> Dict[Any, Any]:
         await self._auth_lib.refresh_if_should()
 

@@ -473,6 +473,7 @@ class BaseService:
 
         payload = {
             "uuid": device_uuid,
+            "with_keypad": "1"
         }
 
         payload = ford_create_payload(self._auth_lib.token.access_token, payload, url_path, "get")

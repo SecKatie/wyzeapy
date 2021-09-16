@@ -25,6 +25,9 @@ class LockService(BaseService):
             elif property_id == PropertyIDs.DOOR_OPEN:
                 lock.door_open = value == "1"
 
+        dev_info = await self._get_lock_info(lock)
+        lock.raw_dict = dev_info["device"]
+        
         return lock
 
     async def get_locks(self):

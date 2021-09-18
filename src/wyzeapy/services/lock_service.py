@@ -10,23 +10,25 @@ from wyzeapy.types import Device, PropertyIDs, DeviceTypes
 class Lock(Device):
     unlocked = False
     door_open = False
+    trash_mode = False
 
 
 class LockService(BaseService):
     async def update(self, lock: Lock):
 
-        device_info = await self._get_property_list(lock)
+        device_info = await self._get_lock_info(lock)
+        lock.raw_dict = device_info["device"]
 
-        for property_id, value in device_info:
-            if property_id == PropertyIDs.ON:
-                lock.unlocked = value == "1"
-            elif property_id == PropertyIDs.AVAILABLE:
-                lock.available = value == "1"
-            elif property_id == PropertyIDs.DOOR_OPEN:
-                lock.door_open = value == "1"
+        lock.available = lock.raw_dict.get("onoff_line") == "1"
+        lock.door_open = lock.raw_dict.get("door_open_status") == "1"
+        lock.trash_mode = lock.raw_dict.get("trash_mode") == "1"
 
-        dev_info = await self._get_lock_info(lock)
-        lock.raw_dict = dev_info["device"]
+        # store the nested dict for easier reference below
+        locker_status = lock.raw_dict.get("locker_status")
+        # Check if the door is locked
+        if locker_status:
+            if locker_status.get("door") and locker_status.get("hardlock"):
+                lock.unlocked = locker_status.get("door") == "1" and locker_status.get("hardlock") =="1"
         
         return lock
 

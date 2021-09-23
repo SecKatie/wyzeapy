@@ -103,6 +103,7 @@ class BaseService:
     async def get_updated_params(self, device_mac: str = None) -> Dict[str, Optional[Any]]:
         if time.time() - BaseService._last_updated_time >= BaseService._min_update_time:
             await self.get_object_list()
+            BaseService._last_updated_time = time.time()
         ret_params = {}
         for dev in BaseService._devices:
             if dev.mac == device_mac:

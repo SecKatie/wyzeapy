@@ -19,16 +19,16 @@ class LockService(BaseService):
         device_info = await self._get_lock_info(lock)
         lock.raw_dict = device_info["device"]
 
-        lock.available = lock.raw_dict.get("onoff_line") == "1"
-        lock.door_open = lock.raw_dict.get("door_open_status") == "1"
-        lock.trash_mode = lock.raw_dict.get("trash_mode") == "1"
+        lock.available = lock.raw_dict.get("onoff_line") == 1
+        lock.door_open = lock.raw_dict.get("door_open_status") == 1
+        lock.trash_mode = lock.raw_dict.get("trash_mode") == 1
 
         # store the nested dict for easier reference below
         locker_status = lock.raw_dict.get("locker_status")
         # Check if the door is locked
         if locker_status:
             if locker_status.get("door") and locker_status.get("hardlock"):
-                lock.unlocked = locker_status.get("door") == "1" and locker_status.get("hardlock") =="1"
+                lock.unlocked = locker_status.get("door") == 1 and locker_status.get("hardlock") == 1
         
         return lock
 

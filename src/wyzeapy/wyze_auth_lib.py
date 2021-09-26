@@ -225,7 +225,6 @@ class WyzeAuthLib:
     async def get(self, url, headers=None, params=None) -> Dict[Any, Any]:
         async with ClientSession(connector=TCPConnector(ttl_dns_cache=(30 * 60))) as _session:
             response = await _session.get(url, params=params, headers=headers)
-            return await response.json()
             # Relocated these below as the sanitization seems to modify the data before it goes to the post.
             _LOGGER.debug("Request:")
             _LOGGER.debug(f"url: {url}")
@@ -242,7 +241,6 @@ class WyzeAuthLib:
     async def patch(self, url, headers=None, params=None, json=None) -> Dict[Any, Any]:
         async with ClientSession(connector=TCPConnector(ttl_dns_cache=(30 * 60))) as _session:
             response = await _session.patch(url, headers=headers, params=params, json=json)
-            return await response.json()
             # Relocated these below as the sanitization seems to modify the data before it goes to the post.
             _LOGGER.debug("Request:")
             _LOGGER.debug(f"url: {url}")
@@ -260,7 +258,6 @@ class WyzeAuthLib:
     async def delete(self, url, headers=None, json=None) -> Dict[Any, Any]:
         async with ClientSession(connector=TCPConnector(ttl_dns_cache=(30 * 60))) as _session:
             response = await _session.delete(url, headers=headers, json=json)
-            return await response.json()
             # Relocated these below as the sanitization seems to modify the data before it goes to the post.
             _LOGGER.debug("Request:")
             _LOGGER.debug(f"url: {url}")

@@ -3,6 +3,15 @@ All notable changes to this project will be documented in this file.
 See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## 0.4.3 - 2021-09-26
+
+
+### Bug Fixes
+
+88e1bb - modify pypi version number - Joshua Mulliken
+
+
+- - -
 ## 0.4.2 - 2021-09-26
 
 

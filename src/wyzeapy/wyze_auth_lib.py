@@ -226,13 +226,50 @@ class WyzeAuthLib:
         async with ClientSession(connector=TCPConnector(ttl_dns_cache=(30 * 60))) as _session:
             response = await _session.get(url, params=params, headers=headers)
             return await response.json()
+            # Relocated these below as the sanitization seems to modify the data before it goes to the post.
+            _LOGGER.debug("Request:")
+            _LOGGER.debug(f"url: {url}")
+            _LOGGER.debug(f"headers: {self.sanitize(headers)}")
+            _LOGGER.debug(f"params: {self.sanitize(params)}")
+            # Log the response.json() if it exists, if not log the response.
+            try: 
+                response_json = await response.json()
+                _LOGGER.debug(f"Response Json: {response_json}")
+            except ContentTypeError:
+                _LOGGER.debug(f"Response: {response}")
+            return await response.json()
 
     async def patch(self, url, headers=None, params=None, json=None) -> Dict[Any, Any]:
         async with ClientSession(connector=TCPConnector(ttl_dns_cache=(30 * 60))) as _session:
             response = await _session.patch(url, headers=headers, params=params, json=json)
             return await response.json()
+            # Relocated these below as the sanitization seems to modify the data before it goes to the post.
+            _LOGGER.debug("Request:")
+            _LOGGER.debug(f"url: {url}")
+            _LOGGER.debug(f"json: {self.sanitize(json)}")
+            _LOGGER.debug(f"headers: {self.sanitize(headers)}")
+            _LOGGER.debug(f"params: {self.sanitize(params)}")
+            # Log the response.json() if it exists, if not log the response.
+            try: 
+                response_json = await response.json()
+                _LOGGER.debug(f"Response Json: {response_json}")
+            except ContentTypeError:
+                _LOGGER.debug(f"Response: {response}")
+            return await response.json()
 
     async def delete(self, url, headers=None, json=None) -> Dict[Any, Any]:
         async with ClientSession(connector=TCPConnector(ttl_dns_cache=(30 * 60))) as _session:
             response = await _session.delete(url, headers=headers, json=json)
+            return await response.json()
+            # Relocated these below as the sanitization seems to modify the data before it goes to the post.
+            _LOGGER.debug("Request:")
+            _LOGGER.debug(f"url: {url}")
+            _LOGGER.debug(f"json: {self.sanitize(json)}")
+            _LOGGER.debug(f"headers: {self.sanitize(headers)}")
+            # Log the response.json() if it exists, if not log the response.
+            try: 
+                response_json = await response.json()
+                _LOGGER.debug(f"Response Json: {response_json}")
+            except ContentTypeError:
+                _LOGGER.debug(f"Response: {response}")
             return await response.json()

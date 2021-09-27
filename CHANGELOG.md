@@ -3,6 +3,20 @@ All notable changes to this project will be documented in this file.
 See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## 0.4.4 - 2021-09-27
+
+
+### Bug Fixes
+
+f08f6b - fix lock status being flipped - Joshua Mulliken
+
+
+### Miscellaneous Chores
+
+b7cd51 - bump version in setup.cfg - Joshua Mulliken
+
+
+- - -
 ## 0.4.3 - 2021-09-26
 
 

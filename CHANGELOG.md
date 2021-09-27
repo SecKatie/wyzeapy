@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2021 Joshua Mulliken <joshua@mulliken.net>
+
+SPDX-License-Identifier: GPL-3.0-only
+-->
+
 # Changelog
 All notable changes to this project will be documented in this file.
 See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.

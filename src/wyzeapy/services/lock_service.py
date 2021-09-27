@@ -15,7 +15,6 @@ class Lock(Device):
 
 class LockService(BaseService):
     async def update(self, lock: Lock):
-
         device_info = await self._get_lock_info(lock)
         lock.raw_dict = device_info["device"]
 
@@ -28,7 +27,7 @@ class LockService(BaseService):
         # Check if the door is locked
         if locker_status:
             if locker_status.get("door") and locker_status.get("hardlock"):
-                lock.unlocked = locker_status.get("door") == 1 and locker_status.get("hardlock") == 1
+                lock.unlocked = locker_status.get("door") == 2 and locker_status.get("hardlock") == 2
         
         return lock
 

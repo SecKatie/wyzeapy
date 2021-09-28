@@ -41,7 +41,8 @@ class DeviceUpdater(object):
 
     def delay(self):
         # This should be called to reduce the number of updates per interval so that new devices can be added into the queue fairly
-        self.updates_per_interval -= 1
+        if self.updates_per_interval > 1:
+            self.updates_per_interval -= 1
 
 class UpdateManager:
     # Holds all the logic for when to update the devices

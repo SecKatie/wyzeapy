@@ -13,6 +13,7 @@ from wyzeapy.crypto import olive_create_signature
 from wyzeapy.payload_factory import olive_create_hms_patch_payload, olive_create_hms_payload, \
     olive_create_hms_get_payload, ford_create_payload, olive_create_get_payload, olive_create_post_payload, \
     olive_create_user_info_payload
+from wyzeapy.services.update_manager import DeviceUpdater, UpdateManager
 from wyzeapy.types import PropertyIDs, Device, ThermostatProps
 from wyzeapy.utils import check_for_errors_standard, check_for_errors_hms, check_for_errors_lock, \
     check_for_errors_thermostat
@@ -24,9 +25,25 @@ class BaseService:
     _last_updated_time: time = 0  #  preload a value of 0 so that comparison will succeed on the first run
     _min_update_time = 1200  #  lets let the device_params update every 20 minutes for now. This could probably reduced signicficantly.
     _update_lock: asyncio.Lock() = asyncio.Lock()
+    _update_manager: UpdateManager = UpdateManager()
+    _update_loop = None
+    _updater: DeviceUpdater = None
 
     def __init__(self, auth_lib: WyzeAuthLib):
         self._auth_lib = auth_lib
+
+    async def start_update_manager(self):
+        if BaseService._update_loop is None:
+            BaseService._update_loop = asyncio.get_event_loop()
+            BaseService._update_loop.create_task(BaseService._update_manager.update_next())       
+
+    def register_updater(self, device: Device, interval) -> DeviceUpdater:
+        self._dev_updater = DeviceUpdater(self, device, interval)
+        BaseService._update_manager.add_updater(self._dev_updater)
+
+    def unregister_updater(self):
+        if self._updater:
+            BaseService._update_manager.del_updater(self._updater)
 
     async def set_push_info(self, on: bool) -> None:
         await self._auth_lib.refresh_if_should()

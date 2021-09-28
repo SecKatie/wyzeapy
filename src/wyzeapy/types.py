@@ -50,6 +50,7 @@ class Device:
     nickname: str
     device_params: Dict[str, Any]
     raw_dict: Dict[str, Any]
+    callback_function = None
 
     def __init__(self, dictionary: Dict[Any, Any]):
         self.available = False

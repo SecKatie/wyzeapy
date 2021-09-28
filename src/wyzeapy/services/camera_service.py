@@ -13,6 +13,7 @@ from aiohttp import ClientOSError, ContentTypeError
 
 from wyzeapy.exceptions import UnknownApiError
 from wyzeapy.services.base_service import BaseService
+from wyzeapy.services.update_manager import DeviceUpdater
 from wyzeapy.types import Device, DeviceTypes, Event, PropertyIDs
 from wyzeapy.utils import return_event_for_device, create_pid_pair
 
@@ -112,3 +113,7 @@ class CameraService(BaseService):
         ]
 
         await self._set_property_list(camera, plist)
+
+    def register_updater(self, camera: Camera, interval):
+        dev_updater = DeviceUpdater(self, camera, interval)
+        BaseService._update_manager.add_updater(dev_updater)

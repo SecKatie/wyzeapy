@@ -15,17 +15,23 @@ class DeviceUpdater(object):
     update_in: int # A countdown to zero that will tell the priority queue that it is time to update this device
     updates_per_interval: int=field(compare=False) # The number of updates that should happen every 5 minutes
 
-    def __init__(self, service, device: Device, updates_per_interval: int):
+    def __init__(self, service, device: Device, update_interval: int):
+        """
+        This function initializes a DeviceUpdater object
+        :param service: The WyzeApy service connected to a device
+        :param device: A WyzeApy device that needs to be in the update que
+        :param update_interval: How many seconds should be targeted between updates. **Note this value may shift based on 1 call per sec and load.
+        """
         self.service = service
         self.device = device
         self.update_in = 0  # Always initialize at 0 so that we get the first update ASAP. The items will shift based on priority after this.
-        self.updates_per_interval = updates_per_interval
+        self.updates_per_interval = ceil(INTERVAL / update_interval)
 
     async def update(self):
         # We only want to update if the update_in counter is zero
         if self.update_in <= 0:
             # Once it reaches zero and we update the device we want to reset the update_in counter
-            self.update_in = self.updates_per_interval
+            self.update_in = ceil(INTERVAL / self.updates_per_interval)
             # Get the updated info for the device from Wyze's API
             self.device = await self.service.update(self.device)
             # Callback to provide the updated info to the subscriber
@@ -77,7 +83,7 @@ class UpdateManager:
         # This just returns the number of available slots
         current_slots = 0
         for a_updater in self.updaters:
-            current_slots += ceil(INTERVAL / a_updater.updates_per_interval)
+            current_slots += a_updater.updates_per_interval
 
         return current_slots
 
@@ -96,7 +102,7 @@ class UpdateManager:
             raise Exception("No more devices can be updated within the rate limit")
 
         # When we add a new updater it has to fit within the max slots or we will not add it
-        while (self.filled_slots() + ceil(INTERVAL / updater.updates_per_interval)) > MAX_SLOTS:
+        while (self.filled_slots() + updater.updates_per_interval) > MAX_SLOTS:
             # If we are overflowing the available slots we will reduce the frequency of updates evenly for all devices until we can fit in one more.
             self.decrease_updates_per_interval()
             updater.delay()

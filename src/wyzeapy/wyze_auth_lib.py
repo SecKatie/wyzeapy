@@ -54,7 +54,16 @@ class Token:
 
 class WyzeAuthLib:
     token: Optional[Token] = None
-    SANITIZE_FIELDS = ["email", "password", "access_token", "refresh_token"]
+    SANITIZE_FIELDS = [
+        "email",
+        "password",
+        "access_token",
+        "accessToken",
+        "refresh_token",
+        "lat",
+        "lon",
+        "address",
+    ]
     SANITIZE_STRING = "**Sanitized**"
 
     def __init__(self, username=None, password=None, token: Token = None, token_callback=None):
@@ -200,6 +209,8 @@ class WyzeAuthLib:
         if data and type(data) is dict:
             # value is unused, but it prevents us from having to split the tuple to check against SANITIZE_FIELDS
             for key, value in data.items():
+                if type(value) is dict:
+                    data[key] = self.sanitize(value)
                 if key in self.SANITIZE_FIELDS:
                     data[key] = self.SANITIZE_STRING
         return data
@@ -215,9 +226,9 @@ class WyzeAuthLib:
             _LOGGER.debug(f"headers: {self.sanitize(headers)}")
             _LOGGER.debug(f"data: {self.sanitize(data)}")
             # Log the response.json() if it exists, if not log the response.
-            try: 
+            try:
                 response_json = await response.json()
-                _LOGGER.debug(f"Response Json: {response_json}")
+                _LOGGER.debug(f"Response Json: {self.sanitize(response_json)}")
             except ContentTypeError:
                 _LOGGER.debug(f"Response: {response}")
             return await response.json()
@@ -231,9 +242,9 @@ class WyzeAuthLib:
             _LOGGER.debug(f"headers: {self.sanitize(headers)}")
             _LOGGER.debug(f"params: {self.sanitize(params)}")
             # Log the response.json() if it exists, if not log the response.
-            try: 
+            try:
                 response_json = await response.json()
-                _LOGGER.debug(f"Response Json: {response_json}")
+                _LOGGER.debug(f"Response Json: {self.sanitize(response_json)}")
             except ContentTypeError:
                 _LOGGER.debug(f"Response: {response}")
             return await response.json()
@@ -248,9 +259,9 @@ class WyzeAuthLib:
             _LOGGER.debug(f"headers: {self.sanitize(headers)}")
             _LOGGER.debug(f"params: {self.sanitize(params)}")
             # Log the response.json() if it exists, if not log the response.
-            try: 
+            try:
                 response_json = await response.json()
-                _LOGGER.debug(f"Response Json: {response_json}")
+                _LOGGER.debug(f"Response Json: {self.sanitize(response_json)}")
             except ContentTypeError:
                 _LOGGER.debug(f"Response: {response}")
             return await response.json()
@@ -264,9 +275,9 @@ class WyzeAuthLib:
             _LOGGER.debug(f"json: {self.sanitize(json)}")
             _LOGGER.debug(f"headers: {self.sanitize(headers)}")
             # Log the response.json() if it exists, if not log the response.
-            try: 
+            try:
                 response_json = await response.json()
-                _LOGGER.debug(f"Response Json: {response_json}")
+                _LOGGER.debug(f"Response Json: {self.sanitize(response_json)}")
             except ContentTypeError:
                 _LOGGER.debug(f"Response: {response}")
             return await response.json()

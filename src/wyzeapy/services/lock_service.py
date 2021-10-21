@@ -25,10 +25,8 @@ class LockService(BaseService):
         # store the nested dict for easier reference below
         locker_status = lock.raw_dict.get("locker_status")
         # Check if the door is locked
-        if locker_status:
-            if locker_status.get("door") and locker_status.get("hardlock"):
-                lock.unlocked = locker_status.get("door") == 2 and locker_status.get("hardlock") == 2
-        
+        lock.unlocked = locker_status.get("hardlock") == 2
+
         return lock
 
     async def get_locks(self):

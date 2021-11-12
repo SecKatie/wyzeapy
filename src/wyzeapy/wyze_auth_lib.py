@@ -5,6 +5,7 @@
 #  joshua@mulliken.net to receive a copy
 import asyncio
 import logging
+from pprint import pformat
 import time
 from typing import Dict, Any, Optional
 
@@ -222,13 +223,13 @@ class WyzeAuthLib:
             # Relocated these below as the sanitization seems to modify the data before it goes to the post.
             _LOGGER.debug("Request:")
             _LOGGER.debug(f"url: {url}")
-            _LOGGER.debug(f"json: {self.sanitize(json)}")
+            _LOGGER.debug(f"json: {pformat(self.sanitize(json))}")
             _LOGGER.debug(f"headers: {self.sanitize(headers)}")
-            _LOGGER.debug(f"data: {self.sanitize(data)}")
+            _LOGGER.debug(f"data: {pformat(self.sanitize(data))}")
             # Log the response.json() if it exists, if not log the response.
             try:
                 response_json = await response.json()
-                _LOGGER.debug(f"Response Json: {self.sanitize(response_json)}")
+                _LOGGER.debug(f"Response Json: {pformat(self.sanitize(response_json))}")
             except ContentTypeError:
                 _LOGGER.debug(f"Response: {response}")
             return await response.json()
@@ -244,7 +245,7 @@ class WyzeAuthLib:
             # Log the response.json() if it exists, if not log the response.
             try:
                 response_json = await response.json()
-                _LOGGER.debug(f"Response Json: {self.sanitize(response_json)}")
+                _LOGGER.debug(f"Response Json: {pformat(self.sanitize(response_json))}")
             except ContentTypeError:
                 _LOGGER.debug(f"Response: {response}")
             return await response.json()
@@ -261,7 +262,7 @@ class WyzeAuthLib:
             # Log the response.json() if it exists, if not log the response.
             try:
                 response_json = await response.json()
-                _LOGGER.debug(f"Response Json: {self.sanitize(response_json)}")
+                _LOGGER.debug(f"Response Json: {pformat(self.sanitize(response_json))}")
             except ContentTypeError:
                 _LOGGER.debug(f"Response: {response}")
             return await response.json()
@@ -277,7 +278,7 @@ class WyzeAuthLib:
             # Log the response.json() if it exists, if not log the response.
             try:
                 response_json = await response.json()
-                _LOGGER.debug(f"Response Json: {self.sanitize(response_json)}")
+                _LOGGER.debug(f"Response Json: {pformat(self.sanitize(response_json))}")
             except ContentTypeError:
                 _LOGGER.debug(f"Response: {response}")
             return await response.json()

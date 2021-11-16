@@ -63,6 +63,7 @@ class WyzeAuthLib:
         "lat",
         "lon",
         "address",
+        "url", # This is to sanitize the screenshot/video url from the events endpoint
     ]
     SANITIZE_STRING = "**Sanitized**"
 
@@ -211,6 +212,8 @@ class WyzeAuthLib:
             for key, value in data.items():
                 if type(value) is dict:
                     data[key] = self.sanitize(value)
+                if type(value) is list: # the events data is a list of dicts
+                    data[key] = [self.sanitize(item) for item in value]
                 if key in self.SANITIZE_FIELDS:
                     data[key] = self.SANITIZE_STRING
         return data

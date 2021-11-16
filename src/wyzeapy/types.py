@@ -98,6 +98,7 @@ class PropertyIDs(Enum):
     DOOR_OPEN = "P2001"  # 0 if the door is closed
     CONTACT_STATE = "P1301"
     MOTION_STATE = "P1302"
+    CAMERA_SIREN = "P1049"
 
 
 class ThermostatProps(Enum):

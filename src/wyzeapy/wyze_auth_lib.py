@@ -63,6 +63,7 @@ class WyzeAuthLib:
         "lat",
         "lon",
         "address",
+        "url", # This is to sanitize the screenshot/video url from the events endpoint
     ]
     SANITIZE_STRING = "**Sanitized**"
 
@@ -211,6 +212,8 @@ class WyzeAuthLib:
             for key, value in data.items():
                 if type(value) is dict:
                     data[key] = self.sanitize(value)
+                if type(value) is list: # the events data is a list of dicts
+                    data[key] = [self.sanitize(item) for item in value]
                 if key in self.SANITIZE_FIELDS:
                     data[key] = self.SANITIZE_STRING
         return data
@@ -230,8 +233,11 @@ class WyzeAuthLib:
                 response_json = await response.json()
                 _LOGGER.debug(f"Response Json: {self.sanitize(response_json)}")
             except ContentTypeError:
+                # lets return a blank dict if we can't parse the response.
+                response_json = []
                 _LOGGER.debug(f"Response: {response}")
-            return await response.json()
+            finally:
+                return response_json
 
     async def get(self, url, headers=None, params=None) -> Dict[Any, Any]:
         async with ClientSession(connector=TCPConnector(ttl_dns_cache=(30 * 60))) as _session:
@@ -246,8 +252,11 @@ class WyzeAuthLib:
                 response_json = await response.json()
                 _LOGGER.debug(f"Response Json: {self.sanitize(response_json)}")
             except ContentTypeError:
+                # lets return a blank dict if we can't parse the response.
+                response_json = []
                 _LOGGER.debug(f"Response: {response}")
-            return await response.json()
+            finally:
+                return response_json
 
     async def patch(self, url, headers=None, params=None, json=None) -> Dict[Any, Any]:
         async with ClientSession(connector=TCPConnector(ttl_dns_cache=(30 * 60))) as _session:
@@ -263,8 +272,11 @@ class WyzeAuthLib:
                 response_json = await response.json()
                 _LOGGER.debug(f"Response Json: {self.sanitize(response_json)}")
             except ContentTypeError:
+                # lets return a blank dict if we can't parse the response.
+                response_json = []
                 _LOGGER.debug(f"Response: {response}")
-            return await response.json()
+            finally:
+                return response_json
 
     async def delete(self, url, headers=None, json=None) -> Dict[Any, Any]:
         async with ClientSession(connector=TCPConnector(ttl_dns_cache=(30 * 60))) as _session:
@@ -279,5 +291,8 @@ class WyzeAuthLib:
                 response_json = await response.json()
                 _LOGGER.debug(f"Response Json: {self.sanitize(response_json)}")
             except ContentTypeError:
+                # lets return a blank dict if we can't parse the response.
+                response_json = []
                 _LOGGER.debug(f"Response: {response}")
-            return await response.json()
+            finally:
+                return response_json

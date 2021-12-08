@@ -18,11 +18,14 @@ class Bulb(Device):
     _brightness: int = 0
     _color_temp: int = 1800
     _color: Optional[str]
+    enr: str
 
     on: bool = False
 
     def __init__(self, dictionary: Dict[Any, Any]):
         super().__init__(dictionary)
+
+        self.ip = self.device_params["ip"]
 
         if self.type is DeviceTypes.MESH_LIGHT:
             self._color = "000000"
@@ -90,88 +93,69 @@ class BulbService(BaseService):
         return [Bulb(bulb.raw_dict) for bulb in bulbs]
 
     async def turn_on(self, bulb: Bulb, options=None):
+        plist = [
+            create_pid_pair(PropertyIDs.ON, "1")
+        ]
+        if options is not None:
+            plist.extend(options)
+
         if bulb.type in [
             DeviceTypes.LIGHT
         ]:
-            plist = [
-                create_pid_pair(PropertyIDs.ON, "1")
-            ]
-            if options is not None:
-                plist.extend(options)
-
             await self._set_property_list(bulb, plist)
         elif bulb.type in [
             DeviceTypes.MESH_LIGHT
         ]:
-            plist = [
-                create_pid_pair(PropertyIDs.ON, "1")
-            ]
-            if options is not None:
-                plist.extend(options)
-
-            await self._run_action_list(bulb, plist)
+            await self._local_bulb_command(bulb, plist)
 
     async def turn_off(self, bulb: Bulb):
-        _LOGGER.debug(f"Turning off {bulb.nickname}")
+        plist = [
+            create_pid_pair(PropertyIDs.ON, "0")
+        ]
+
         if bulb.type in [
             DeviceTypes.LIGHT
         ]:
-            plist = [
-                create_pid_pair(PropertyIDs.ON, "0")
-            ]
-
             await self._set_property_list(bulb, plist)
         elif bulb.type in [
             DeviceTypes.MESH_LIGHT
         ]:
-            plist = [
-                create_pid_pair(PropertyIDs.ON, "0")
-            ]
-
-            await self._run_action_list(bulb, plist)
+            await self._local_bulb_command(bulb, plist)
 
     async def set_color_temp(self, bulb: Bulb, color_temp: int):
+        plist = [
+            create_pid_pair(PropertyIDs.COLOR_TEMP, str(color_temp))
+        ]
+
         if bulb.type in [
             DeviceTypes.LIGHT
         ]:
-            plist = [
-                create_pid_pair(PropertyIDs.COLOR_TEMP, str(color_temp))
-            ]
-
             await self._set_property_list(bulb, plist)
         elif bulb.type in [
             DeviceTypes.MESH_LIGHT
         ]:
-            plist = [
-                create_pid_pair(PropertyIDs.COLOR_TEMP, str(color_temp))
-            ]
-
-            await self._run_action_list(bulb, plist)
+            await self._local_bulb_command(bulb, plist)
 
     async def set_color(self, bulb: Bulb, color: str):
+        plist = [
+            create_pid_pair(PropertyIDs.COLOR, str(color))
+        ]
+
         if bulb.type in [
             DeviceTypes.MESH_LIGHT
         ]:
-            plist = [
-                create_pid_pair(PropertyIDs.COLOR, str(color))
-            ]
-
-            await self._run_action_list(bulb, plist)
+            await self._local_bulb_command(bulb, plist)
 
     async def set_brightness(self, bulb: Device, brightness: int):
+        plist = [
+            create_pid_pair(PropertyIDs.BRIGHTNESS, str(brightness))
+        ]
+
         if bulb.type in [
             DeviceTypes.LIGHT
         ]:
-            plist = [
-                create_pid_pair(PropertyIDs.BRIGHTNESS, str(brightness))
-            ]
-
             await self._set_property_list(bulb, plist)
         if bulb.type in [
             DeviceTypes.MESH_LIGHT
         ]:
-            plist = [
-                create_pid_pair(PropertyIDs.BRIGHTNESS, str(brightness))
-            ]
-
-            await self._run_action_list(bulb, plist)
+            await self._local_bulb_command(bulb, plist)

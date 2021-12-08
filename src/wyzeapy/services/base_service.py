@@ -3,10 +3,12 @@
 #  of the attached license. You should have received a copy of
 #  the license with this file. If not, please write to:
 #  joshua@mulliken.net to receive a copy
+import asyncio
 import json
 import time
 from typing import List, Tuple, Any, Dict, Optional
-import asyncio
+
+import aiohttp
 
 from wyzeapy.const import PHONE_SYSTEM_TYPE, APP_VERSION, APP_VER, PHONE_ID, APP_NAME, OLIVE_APP_ID, APP_INFO, SC, SV
 from wyzeapy.crypto import olive_create_signature
@@ -16,14 +18,14 @@ from wyzeapy.payload_factory import olive_create_hms_patch_payload, olive_create
 from wyzeapy.services.update_manager import DeviceUpdater, UpdateManager
 from wyzeapy.types import PropertyIDs, Device, ThermostatProps
 from wyzeapy.utils import check_for_errors_standard, check_for_errors_hms, check_for_errors_lock, \
-    check_for_errors_thermostat
+    check_for_errors_thermostat, wyze_encrypt
 from wyzeapy.wyze_auth_lib import WyzeAuthLib
 
 
 class BaseService:
     _devices: Optional[List[Device]] = None
-    _last_updated_time: time = 0  #  preload a value of 0 so that comparison will succeed on the first run
-    _min_update_time = 1200  #  lets let the device_params update every 20 minutes for now. This could probably reduced signicficantly.
+    _last_updated_time: time = 0  # preload a value of 0 so that comparison will succeed on the first run
+    _min_update_time = 1200  # lets let the device_params update every 20 minutes for now. This could probably reduced signicficantly.
     _update_lock: asyncio.Lock() = asyncio.Lock()
     _update_manager: UpdateManager = UpdateManager()
     _update_loop = None
@@ -32,12 +34,13 @@ class BaseService:
     def __init__(self, auth_lib: WyzeAuthLib):
         self._auth_lib = auth_lib
 
-    async def start_update_manager(self):
+    @staticmethod
+    async def start_update_manager():
         if BaseService._update_loop is None:
             BaseService._update_loop = asyncio.get_event_loop()
-            BaseService._update_loop.create_task(BaseService._update_manager.update_next())       
+            BaseService._update_loop.create_task(BaseService._update_manager.update_next())
 
-    def register_updater(self, device: Device, interval) -> DeviceUpdater:
+    def register_updater(self, device: Device, interval):
         self._dev_updater = DeviceUpdater(self, device, interval)
         BaseService._update_manager.add_updater(self._dev_updater)
 
@@ -111,8 +114,8 @@ class BaseService:
                                                   json=payload)
 
         check_for_errors_standard(response_json)
-        
-        # Cache the devices so that update calls can pull more recent device_params 
+
+        # Cache the devices so that update calls can pull more recent device_params
         BaseService._devices = [Device(device) for device in response_json['data']['device_list']]
 
         return BaseService._devices
@@ -159,12 +162,12 @@ class BaseService:
         properties = response_json['data']['property_list']
 
         property_list = []
-        for property in properties:
+        for prop in properties:
             try:
-                property_id = PropertyIDs(property['pid'])
+                property_id = PropertyIDs(prop['pid'])
                 property_list.append((
                     property_id,
-                    property['value']
+                    prop['value']
                 ))
             except ValueError:
                 pass
@@ -574,3 +577,44 @@ class BaseService:
         response_json = await self._auth_lib.post(url, headers=headers, data=payload_str)
 
         check_for_errors_thermostat(response_json)
+
+    async def _local_bulb_command(self, bulb, plist):
+        # await self._auth_lib.refresh_if_should()
+
+        characteristics = {
+            "mac": bulb.mac,
+            "index": 1,
+            "ts": int(time.time_ns() // 1000000),
+            "plist": json.dumps(plist)
+        }
+
+        characteristics_str = json.dumps(characteristics)
+        characteristics_enc = wyze_encrypt(characteristics_str, bulb.enr)
+
+        payload = {
+            "request": "set_status",
+            "isSendQueue": 0,
+            "characteristics": characteristics_enc
+        }
+
+        url = f"http://{bulb.ip}:88/device_request"
+
+        headers = {
+            "User-Agent": "wyze_android/2.26.22(A0001; Android 11; Scale/3.0; Height/1920; Width/1080)",
+            "root-response": "true",
+            "Mesh-Node-Mac": bulb.mac,
+            "Connection": "close",
+            "Mesh-Node-Num": "1",
+            "Content-Type": "application/json; charset=utf-8",
+            "Host": "192.168.1.71:88",
+            "Accept-Encoding": "gzip, deflate"
+        }
+
+        timeout = aiohttp.ClientTimeout(sock_read=0.01)
+
+        async with aiohttp.ClientSession(timeout=timeout) as session:
+            try:
+                async with session.post(url, json=payload, headers=headers) as _:
+                    pass  # We are never going to get a response so don't bother checking it
+            except aiohttp.ServerTimeoutError:
+                pass  # The bulb will always timeout, so we don't care

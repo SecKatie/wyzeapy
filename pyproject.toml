@@ -1,10 +1,18 @@
-# SPDX-FileCopyrightText: 2021 Mulliken, LLC <joshua@mulliken.net>
-#
-# SPDX-License-Identifier: GPL-3.0-only
+[tool.poetry]
+name = "wyzeapy"
+version = "0.5.2b2"
+description = "A library for interacting with Wyze devices"
+authors = ["Joshua Mulliken <joshua@mulliken.net>"]
+license = "GPL-3.0-only"
+
+[tool.poetry.dependencies]
+python = "^3.6"
+aiohttp = "^3.8.1"
+aiodns = "^3.0.0"
+cchardet = "^2.1.7"
+
+[tool.poetry.dev-dependencies]
 
 [build-system]
-requires = [
-    "setuptools>=42",
-    "wheel"
-]
-build-backend = "setuptools.build_meta"
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

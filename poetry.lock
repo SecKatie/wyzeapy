@@ -187,7 +187,7 @@ typing-extensions = {version = ">=3.7.4", markers = "python_version < \"3.8\""}
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6"
-content-hash = "f47ab209fce4caf5558f88c3b476d738123524b293e413a64b19930d2df913c8"
+content-hash = "aa59c4541978db36ee1f0cb478c75b423bfde54720b3ead63949d5866129e9c6"
 
 [metadata.files]
 aiodns = [

@@ -607,7 +607,7 @@ class BaseService:
 
         try:
             async with aiohttp.ClientSession() as session:
-                async with session.post(url, data=payload_str, proxy='http://127.0.0.1:8081', ) as response:
+                async with session.post(url, data=payload_str) as response:
                     print(await response.text())
         except aiohttp.ClientConnectionError:
             _LOGGER.warning("Failed to connect to bulb %s" % bulb.mac)

@@ -46,8 +46,6 @@ class Bulb(Device):
 
     @color_temp.setter
     def color_temp(self, value: int) -> None:
-        assert value <= 6500
-        assert value >= 1800
         self._color_temp = value
 
     @property

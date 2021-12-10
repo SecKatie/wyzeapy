@@ -9,8 +9,10 @@ from typing import Dict, Any, List, Optional
 
 from Crypto.Cipher import AES
 
-from wyzeapy.exceptions import ParameterError, AccessTokenError, UnknownApiError
-from wyzeapy.types import ResponseCodes, PropertyIDs, Device, Event
+from .exceptions import ParameterError, AccessTokenError, UnknownApiError
+from .types import ResponseCodes, PropertyIDs, Device, Event
+
+PADDING = bytes.fromhex("05")
 
 
 def pad(plain_text):
@@ -20,48 +22,48 @@ def pad(plain_text):
     blocks, the text message must be padded with additional bytes to make the
     text message to be multiples of 8-byte blocks.
     """
-    number_of_bytes_to_pad = AES.block_size - len(plain_text) % AES.block_size
-    ascii_string = chr(number_of_bytes_to_pad)
-    padding_str = number_of_bytes_to_pad * ascii_string
-    padded_plain_text = plain_text + padding_str
-    return padded_plain_text
+    raw = plain_text.encode("ascii")
+
+    pad_num = AES.block_size - len(raw) % AES.block_size
+    raw += PADDING * pad_num
+
+    return raw
 
 
-def wyze_encrypt(plain_text, key):
+def wyze_encrypt(key, text):
     """
-    func to encrypt plain text using AES-128-CBC
+    Reimplementation of the Wyze app's encryption mechanism.
 
-    Based on the implementation found in the Wyze Android App:
+    The decompiled code can be found here 👇
     https://paste.sr.ht/~joshmulliken/e9f67e05c4a774004b226d2ac1f070b6d341cb39
-
-    :param plain_text: plain text to be encrypted
-    :param key: key to encrypt plain text
     """
-    padded_plain_text = pad(plain_text)
-    raw_text = padded_plain_text.encode('utf-8')
-    raw_key = key.encode('utf-8')
-    cipher = AES.new(raw_key, AES.MODE_CBC, raw_key)  # Wyze uses the key as the IV
-    cipher_text = cipher.encrypt(raw_text)
-    cipher_text_b64 = base64.b64encode(cipher_text).decode('utf-8')
-    return cipher_text_b64
+    raw = pad(text)
+    key = key.encode("ascii")
+    iv = key  # Wyze uses the secret key for the iv as well
+    cipher = AES.new(key, AES.MODE_CBC, iv)
+    enc = cipher.encrypt(raw)
+    b64_enc = base64.b64encode(enc).decode("ascii")
+    b64_enc = b64_enc.replace("/", r'\/')
+    return b64_enc
 
 
-def wyze_decrypt(cipher_text, key):
+def wyze_decrypt(key, enc):
     """
-    func to decrypt cipher text using AES-128-CBC
+    Reimplementation of the Wyze app's decryption mechanism.
 
-    Based on the implementation found in the Wyze Android App:
+    The decompiled code can be found here 👇
     https://paste.sr.ht/~joshmulliken/e9f67e05c4a774004b226d2ac1f070b6d341cb39
-
-    :param cipher_text: cipher text to be decrypted
-    :param key: key to decrypt cipher text
     """
-    raw_cipher_text = base64.b64decode(cipher_text)
-    raw_key = key.encode('utf-8')
-    cipher = AES.new(raw_key, AES.MODE_CBC, raw_key)  # Wyze uses the key as the IV
-    raw_text = cipher.decrypt(raw_cipher_text)
-    plain_text = raw_text.decode('utf-8')
-    return plain_text
+    enc = base64.b64decode(enc)
+
+    key = key.encode('ascii')
+    iv = key
+    cipher = AES.new(key, AES.MODE_CBC, iv)
+    decrypt = cipher.decrypt(enc)
+
+    decrypt_txt = decrypt.decode("ascii")
+
+    return decrypt_txt
 
 
 def create_password(password: str) -> str:

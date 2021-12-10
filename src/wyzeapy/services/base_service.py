@@ -5,21 +5,24 @@
 #  joshua@mulliken.net to receive a copy
 import asyncio
 import json
+import logging
 import time
 from typing import List, Tuple, Any, Dict, Optional
 
 import aiohttp
 
-from wyzeapy.const import PHONE_SYSTEM_TYPE, APP_VERSION, APP_VER, PHONE_ID, APP_NAME, OLIVE_APP_ID, APP_INFO, SC, SV
-from wyzeapy.crypto import olive_create_signature
-from wyzeapy.payload_factory import olive_create_hms_patch_payload, olive_create_hms_payload, \
+from .update_manager import DeviceUpdater, UpdateManager
+from ..const import PHONE_SYSTEM_TYPE, APP_VERSION, APP_VER, PHONE_ID, APP_NAME, OLIVE_APP_ID, APP_INFO, SC, SV
+from ..crypto import olive_create_signature
+from ..payload_factory import olive_create_hms_patch_payload, olive_create_hms_payload, \
     olive_create_hms_get_payload, ford_create_payload, olive_create_get_payload, olive_create_post_payload, \
     olive_create_user_info_payload
-from wyzeapy.services.update_manager import DeviceUpdater, UpdateManager
-from wyzeapy.types import PropertyIDs, Device, ThermostatProps
-from wyzeapy.utils import check_for_errors_standard, check_for_errors_hms, check_for_errors_lock, \
+from ..types import PropertyIDs, Device, ThermostatProps
+from ..utils import check_for_errors_standard, check_for_errors_hms, check_for_errors_lock, \
     check_for_errors_thermostat, wyze_encrypt
-from wyzeapy.wyze_auth_lib import WyzeAuthLib
+from ..wyze_auth_lib import WyzeAuthLib
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class BaseService:
@@ -582,14 +585,14 @@ class BaseService:
         # await self._auth_lib.refresh_if_should()
 
         characteristics = {
-            "mac": bulb.mac,
-            "index": 1,
-            "ts": int(time.time_ns() // 1000000),
-            "plist": json.dumps(plist)
+            "mac": bulb.mac.upper(),
+            "index": "1",
+            "ts": str(int(time.time_ns() // 1000000)),
+            "plist": plist
         }
 
-        characteristics_str = json.dumps(characteristics)
-        characteristics_enc = wyze_encrypt(characteristics_str, bulb.enr)
+        characteristics_str = json.dumps(characteristics, separators=(',', ':'))
+        characteristics_enc = wyze_encrypt(bulb.enr, characteristics_str)
 
         payload = {
             "request": "set_status",
@@ -597,24 +600,14 @@ class BaseService:
             "characteristics": characteristics_enc
         }
 
-        url = f"http://{bulb.ip}:88/device_request"
+        # JSON likes to add a second \ so we have to remove it for the bulb to be happy
+        payload_str = json.dumps(payload, separators=(',', ':')).replace('\\\\', '\\')
 
-        headers = {
-            "User-Agent": "wyze_android/2.26.22(A0001; Android 11; Scale/3.0; Height/1920; Width/1080)",
-            "root-response": "true",
-            "Mesh-Node-Mac": bulb.mac,
-            "Connection": "close",
-            "Mesh-Node-Num": "1",
-            "Content-Type": "application/json; charset=utf-8",
-            "Host": "192.168.1.71:88",
-            "Accept-Encoding": "gzip, deflate"
-        }
+        url = "http://%s:88/device_request" % bulb.ip
 
-        timeout = aiohttp.ClientTimeout(sock_read=0.01)
-
-        async with aiohttp.ClientSession(timeout=timeout) as session:
-            try:
-                async with session.post(url, json=payload, headers=headers) as _:
-                    pass  # We are never going to get a response so don't bother checking it
-            except aiohttp.ServerTimeoutError:
-                pass  # The bulb will always timeout, so we don't care
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.post(url, data=payload_str, proxy='http://127.0.0.1:8081', ) as response:
+                    print(await response.text())
+        except aiohttp.ClientConnectionError:
+            _LOGGER.warning("Failed to connect to bulb %s" % bulb.mac)

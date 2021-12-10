@@ -7,9 +7,9 @@ import logging
 import re
 from typing import Any, Dict, Optional, List
 
-from wyzeapy.services.base_service import BaseService
-from wyzeapy.types import Device, PropertyIDs, DeviceTypes
-from wyzeapy.utils import create_pid_pair
+from .base_service import BaseService
+from ..types import Device, PropertyIDs, DeviceTypes
+from ..utils import create_pid_pair
 
 _LOGGER = logging.getLogger(__name__)
 

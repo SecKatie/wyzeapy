@@ -4,24 +4,23 @@
 #  the license with this file. If not, please write to:
 #  joshua@mulliken.net to receive a copy
 import logging
-import time
-from typing import Dict, Any, List, Optional, Set
 from inspect import iscoroutinefunction
+from typing import List, Optional, Set, Callable
 
-from wyzeapy.const import PHONE_SYSTEM_TYPE, APP_VERSION, SC, APP_VER, SV, PHONE_ID, APP_NAME, OLIVE_APP_ID, APP_INFO
-from wyzeapy.crypto import olive_create_signature
-from wyzeapy.payload_factory import olive_create_user_info_payload
-from wyzeapy.services.base_service import BaseService
-from wyzeapy.services.bulb_service import BulbService
-from wyzeapy.services.camera_service import CameraService
-from wyzeapy.services.hms_service import HMSService
-from wyzeapy.services.lock_service import LockService
-from wyzeapy.services.sensor_service import SensorService
-from wyzeapy.services.switch_service import SwitchService
-from wyzeapy.services.thermostat_service import ThermostatService
-from wyzeapy.utils import check_for_errors_standard
-from wyzeapy.wyze_auth_lib import WyzeAuthLib, Token
-from wyzeapy.exceptions import TwoFactorAuthenticationEnabled
+from .const import PHONE_SYSTEM_TYPE, APP_VERSION, SC, APP_VER, SV, PHONE_ID, APP_NAME, OLIVE_APP_ID, APP_INFO
+from .crypto import olive_create_signature
+from .exceptions import TwoFactorAuthenticationEnabled
+from .payload_factory import olive_create_user_info_payload
+from .services.base_service import BaseService
+from .services.bulb_service import BulbService
+from .services.camera_service import CameraService
+from .services.hms_service import HMSService
+from .services.lock_service import LockService
+from .services.sensor_service import SensorService
+from .services.switch_service import SwitchService
+from .services.thermostat_service import ThermostatService
+from .utils import check_for_errors_standard
+from .wyze_auth_lib import WyzeAuthLib, Token
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -42,7 +41,7 @@ class Wyzeapy:
         self._email = None
         self._password = None
         self._service: Optional[BaseService] = None
-        self._token_callbacks: List[function] = []
+        self._token_callbacks: List[Callable] = []
 
     @classmethod
     async def create(cls):
@@ -71,7 +70,8 @@ class Wyzeapy:
         try:
             if token:
                 # User token supplied, lets go ahead and use it and refresh the access token if needed.
-                self._auth_lib = await WyzeAuthLib.create(email, password, token, token_callback=self.execute_token_callbacks)
+                self._auth_lib = await WyzeAuthLib.create(
+                    email, password, token, token_callback=self.execute_token_callbacks)
                 await self._auth_lib.refresh_if_should()
                 self._service = BaseService(self._auth_lib)
             else:

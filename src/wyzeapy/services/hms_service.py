@@ -6,8 +6,8 @@
 from enum import Enum
 from typing import Optional
 
-from wyzeapy.wyze_auth_lib import WyzeAuthLib
-from wyzeapy.services.base_service import BaseService
+from ..wyze_auth_lib import WyzeAuthLib
+from .base_service import BaseService
 
 
 class HMSMode(Enum):

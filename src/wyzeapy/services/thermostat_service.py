@@ -7,8 +7,8 @@ import logging
 from enum import Enum
 from typing import Any, Dict, List
 
-from wyzeapy.services.base_service import BaseService
-from wyzeapy.types import Device, ThermostatProps, DeviceTypes
+from .base_service import BaseService
+from ..types import Device, ThermostatProps, DeviceTypes
 
 _LOGGER = logging.getLogger(__name__)
 

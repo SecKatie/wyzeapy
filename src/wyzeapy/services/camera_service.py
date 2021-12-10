@@ -11,11 +11,11 @@ from typing import Any, List, Optional, Dict, Callable, Tuple
 
 from aiohttp import ClientOSError, ContentTypeError
 
-from wyzeapy.exceptions import UnknownApiError
-from wyzeapy.services.base_service import BaseService
-from wyzeapy.services.update_manager import DeviceUpdater
-from wyzeapy.types import Device, DeviceTypes, Event, PropertyIDs
-from wyzeapy.utils import return_event_for_device, create_pid_pair
+from ..exceptions import UnknownApiError
+from .base_service import BaseService
+from .update_manager import DeviceUpdater
+from ..types import Device, DeviceTypes, Event, PropertyIDs
+from ..utils import return_event_for_device, create_pid_pair
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -82,9 +82,6 @@ class CameraService(BaseService):
                         _LOGGER.error(f"A network error was detected: {e}")
                     except ContentTypeError as e:
                         _LOGGER.error(f"Server returned unexpected ContentType: {e}")
-                    except RuntimeError as e:
-                        if e == RuntimeError("Session is closed"):
-                            asyncio.run_coroutine_threadsafe(self._auth_lib.gen_session(), loop).result()
 
     async def get_cameras(self) -> List[Camera]:
         if self._devices is None:

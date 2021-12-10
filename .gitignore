@@ -7,3 +7,4 @@
 /.scannerwork/
 .venv
 __pycache__
+dist/

@@ -35,6 +35,7 @@ if __name__ == "__main__":
 ## Thanks to:
 
 - [@shauntarves](https://github.com/shauntarves): for contributing the App ID and Signing Secret
+- [@yoinx](https://github.com/yoinx): for considerable contributions to the project
 
 
 ## License

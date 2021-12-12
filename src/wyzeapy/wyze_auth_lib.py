@@ -8,12 +8,11 @@ import logging
 import time
 from typing import Dict, Any, Optional
 
-import aiohttp
 from aiohttp import TCPConnector, ClientSession, ContentTypeError
 
-from wyzeapy.const import API_KEY, PHONE_ID, APP_NAME, APP_VERSION, SC, SV, PHONE_SYSTEM_TYPE, APP_VER, APP_INFO
-from wyzeapy.exceptions import UnknownApiError, AccessTokenError, TwoFactorAuthenticationEnabled
-from wyzeapy.utils import create_password, check_for_errors_standard
+from .const import API_KEY, PHONE_ID, APP_NAME, APP_VERSION, SC, SV, PHONE_SYSTEM_TYPE, APP_VER, APP_INFO
+from .exceptions import UnknownApiError, TwoFactorAuthenticationEnabled
+from .utils import create_password, check_for_errors_standard
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -197,7 +196,7 @@ class WyzeAuthLib:
 
         async with ClientSession(connector=TCPConnector(ttl_dns_cache=(30 * 60))) as _session:
             response = await _session.post("https://api.wyzecam.com/app/user/refresh_token", headers=headers,
-                                                json=payload)
+                                           json=payload)
         response_json = await response.json()
         check_for_errors_standard(response_json)
 
@@ -214,7 +213,6 @@ class WyzeAuthLib:
                 if key in self.SANITIZE_FIELDS:
                     data[key] = self.SANITIZE_STRING
         return data
-
 
     async def post(self, url, json=None, headers=None, data=None) -> Dict[Any, Any]:
         async with ClientSession(connector=TCPConnector(ttl_dns_cache=(30 * 60))) as _session:

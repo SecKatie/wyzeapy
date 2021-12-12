@@ -7,9 +7,7 @@ import asyncio
 import os
 import time
 import unittest
-from typing import Optional
 
-import wyzeapy
 from wyzeapy import Wyzeapy
 from wyzeapy.services.bulb_service import Bulb, BulbService
 from wyzeapy.services.camera_service import Camera, CameraService
@@ -19,7 +17,7 @@ from wyzeapy.services.sensor_service import Sensor, SensorService
 from wyzeapy.services.switch_service import Switch, SwitchService
 from wyzeapy.services.thermostat_service import Thermostat, Preset, HVACState, ThermostatService, HVACMode, FanMode, \
     TemperatureUnit
-from wyzeapy.types import DeviceTypes, Event
+from wyzeapy.types import DeviceTypes
 
 USERNAME = os.getenv("WYZE_EMAIL")
 PASSWORD = os.getenv("WYZE_PASSWORD")

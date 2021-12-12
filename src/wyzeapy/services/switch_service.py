@@ -5,8 +5,8 @@
 #  joshua@mulliken.net to receive a copy
 from typing import List, Dict, Any
 
-from wyzeapy.services.base_service import BaseService
-from wyzeapy.types import Device, DeviceTypes, PropertyIDs
+from .base_service import BaseService
+from ..types import Device, DeviceTypes, PropertyIDs
 
 
 class Switch(Device):

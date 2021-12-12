@@ -10,9 +10,9 @@ from typing import List, Callable, Tuple, Optional
 
 from aiohttp import ClientOSError, ContentTypeError
 
-from wyzeapy.exceptions import UnknownApiError
-from wyzeapy.services.base_service import BaseService
-from wyzeapy.types import Device, PropertyIDs, DeviceTypes
+from ..exceptions import UnknownApiError
+from .base_service import BaseService
+from ..types import Device, PropertyIDs, DeviceTypes
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -69,9 +69,6 @@ class SensorService(BaseService):
                     _LOGGER.error(f"A network error was detected: {e}")
                 except ContentTypeError as e:
                     _LOGGER.error(f"Server returned unexpected ContentType: {e}")
-                except RuntimeError as e:
-                    if e == RuntimeError("Session is closed"):
-                        asyncio.run_coroutine_threadsafe(self._auth_lib.gen_session(), loop).result()
 
     async def get_sensors(self) -> List[Sensor]:
         if self._devices is None:

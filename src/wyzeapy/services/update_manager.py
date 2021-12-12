@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from heapq import heappush, heappop
 from typing import Any
 from math import ceil
-from wyzeapy.types import Device
+from ..types import Device
 
 INTERVAL = 300
 MAX_SLOTS = 225
@@ -53,7 +53,7 @@ class DeviceUpdater(object):
 class UpdateManager:
     # Holds all the logic for when to update the devices
     updaters = []
-    removed_updaters = {}
+    removed_updaters = []
 
     def check_if_removed(self, updater: DeviceUpdater):
         for item in self.removed_updaters:
@@ -111,4 +111,4 @@ class UpdateManager:
         heappush(self.updaters, updater)
 
     def del_updater(self, updater: DeviceUpdater):
-        self.removed_updaters.add(updater)
+        self.removed_updaters.append(updater)

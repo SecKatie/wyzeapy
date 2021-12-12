@@ -3,27 +3,32 @@
 #  of the attached license. You should have received a copy of
 #  the license with this file. If not, please write to:
 #  joshua@mulliken.net to receive a copy
+import asyncio
 import json
+import logging
 import time
 from typing import List, Tuple, Any, Dict, Optional
-import asyncio
 
-from wyzeapy.const import PHONE_SYSTEM_TYPE, APP_VERSION, APP_VER, PHONE_ID, APP_NAME, OLIVE_APP_ID, APP_INFO, SC, SV
-from wyzeapy.crypto import olive_create_signature
-from wyzeapy.payload_factory import olive_create_hms_patch_payload, olive_create_hms_payload, \
+import aiohttp
+
+from .update_manager import DeviceUpdater, UpdateManager
+from ..const import PHONE_SYSTEM_TYPE, APP_VERSION, APP_VER, PHONE_ID, APP_NAME, OLIVE_APP_ID, APP_INFO, SC, SV
+from ..crypto import olive_create_signature
+from ..payload_factory import olive_create_hms_patch_payload, olive_create_hms_payload, \
     olive_create_hms_get_payload, ford_create_payload, olive_create_get_payload, olive_create_post_payload, \
     olive_create_user_info_payload
-from wyzeapy.services.update_manager import DeviceUpdater, UpdateManager
-from wyzeapy.types import PropertyIDs, Device, ThermostatProps
-from wyzeapy.utils import check_for_errors_standard, check_for_errors_hms, check_for_errors_lock, \
-    check_for_errors_thermostat
-from wyzeapy.wyze_auth_lib import WyzeAuthLib
+from ..types import PropertyIDs, Device, ThermostatProps
+from ..utils import check_for_errors_standard, check_for_errors_hms, check_for_errors_lock, \
+    check_for_errors_thermostat, wyze_encrypt
+from ..wyze_auth_lib import WyzeAuthLib
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class BaseService:
     _devices: Optional[List[Device]] = None
-    _last_updated_time: time = 0  #  preload a value of 0 so that comparison will succeed on the first run
-    _min_update_time = 1200  #  lets let the device_params update every 20 minutes for now. This could probably reduced signicficantly.
+    _last_updated_time: time = 0  # preload a value of 0 so that comparison will succeed on the first run
+    _min_update_time = 1200  # lets let the device_params update every 20 minutes for now. This could probably reduced signicficantly.
     _update_lock: asyncio.Lock() = asyncio.Lock()
     _update_manager: UpdateManager = UpdateManager()
     _update_loop = None
@@ -32,12 +37,13 @@ class BaseService:
     def __init__(self, auth_lib: WyzeAuthLib):
         self._auth_lib = auth_lib
 
-    async def start_update_manager(self):
+    @staticmethod
+    async def start_update_manager():
         if BaseService._update_loop is None:
             BaseService._update_loop = asyncio.get_event_loop()
-            BaseService._update_loop.create_task(BaseService._update_manager.update_next())       
+            BaseService._update_loop.create_task(BaseService._update_manager.update_next())
 
-    def register_updater(self, device: Device, interval) -> DeviceUpdater:
+    def register_updater(self, device: Device, interval):
         self._dev_updater = DeviceUpdater(self, device, interval)
         BaseService._update_manager.add_updater(self._dev_updater)
 
@@ -111,8 +117,8 @@ class BaseService:
                                                   json=payload)
 
         check_for_errors_standard(response_json)
-        
-        # Cache the devices so that update calls can pull more recent device_params 
+
+        # Cache the devices so that update calls can pull more recent device_params
         BaseService._devices = [Device(device) for device in response_json['data']['device_list']]
 
         return BaseService._devices
@@ -159,12 +165,12 @@ class BaseService:
         properties = response_json['data']['property_list']
 
         property_list = []
-        for property in properties:
+        for prop in properties:
             try:
-                property_id = PropertyIDs(property['pid'])
+                property_id = PropertyIDs(prop['pid'])
                 property_list.append((
                     property_id,
-                    property['value']
+                    prop['value']
                 ))
             except ValueError:
                 pass
@@ -574,3 +580,34 @@ class BaseService:
         response_json = await self._auth_lib.post(url, headers=headers, data=payload_str)
 
         check_for_errors_thermostat(response_json)
+
+    async def _local_bulb_command(self, bulb, plist):
+        # await self._auth_lib.refresh_if_should()
+
+        characteristics = {
+            "mac": bulb.mac.upper(),
+            "index": "1",
+            "ts": str(int(time.time_ns() // 1000000)),
+            "plist": plist
+        }
+
+        characteristics_str = json.dumps(characteristics, separators=(',', ':'))
+        characteristics_enc = wyze_encrypt(bulb.enr, characteristics_str)
+
+        payload = {
+            "request": "set_status",
+            "isSendQueue": 0,
+            "characteristics": characteristics_enc
+        }
+
+        # JSON likes to add a second \ so we have to remove it for the bulb to be happy
+        payload_str = json.dumps(payload, separators=(',', ':')).replace('\\\\', '\\')
+
+        url = "http://%s:88/device_request" % bulb.ip
+
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.post(url, data=payload_str) as response:
+                    print(await response.text())
+        except aiohttp.ClientConnectionError:
+            _LOGGER.warning("Failed to connect to bulb %s" % bulb.mac)

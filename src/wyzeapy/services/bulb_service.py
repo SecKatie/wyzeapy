@@ -67,7 +67,7 @@ class BulbService(BaseService):
         device_info = await self._get_property_list(bulb)
         for property_id, value in device_info:
             if property_id == PropertyIDs.BRIGHTNESS:
-                bulb.brightness = int(value)
+                bulb.brightness = int(float(value))
             elif property_id == PropertyIDs.COLOR_TEMP:
                 try:
                     bulb.color_temp = int(value)

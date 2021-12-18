@@ -153,6 +153,10 @@ class BulbService(BaseService):
         plist = [
             create_pid_pair(PropertyIDs.COLOR, str(color))
         ]
+        if bulb_type in [
+            DeviceTypes.LIGHTSTRIP
+        ]:
+            await self._set_property_list(bulb, plist)
 
         if bulb.type in [
             DeviceTypes.MESH_LIGHT

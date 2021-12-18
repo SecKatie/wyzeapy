@@ -109,14 +109,14 @@ class BulbService(BaseService):
         if options is not None:
             plist.extend(options)
 
-        if (
-            bulb.type in [DeviceTypes.LIGHT]
+        if bulb.type in [
+            DeviceTypes.LIGHT
+        ]:
+            await self._set_property_list(bulb, plist)
+        elif (
+            bulb.type in [DeviceTypes.MESH_LIGHT] 
             or bulb.type in [DeviceTypes.LIGHTSTRIP]
         ):
-            await self._set_property_list(bulb, plist)
-        elif bulb.type in [
-            DeviceTypes.MESH_LIGHT
-        ]:
             await self._local_bulb_command(bulb, plist)
 
     async def turn_off(self, bulb: Bulb):
@@ -124,14 +124,14 @@ class BulbService(BaseService):
             create_pid_pair(PropertyIDs.ON, "0")
         ]
 
-        if (
-            bulb.type in [DeviceTypes.LIGHT] 
+        if bulb.type in [
+            DeviceTypes.LIGHT
+        ]:
+            await self._set_property_list(bulb, plist)
+        elif (
+            bulb.type in [DeviceTypes.MESH_LIGHT] 
             or bulb.type in [DeviceTypes.LIGHTSTRIP]
         ):
-            await self._set_property_list(bulb, plist)
-        elif bulb.type in [
-            DeviceTypes.MESH_LIGHT
-        ]:
             await self._local_bulb_command(bulb, plist)
 
     async def set_color_temp(self, bulb: Bulb, color_temp: int):
@@ -139,10 +139,9 @@ class BulbService(BaseService):
             create_pid_pair(PropertyIDs.COLOR_TEMP, str(color_temp))
         ]
 
-        if (
-            bulb.type in [DeviceTypes.LIGHT]
-            or bulb.type in [DeviceTypes.LIGHTSTRIP]
-        ):
+        if bulb.type in [
+            DeviceTypes.LIGHT
+        ]:
             await self._set_property_list(bulb, plist)
         elif bulb.type in [
             DeviceTypes.MESH_LIGHT
@@ -153,11 +152,6 @@ class BulbService(BaseService):
         plist = [
             create_pid_pair(PropertyIDs.COLOR, str(color))
         ]
-        if bulb_type in [
-            DeviceTypes.LIGHTSTRIP
-        ]:
-            await self._set_property_list(bulb, plist)
-
         if bulb.type in [
             DeviceTypes.MESH_LIGHT
         ]:

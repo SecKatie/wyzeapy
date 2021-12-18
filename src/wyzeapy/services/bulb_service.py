@@ -27,7 +27,10 @@ class Bulb(Device):
 
         self.ip = self.device_params["ip"]
 
-        if self.type is DeviceTypes.MESH_LIGHT:
+        if (
+            self.type is DeviceTypes.MESH_LIGHT
+            or self.type is DeviceTypes.LIGHTSTRIP
+        ):
             self._color = "000000"
 
     @property
@@ -77,7 +80,11 @@ class BulbService(BaseService):
                 bulb.on = value == "1"
             elif property_id == PropertyIDs.AVAILABLE:
                 bulb.available = value == "1"
-            elif bulb.type is DeviceTypes.MESH_LIGHT and property_id == PropertyIDs.COLOR:
+            elif (
+                bulb.type is DeviceTypes.MESH_LIGHT
+                or bulb.type is DeviceTypes.LIGHTSTRIP
+                and property_id == PropertyIDs.COLOR
+            ):
                 bulb.color = value
         return bulb
 
@@ -85,8 +92,13 @@ class BulbService(BaseService):
         if self._devices is None:
             self._devices = await self.get_object_list()
 
-        bulbs = [device for device in self._devices if device.type is DeviceTypes.LIGHT or
-                 device.type is DeviceTypes.MESH_LIGHT]
+        bulbs = [
+            device
+            for device in self._devices
+            if device.type is DeviceTypes.LIGHT
+            or device.type is DeviceTypes.MESH_LIGHT
+            or device.type is DeviceTypes.LIGHTSTRIP
+        ]
 
         return [Bulb(bulb.raw_dict) for bulb in bulbs]
 
@@ -97,9 +109,10 @@ class BulbService(BaseService):
         if options is not None:
             plist.extend(options)
 
-        if bulb.type in [
-            DeviceTypes.LIGHT
-        ]:
+        if (
+            bulb.type in [DeviceTypes.LIGHT]
+            or bulb.type in [DeviceTypes.LIGHTSTRIP]
+        ):
             await self._set_property_list(bulb, plist)
         elif bulb.type in [
             DeviceTypes.MESH_LIGHT
@@ -111,9 +124,10 @@ class BulbService(BaseService):
             create_pid_pair(PropertyIDs.ON, "0")
         ]
 
-        if bulb.type in [
-            DeviceTypes.LIGHT
-        ]:
+        if (
+            bulb.type in [DeviceTypes.LIGHT] 
+            or bulb.type in [DeviceTypes.LIGHTSTRIP]
+        ):
             await self._set_property_list(bulb, plist)
         elif bulb.type in [
             DeviceTypes.MESH_LIGHT
@@ -125,9 +139,10 @@ class BulbService(BaseService):
             create_pid_pair(PropertyIDs.COLOR_TEMP, str(color_temp))
         ]
 
-        if bulb.type in [
-            DeviceTypes.LIGHT
-        ]:
+        if (
+            bulb.type in [DeviceTypes.LIGHT]
+            or bulb.type in [DeviceTypes.LIGHTSTRIP]
+        ):
             await self._set_property_list(bulb, plist)
         elif bulb.type in [
             DeviceTypes.MESH_LIGHT

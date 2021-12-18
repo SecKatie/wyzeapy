@@ -41,7 +41,7 @@ class DeviceTypes(Enum):
     UNKNOWN = "Unknown"
     SENSE_V2_GATEWAY = "S1Gateway"
     KEYPAD = "Keypad"
-
+    LIGHTSTRIP = "LightStrip"
 
 class Device:
     product_type: str

@@ -82,9 +82,7 @@ class BulbService(BaseService):
                 bulb.available = value == "1"
             elif (
                 property_id == PropertyIDs.COLOR
-                and (
-                    bulb.type is DeviceTypes.LIGHTSTRIP
-                    or bulb.type is DeviceTypes.MESH_LIGHT
+                and bulb.type is in [DeviceTypes.LIGHTSTRIP, DeviceTypes.MESH_LIGHT]
                 )
             ):
                 bulb.color = value
@@ -97,9 +95,9 @@ class BulbService(BaseService):
         bulbs = [
             device
             for device in self._devices
-            if device.type is DeviceTypes.LIGHT
-            or device.type is DeviceTypes.MESH_LIGHT
-            or device.type is DeviceTypes.LIGHTSTRIP
+            if device.type is in [DeviceTypes.LIGHT,
+                                  DeviceTypes.MESH_LIGHT,
+                                  DeviceTypes.LIGHTSTRIP]
         ]
 
         return [Bulb(bulb.raw_dict) for bulb in bulbs]
@@ -120,8 +118,7 @@ class BulbService(BaseService):
         ]:
             await self._set_property_list(bulb, plist)
         elif (
-            bulb.type in [DeviceTypes.MESH_LIGHT]
-            or bulb.type in [DeviceTypes.LIGHTSTRIP]
+            bulb.type in [DeviceTypes.MESH_LIGHT, DeviceTypes.LIGHTSTRIP]
         ):
             await self._local_bulb_command(bulb, plist)
 
@@ -135,8 +132,7 @@ class BulbService(BaseService):
         ]:
             await self._set_property_list(bulb, plist)
         elif (
-            bulb.type in [DeviceTypes.MESH_LIGHT]
-            or bulb.type in [DeviceTypes.LIGHTSTRIP]
+            bulb.type in [DeviceTypes.MESH_LIGHT, DeviceTypes.LIGHTSTRIP]
         ):
             await self._local_bulb_command(bulb, plist)
 

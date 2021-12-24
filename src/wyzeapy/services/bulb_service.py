@@ -82,8 +82,7 @@ class BulbService(BaseService):
                 bulb.available = value == "1"
             elif (
                 property_id == PropertyIDs.COLOR
-                and bulb.type is in [DeviceTypes.LIGHTSTRIP, DeviceTypes.MESH_LIGHT]
-                )
+                and bulb.type in [DeviceTypes.LIGHTSTRIP, DeviceTypes.MESH_LIGHT]
             ):
                 bulb.color = value
         return bulb
@@ -95,9 +94,9 @@ class BulbService(BaseService):
         bulbs = [
             device
             for device in self._devices
-            if device.type is in [DeviceTypes.LIGHT,
-                                  DeviceTypes.MESH_LIGHT,
-                                  DeviceTypes.LIGHTSTRIP]
+            if device.type in [DeviceTypes.LIGHT,
+                               DeviceTypes.MESH_LIGHT,
+                               DeviceTypes.LIGHTSTRIP]
         ]
 
         return [Bulb(bulb.raw_dict) for bulb in bulbs]

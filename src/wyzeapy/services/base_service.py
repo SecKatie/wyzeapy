@@ -115,10 +115,12 @@ class BaseService:
 
         response_json = await self._auth_lib.post("https://api.wyzecam.com/app/v2/home_page/get_object_list",
                                                   json=payload)
+
         check_for_errors_standard(response_json)
 
         # Cache the devices so that update calls can pull more recent device_params
         BaseService._devices = [Device(device) for device in response_json['data']['device_list']]
+
         return BaseService._devices
 
     async def get_updated_params(self, device_mac: str = None) -> Dict[str, Optional[Any]]:
@@ -161,6 +163,7 @@ class BaseService:
 
         check_for_errors_standard(response_json)
         properties = response_json['data']['property_list']
+
         property_list = []
         for prop in properties:
             try:

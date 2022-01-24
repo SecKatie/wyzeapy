@@ -611,5 +611,5 @@ class BaseService:
                     print(await response.text())
         except aiohttp.ClientConnectionError:
             _LOGGER.warning("Failed to connect to bulb %s, reverting to cloud." % bulb.mac)
-            await self._set_property_list(bulb, plist)
+            await self._run_action_list(bulb, plist)
             bulb.cloud_fallback = True

@@ -123,7 +123,7 @@ class BulbService(BaseService):
             if not bulb.cloud_fallback:
                 await self._local_bulb_command(bulb, plist)
             else:
-                await self._set_property_list(bulb, plist)
+                await self._run_action_list(bulb, plist)
 
     async def turn_off(self, bulb: Bulb):
         plist = [
@@ -140,7 +140,7 @@ class BulbService(BaseService):
             if not bulb.cloud_fallback:
                 await self._local_bulb_command(bulb, plist)
             else:
-                await self._set_property_list(bulb, plist)
+                await self._run_action_list(bulb, plist)
 
     async def set_color_temp(self, bulb: Bulb, color_temp: int):
         plist = [

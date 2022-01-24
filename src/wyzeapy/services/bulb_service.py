@@ -21,6 +21,7 @@ class Bulb(Device):
     enr: str
 
     on: bool = False
+    cloud_fallback = False
 
     def __init__(self, dictionary: Dict[Any, Any]):
         super().__init__(dictionary)
@@ -119,7 +120,10 @@ class BulbService(BaseService):
         elif (
             bulb.type in [DeviceTypes.MESH_LIGHT, DeviceTypes.LIGHTSTRIP]
         ):
-            await self._local_bulb_command(bulb, plist)
+            if not bulb.cloud_fallback:
+                await self._local_bulb_command(bulb, plist)
+            else:
+                await self._run_action_list(bulb, plist)
 
     async def turn_off(self, bulb: Bulb):
         plist = [
@@ -133,7 +137,10 @@ class BulbService(BaseService):
         elif (
             bulb.type in [DeviceTypes.MESH_LIGHT, DeviceTypes.LIGHTSTRIP]
         ):
-            await self._local_bulb_command(bulb, plist)
+            if not bulb.cloud_fallback:
+                await self._local_bulb_command(bulb, plist)
+            else:
+                await self._run_action_list(bulb, plist)
 
     async def set_color_temp(self, bulb: Bulb, color_temp: int):
         plist = [

@@ -102,7 +102,7 @@ class BulbService(BaseService):
 
         return [Bulb(bulb.raw_dict) for bulb in bulbs]
 
-    async def turn_on(self, bulb: Bulb, options=None):
+    async def turn_on(self, bulb: Bulb, local_control, options=None):
         plist = [
             create_pid_pair(PropertyIDs.ON, "1")
         ]
@@ -120,12 +120,14 @@ class BulbService(BaseService):
         elif (
             bulb.type in [DeviceTypes.MESH_LIGHT, DeviceTypes.LIGHTSTRIP]
         ):
-            if not bulb.cloud_fallback:
+            if not bulb.cloud_fallback and local_control:
                 await self._local_bulb_command(bulb, plist)
+                _LOGGER.debug("Using Local Control")
             else:
                 await self._run_action_list(bulb, plist)
+                _LOGGER.debug("Using Cloud Control")
 
-    async def turn_off(self, bulb: Bulb):
+    async def turn_off(self, bulb: Bulb, local_control):
         plist = [
             create_pid_pair(PropertyIDs.ON, "0")
         ]
@@ -137,7 +139,7 @@ class BulbService(BaseService):
         elif (
             bulb.type in [DeviceTypes.MESH_LIGHT, DeviceTypes.LIGHTSTRIP]
         ):
-            if not bulb.cloud_fallback:
+            if not bulb.cloud_fallback and local_control:
                 await self._local_bulb_command(bulb, plist)
             else:
                 await self._run_action_list(bulb, plist)

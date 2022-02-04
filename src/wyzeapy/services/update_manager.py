@@ -67,9 +67,10 @@ class UpdateManager:
             # First we get the next updater off the queue
             updater = heappop(self.updaters)
             # if the updater has been removed, pop the next and clear it from the removed updaters
-            while self.check_if_removed(updater):
-                updater = heappop(self.updaters)
-                self.removed_updaters.remove(updater)
+            if self.removed_updaters:
+                while self.check_if_removed(updater):
+                    self.removed_updaters.remove(updater)
+                    updater = heappop(self.updaters)
             # We then reduce the counter for all the other updaters
             self.tick_tock()
             # Then we update the target device

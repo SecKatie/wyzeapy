@@ -122,10 +122,8 @@ class BulbService(BaseService):
         ):
             if local_control and not bulb.cloud_fallback:
                 await self._local_bulb_command(bulb, plist)
-                _LOGGER.debug("Using Local Control")
             else:
                 await self._run_action_list(bulb, plist)
-                _LOGGER.debug("Using Cloud Control")
 
     async def turn_off(self, bulb: Bulb, local_control):
         plist = [

@@ -120,7 +120,7 @@ class BulbService(BaseService):
         elif (
             bulb.type in [DeviceTypes.MESH_LIGHT, DeviceTypes.LIGHTSTRIP]
         ):
-            if not bulb.cloud_fallback and local_control:
+            if local_control and not bulb.cloud_fallback:
                 await self._local_bulb_command(bulb, plist)
                 _LOGGER.debug("Using Local Control")
             else:
@@ -139,7 +139,7 @@ class BulbService(BaseService):
         elif (
             bulb.type in [DeviceTypes.MESH_LIGHT, DeviceTypes.LIGHTSTRIP]
         ):
-            if not bulb.cloud_fallback and local_control:
+            if local_control and not bulb.cloud_fallback:
                 await self._local_bulb_command(bulb, plist)
             else:
                 await self._run_action_list(bulb, plist)

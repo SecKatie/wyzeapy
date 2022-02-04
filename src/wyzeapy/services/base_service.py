@@ -33,6 +33,7 @@ class BaseService:
     _update_manager: UpdateManager = UpdateManager()
     _update_loop = None
     _updater: DeviceUpdater = None
+    _updater_dict = {}
 
     def __init__(self, auth_lib: WyzeAuthLib):
         self._auth_lib = auth_lib
@@ -44,12 +45,14 @@ class BaseService:
             BaseService._update_loop.create_task(BaseService._update_manager.update_next())
 
     def register_updater(self, device: Device, interval):
-        self._dev_updater = DeviceUpdater(self, device, interval)
-        BaseService._update_manager.add_updater(self._dev_updater)
+        self._updater = DeviceUpdater(self, device, interval)
+        BaseService._update_manager.add_updater(self._updater)
+        self._updater_dict[self._updater.device] = self._updater
 
-    def unregister_updater(self):
+    def unregister_updater(self, device: Device):
         if self._updater:
-            BaseService._update_manager.del_updater(self._updater)
+            BaseService._update_manager.del_updater(self._updater_dict[device])
+            del self._updater_dict[device]
 
     async def set_push_info(self, on: bool) -> None:
         await self._auth_lib.refresh_if_should()

@@ -1,0 +1,279 @@
+openapi: 3.0.0
+info:
+  description: This spec describes the unofficial revere engineered user authentication API for Wyze as it is used by ha-wyzeapi
+  version: 0.0.1
+  title: Wyze Auth API
+  contact:
+    email: joshua@mulliken.net
+  license:
+    name: GPL-3.0
+    url: https://www.gnu.org/licenses/gpl-3.0.en.html
+servers:
+  - url: https://auth-prod.api.wyze.com
+    variables: {}
+paths:
+  /user/login:
+    post:
+      summary: Logs user into the system
+      tags:
+        - Auth
+      parameters:
+        - name: Phone-Id
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/phone_id'
+        - name: User-Agent
+          in: header
+          required: true
+          schema:
+            type: string
+            default: wyze_android_2.19.14
+        - $ref: '#/components/parameters/APIKey'
+      requestBody:
+        description: Payload including the username and pass
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: md5
+                  description: users password md5 hashed three times
+                mfa_type:
+                  $ref: '#/components/schemas/mfa_type'
+                verification_id:
+                  $ref: '#/components/schemas/totp_app_id'
+                verification_code:
+                  $ref: '#/components/schemas/totp_code'
+      responses:
+        '200':
+          description: Response object from the request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    $ref: '#/components/schemas/OAuthAccessToken'
+                  refresh_token:
+                    $ref: '#/components/schemas/OAuthRefreshToken'
+                  user_id:
+                    $ref: '#/components/schemas/user_id'
+                  mfa_options:
+                    type: string
+                    nullable: true
+                    description: The type of mfa that is in use by the user
+                    enum:
+                      - TotpVerificationCode
+                      - PrimaryPhone
+                  mfa_details:
+                    type: object
+                    nullable: true
+                    description: >-
+                      The details of the TOTP apps that are configured for the
+                      user
+                    properties:
+                      totp_apps:
+                        type: array
+                        description: >-
+                          Array of TOTP apps that the user has configured for
+                          their account
+                        items:
+                          $ref: '#/components/schemas/totp_app'
+                  sms_session_id:
+                    $ref: '#/components/schemas/sms_session_id'
+        '400':
+          description: Login error response
+          content:
+            application/json:
+              schema:
+                type: object
+                title: Error Response
+                properties:
+                  errorCode:
+                    type: number
+                  description:
+                    type: string
+                  requestId:
+                    type: string
+  /user/login/sendSmsCode:
+    post:
+      summary: Sends an SMS MFA Code to the user
+      tags:
+        - Auth
+      parameters:
+        - name: Phone-Id
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/phone_id'
+        - name: User-Agent
+          in: header
+          required: true
+          schema:
+            type: string
+            default: wyze_android_2.19.14
+        - name: X-API-Key
+          in: header
+          required: true
+          schema:
+            type: string
+            default: WMXHYf79Nr5gIlt3r0r7p9Tcw5bvs6BB4U8O8nGJ
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required:
+                - mfaPhoneType
+                - sessionId
+                - userId
+              properties:
+                mfaPhoneType:
+                  type: string
+                  default: Primary
+                sessionId:
+                  $ref: '#/components/schemas/sms_session_id'
+                userId:
+                  $ref: '#/components/schemas/user_id'
+      responses:
+        '200':
+          description: Success response; sms sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  session_id:
+                    type: string
+  /app/user/refresh_token:
+    servers:
+      - url: https://api.wyzecam.com
+    post:
+      summary: Refreshes the access_token using the refresh_token
+      tags:
+        - Auth
+      parameters:
+        - $ref: '#/components/parameters/APIKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                phone_id:
+                  $ref: '#/components/schemas/phone_id'
+                app_name:
+                  $ref: '#/components/schemas/app_name'
+                app_version:
+                  $ref: '#/components/schemas/app_version'
+                sc:
+                  $ref: '#/components/schemas/sc'
+                sv:
+                  $ref: '#/components/schemas/sv'
+                phone_system_type:
+                  $ref: '#/components/schemas/phone_system_type'
+                app_ver:
+                  $ref: '#/components/schemas/app_ver'
+                ts:
+                  type: integer
+                  format: unixtime
+                refresh_token:
+                  $ref: '#/components/schemas/OAuthRefreshToken'
+      responses:
+        '200':
+          description: Success response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      access_token:
+                        $ref: '#/components/schemas/OAuthAccessToken'
+                      refresh_token:
+                        $ref: '#/components/schemas/OAuthRefreshToken'
+components:
+  parameters:
+    APIKey:
+      name: X-API-Key
+      in: header
+      required: true
+      schema:
+        type: string
+        default: WMXHYf79Nr5gIlt3r0r7p9Tcw5bvs6BB4U8O8nGJ
+  schemas:
+    phone_system_type:
+      type: string
+      default: 1
+    sc:
+      type: string
+      default: 9f275790cab94a72bd206c8876429f3c
+    sv:
+      type: string
+      default: 9d74946e652647e9b6c9d59326aef104
+    app_name:
+      type: string
+      default: com.hualai.WyzeCam
+    app_version:
+      type: string
+      default: 2.18.43
+    app_ver:
+      type: string
+      default: com.hualai.WyzeCam___2.18.43
+    phone_id:
+      type: string
+      format: uuidv4
+      example: 5A036F98-D673-403A-B760-54B433092B9D
+    user_id:
+      type: string
+      example: 9819dc122168028d5d574c817c8c5e75
+    sms_session_id:
+      nullable: true
+      type: string
+    totp_code:
+      type: number
+      description: TOTP code from app or SMS
+      minLength: 6
+      maxLength: 6
+      example: 111111
+    totp_app_id:
+      type: string
+      description: The backend id of the TOTP app
+      example: BA4B907A-BE74-4960-B3A7-B96DAB41E8EA
+    totp_app:
+      type: object
+      description: Representation of a TOTP app
+      properties:
+        app_id:
+          $ref: '#/components/schemas/totp_app_id'
+    mfa_type:
+      type: string
+      description: The type of mfa that is in use by the user
+      enum:
+        - TotpVerificationCode
+        - PrimaryPhone
+    OAuthAccessToken:
+      type: string
+      description: Access token for the logged in user
+      example: MTQ0NjJkZmQ5OTM2NDE1ZTZjNGZmZjI3
+    OAuthRefreshToken:
+      type: string
+      description: Refresh token for the logged in user
+      example: IwOGYzYTlmM2YxOTQ5MGE3YmNmMDFkNTVk
+externalDocs:
+  description: Find out more about Swagger
+  url: http://swagger.io

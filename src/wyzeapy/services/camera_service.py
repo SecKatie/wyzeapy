@@ -27,6 +27,7 @@ class Camera(Device):
         self.last_event: Optional[Event] = None
         self.last_event_ts: int = int(time.time() * 1000)
         self.on: bool = True
+        self.siren: bool = False
 
 
 class CameraService(BaseService):
@@ -54,6 +55,8 @@ class CameraService(BaseService):
                 camera.available = value == "1"
             if property is PropertyIDs.ON:
                 camera.on = value == "1"
+            if property is PropertyIDs.CAMERA_SIREN:
+                camera.siren = value == "1"
 
         return camera
 
@@ -96,6 +99,12 @@ class CameraService(BaseService):
 
     async def turn_off(self, camera: Camera):
         await self._run_action(camera, "power_off")
+
+    async def siren_on(self, camera: Camera):
+        await self._run_action(camera, "siren_on")
+
+    async def siren_off(self, camera: Camera):
+        await self._run_action(camera, "siren_off")
 
     async def turn_on_notifications(self, camera: Camera):
         plist = [

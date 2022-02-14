@@ -2,19 +2,25 @@ openapi: 3.0.0
 info:
   description: This spec describes the unofficial revere engineered user authentication API for Wyze as it is used by ha-wyzeapi
   version: 0.0.1
-  title: Wyze Auth API
+  title: Wyze API
   contact:
     email: joshua@mulliken.net
+    name: Joshua Mulliken
+    url: https://www.mulliken.net
   license:
     name: GPL-3.0
     url: https://www.gnu.org/licenses/gpl-3.0.en.html
-servers:
-  - url: https://auth-prod.api.wyze.com
-    variables: {}
+tags:
+  - name: Auth
+    description: Authentication APIs
+  - name: User
+    description: User information APIs
 paths:
   /user/login:
+    servers:
+    - url: https://auth-prod.api.wyze.com
     post:
-      summary: Logs user into the system
+      summary: Authenticates with username and password to gain MFA session or access and refresh token
       tags:
         - Auth
       parameters:
@@ -106,6 +112,8 @@ paths:
                   requestId:
                     type: string
   /user/login/sendSmsCode:
+    servers:
+      - url: https://auth-prod.api.wyze.com
     post:
       summary: Sends an SMS MFA Code to the user
       tags:
@@ -206,6 +214,214 @@ paths:
                         $ref: '#/components/schemas/OAuthAccessToken'
                       refresh_token:
                         $ref: '#/components/schemas/OAuthRefreshToken'
+  /app/v2/platform/get_user_profile:
+    servers:
+      - url: https://wyze-platform-service.wyzecam.com
+    post:
+      tags:
+        - User
+      parameters:
+        - name: appid
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/olive_app_id'
+        - name: appinfo
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/app_info'
+        - name: phoneid
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/phone_id'
+        - name: access_token
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/OAuthAccessToken'
+        - name: signature2
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/olive_signature'
+      responses:
+        '200':
+          description: Success response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      notification:
+                        type: boolean
+  /app/v2/home_page/get_object_list:
+    servers:
+      - url: https://api.wyzecam.com
+    post:
+      tags:
+        - Device
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                phone_system_type:
+                  $ref: '#/components/schemas/phone_system_type'
+                app_version:
+                  $ref: '#/components/schemas/app_version'
+                app_ver:
+                  $ref: '#/components/schemas/app_ver'
+                sc:
+                  $ref: '#/components/schemas/sc'
+                ts:
+                  $ref: '#/components/schemas/ts'
+                sv:
+                  $ref: '#/components/schemas/sv'
+                access_token:
+                  $ref: '#/components/schemas/OAuthAccessToken'
+                phone_id:
+                  $ref: '#/components/schemas/phone_id'
+                app_name:
+                  $ref: '#/components/schemas/app_name'
+      responses:
+       '200':
+        description: Success response
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                code:
+                  type: string
+                  example: 1
+                data:
+                  type: object
+                  properties:
+                    device_list:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/device'
+  /app/v2/home_page/get_property_list:
+    servers:
+      - url: https://api.wyzecam.com
+    post:
+      tags:
+        - Device
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                phone_system_type:
+                  $ref: '#/components/schemas/phone_system_type'
+                app_version:
+                  $ref: '#/components/schemas/app_version'
+                app_ver:
+                  $ref: '#/components/schemas/app_ver'
+                sc:
+                  $ref: '#/components/schemas/sc'
+                ts:
+                  $ref: '#/components/schemas/ts'
+                sv:
+                  $ref: '#/components/schemas/sv'
+                access_token:
+                  $ref: '#/components/schemas/OAuthAccessToken'
+                phone_id:
+                  $ref: '#/components/schemas/phone_id'
+                app_name:
+                  $ref: '#/components/schemas/app_name'
+                device_model:
+                  $ref: '#/components/schemas/product_model'
+                device_mac:
+                  $ref: '#/components/schemas/mac'
+                target_pid_list:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/pid'
+      responses:
+        '200':
+          description: Success response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 1
+                  data:
+                    type: object
+                    properties:
+                      property_list:
+                        type: object
+                        properties:
+                          pid:
+                            $ref: '#/components/schemas/pid'
+                          value:
+                            type: string
+                            example: 1
+  /app/v2/home_page/set_property_list:
+    servers:
+      - url: https://api.wyzecam.com
+    post:
+      tags:
+        - Device
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                phone_system_type:
+                  $ref: '#/components/schemas/phone_system_type'
+                app_version:
+                  $ref: '#/components/schemas/app_version'
+                app_ver:
+                  $ref: '#/components/schemas/app_ver'
+                sc:
+                  $ref: '#/components/schemas/sc'
+                ts:
+                  $ref: '#/components/schemas/ts'
+                sv:
+                  $ref: '#/components/schemas/sv'
+                access_token:
+                  $ref: '#/components/schemas/OAuthAccessToken'
+                phone_id:
+                  $ref: '#/components/schemas/phone_id'
+                app_name:
+                  $ref: '#/components/schemas/app_name'
+                device_model:
+                  $ref: '#/components/schemas/product_model'
+                device_mac:
+                  $ref: '#/components/schemas/mac'
+                property_list:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      pid:
+                        $ref: '#/components/schemas/pid'
+                      pvalue:
+                        type: string
+                        example: 1
+      responses:
+        '200':
+          description: Success response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: 1
 components:
   parameters:
     APIKey:
@@ -216,6 +432,35 @@ components:
         type: string
         default: WMXHYf79Nr5gIlt3r0r7p9Tcw5bvs6BB4U8O8nGJ
   schemas:
+    pid:
+      type: string
+      example: P3
+    product_model:
+      type: string
+    mac:
+      type: string
+    device:
+      type: object
+      properties:
+        product_type:
+          type: string
+        product_model:
+          $ref: '#/components/schemas/product_model'
+        mac:
+          $ref: '#/components/schemas/mac'
+        nickname:
+          type: string
+        device_params:
+          type: object
+    olive_signature:
+      type: string
+      description: "Signature created based on other payload information. See: [Code Ref](https://github.com/JoshuaMulliken/wyzeapy/blob/011cc112a9fb18364b2cadb6268ffe4c7459ea5f/src/wyzeapy/crypto.py#L14-L28)"
+    app_info:
+      type: string
+      default: wyze_android_2.19.14
+    olive_app_id:
+      type: string
+      default: 9319141212m2ik
     phone_system_type:
       type: string
       default: 1
@@ -225,6 +470,10 @@ components:
     sv:
       type: string
       default: 9d74946e652647e9b6c9d59326aef104
+    ts:
+      type: integer
+      description: Current timestamp in unix format.
+      example: 1644854738
     app_name:
       type: string
       default: com.hualai.WyzeCam
@@ -275,5 +524,5 @@ components:
       description: Refresh token for the logged in user
       example: IwOGYzYTlmM2YxOTQ5MGE3YmNmMDFkNTVk
 externalDocs:
-  description: Find out more about Swagger
-  url: http://swagger.io
+  description: Learn more from the wyzeapy library
+  url: https://github.com/JoshuaMulliken/wyzeapy

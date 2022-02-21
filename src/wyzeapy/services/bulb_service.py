@@ -156,14 +156,17 @@ class BulbService(BaseService):
         ]:
             await self._local_bulb_command(bulb, plist)
 
-    async def set_color(self, bulb: Bulb, color: str):
+    async def set_color(self, bulb: Bulb, color: str, local_control):
         plist = [
             create_pid_pair(PropertyIDs.COLOR, str(color))
         ]
         if bulb.type in [
             DeviceTypes.MESH_LIGHT
         ]:
-            await self._local_bulb_command(bulb, plist)
+            if local_control and not bulb.cloud_fallback:
+                await self._local_bulb_command(bulb, plist)
+            else:
+                await self._run_action_list(bulb, plist)
 
     async def set_brightness(self, bulb: Device, brightness: int):
         plist = [

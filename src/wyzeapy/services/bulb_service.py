@@ -86,6 +86,8 @@ class BulbService(BaseService):
                 and bulb.type in [DeviceTypes.LIGHTSTRIP, DeviceTypes.MESH_LIGHT]
             ):
                 bulb.color = value
+            elif property_id == PropertyIDs.COLOR_MODE:
+                bulb.color_mode = value
         return bulb
 
     async def get_bulbs(self) -> List[Bulb]:
@@ -106,8 +108,8 @@ class BulbService(BaseService):
         plist = [
             create_pid_pair(PropertyIDs.ON, "1")
         ]
-        # Put strip back into basic color mode if it isn't already
-        if bulb.type in [DeviceTypes.LIGHTSTRIP]:
+        # Put bulb and strip back into basic color mode if it isn't already
+        if bulb.type in [DeviceTypes.LIGHTSTRIP, DeviceTypes.MESH_LIGHT]:
             plist.append(create_pid_pair(PropertyIDs.COLOR_MODE, "1"))
 
         if options is not None:

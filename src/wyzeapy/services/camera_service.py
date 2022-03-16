@@ -28,6 +28,7 @@ class Camera(Device):
         self.last_event_ts: int = int(time.time() * 1000)
         self.on: bool = True
         self.siren: bool = False
+        self.floodlight: bool = False
 
 
 class CameraService(BaseService):
@@ -57,7 +58,9 @@ class CameraService(BaseService):
                 camera.on = value == "1"
             if property is PropertyIDs.CAMERA_SIREN:
                 camera.siren = value == "1"
-
+            if property is PropertyIDs.FLOOD_LIGHT:
+                camera.floodlight = value == "1"
+                
         return camera
 
     async def register_for_updates(self, camera: Camera, callback: Callable[[Camera], None]):
@@ -106,6 +109,12 @@ class CameraService(BaseService):
     async def siren_off(self, camera: Camera):
         await self._run_action(camera, "siren_off")
 
+    async def floodlight_on(self, camera: Camera):
+        await self._set_property(camera, PropertyIDs.FLOOD_LIGHT.value, "1")
+
+    async def floodlight_off(self, camera: Camera):
+        await self._set_property(camera, PropertyIDs.FLOOD_LIGHT.value, "2")
+        
     async def turn_on_notifications(self, camera: Camera):
         plist = [
             create_pid_pair(PropertyIDs.NOTIFICATION, "1")

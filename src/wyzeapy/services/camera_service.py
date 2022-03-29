@@ -60,7 +60,9 @@ class CameraService(BaseService):
                 camera.siren = value == "1"
             if property is PropertyIDs.FLOOD_LIGHT:
                 camera.floodlight = value == "1"
-                
+            if property is PropertyIDs.NOTIFICATION:
+                camera.notify = value == "1"
+
         return camera
 
     async def register_for_updates(self, camera: Camera, callback: Callable[[Camera], None]):

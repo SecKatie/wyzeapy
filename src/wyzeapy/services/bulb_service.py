@@ -108,9 +108,6 @@ class BulbService(BaseService):
         plist = [
             create_pid_pair(PropertyIDs.ON, "1")
         ]
-        # Put bulb and strip back into basic color mode if it isn't already
-        if bulb.type in [DeviceTypes.LIGHTSTRIP, DeviceTypes.MESH_LIGHT]:
-            plist.append(create_pid_pair(PropertyIDs.COLOR_MODE, "1"))
 
         if options is not None:
             plist.extend(options)

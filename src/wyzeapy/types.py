@@ -101,6 +101,7 @@ class PropertyIDs(Enum):
     MOTION_STATE = "P1302"
     CAMERA_SIREN = "P1049"
     FLOOD_LIGHT = "P1056"
+    SUN_MATCH = "P1528"
 
 
 class ThermostatProps(Enum):

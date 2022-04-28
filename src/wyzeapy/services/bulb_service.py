@@ -88,6 +88,9 @@ class BulbService(BaseService):
                 bulb.color = value
             elif property_id == PropertyIDs.COLOR_MODE:
                 bulb.color_mode = value
+            elif property_id == PropertyIDs.SUN_MATCH:
+                bulb.sun_match = value == "1"
+
         return bulb
 
     async def get_bulbs(self) -> List[Bulb]:
@@ -112,17 +115,25 @@ class BulbService(BaseService):
         if options is not None:
             plist.extend(options)
 
-        if bulb.type in [
-            DeviceTypes.LIGHT
-        ]:
+        if bulb.type is DeviceTypes.LIGHT:
             await self._set_property_list(bulb, plist)
+
         elif (
             bulb.type in [DeviceTypes.MESH_LIGHT, DeviceTypes.LIGHTSTRIP]
         ):
+            # Local Control
             if local_control and not bulb.cloud_fallback:
                 await self._local_bulb_command(bulb, plist)
-            else:
+
+            # Cloud Control
+            elif bulb.type is DeviceTypes.MESH_LIGHT:  # Sun match for mesh bulbs needs to be set on a different endpoint for some reason
+                for item in plist:
+                    if item["pid"] == PropertyIDs.SUN_MATCH.value:
+                        await self._set_property_list(bulb, [item])
+                        plist.remove(item)
                 await self._run_action_list(bulb, plist)
+            else:
+                await self._run_action_list(bulb, plist)  # Lightstrips
 
     async def turn_off(self, bulb: Bulb, local_control):
         plist = [

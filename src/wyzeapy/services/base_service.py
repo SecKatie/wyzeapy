@@ -17,9 +17,9 @@ from ..crypto import olive_create_signature
 from ..payload_factory import olive_create_hms_patch_payload, olive_create_hms_payload, \
     olive_create_hms_get_payload, ford_create_payload, olive_create_get_payload, olive_create_post_payload, \
     olive_create_user_info_payload
-from ..types import PropertyIDs, Device, ThermostatProps
+from ..types import PropertyIDs, Device
 from ..utils import check_for_errors_standard, check_for_errors_hms, check_for_errors_lock, \
-    check_for_errors_thermostat, wyze_encrypt
+    check_for_errors_iot, wyze_encrypt
 from ..wyze_auth_lib import WyzeAuthLib
 
 _LOGGER = logging.getLogger(__name__)
@@ -537,10 +537,10 @@ class BaseService:
 
         return response_json
 
-    async def _thermostat_get_iot_prop(self, device: Device) -> Dict[Any, Any]:
+    async def _get_iot_prop(self, url: str, device: Device, keys: str) -> Dict[Any, Any]:
         await self._auth_lib.refresh_if_should()
 
-        payload = olive_create_get_payload(device.mac)
+        payload = olive_create_get_payload(device.mac, keys)
         signature = olive_create_signature(payload, self._auth_lib.token.access_token)
         headers = {
             'Accept-Encoding': 'gzip',
@@ -552,19 +552,16 @@ class BaseService:
             'signature2': signature
         }
 
-        url = 'https://wyze-earth-service.wyzecam.com/plugin/earth/get_iot_prop'
-
         response_json = await self._auth_lib.get(url, headers=headers, params=payload)
 
-        check_for_errors_thermostat(response_json)
+        check_for_errors_iot(response_json)
 
         return response_json
 
-    async def _thermostat_set_iot_prop(self, device: Device, prop: ThermostatProps, value: Any) -> None:
+    async def _set_iot_prop(self, url: str, device: Device, prop_key: str, value: Any) -> None:
         await self._auth_lib.refresh_if_should()
 
-        url = "https://wyze-earth-service.wyzecam.com/plugin/earth/set_iot_prop_by_topic"
-        payload = olive_create_post_payload(device.mac, device.product_model, prop, value)
+        payload = olive_create_post_payload(device.mac, device.product_model, prop_key, value)
         signature = olive_create_signature(json.dumps(payload, separators=(',', ':')),
                                            self._auth_lib.token.access_token)
         headers = {
@@ -582,7 +579,7 @@ class BaseService:
 
         response_json = await self._auth_lib.post(url, headers=headers, data=payload_str)
 
-        check_for_errors_thermostat(response_json)
+        check_for_errors_iot(response_json)
 
     async def _local_bulb_command(self, bulb, plist):
         # await self._auth_lib.refresh_if_should()

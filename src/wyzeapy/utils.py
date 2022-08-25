@@ -94,7 +94,7 @@ def check_for_errors_lock(response_json: Dict[str, Any]) -> None:
             raise UnknownApiError(response_json)
 
 
-def check_for_errors_thermostat(response_json: Dict[Any, Any]) -> None:
+def check_for_errors_iot(response_json: Dict[Any, Any]) -> None:
     if response_json['code'] != 1:
         raise UnknownApiError(response_json)
 

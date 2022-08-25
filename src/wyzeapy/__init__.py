@@ -19,6 +19,7 @@ from .services.lock_service import LockService
 from .services.sensor_service import SensorService
 from .services.switch_service import SwitchService
 from .services.thermostat_service import ThermostatService
+from .services.wall_switch_service import WallSwitchService
 from .utils import check_for_errors_standard
 from .wyze_auth_lib import WyzeAuthLib, Token
 
@@ -38,6 +39,7 @@ class Wyzeapy:
         self._hms_service = None
         self._lock_service = None
         self._sensor_service = None
+        self._wall_switch_service = None
         self._email = None
         self._password = None
         self._service: Optional[BaseService] = None
@@ -230,3 +232,11 @@ class Wyzeapy:
         if self._sensor_service is None:
             self._sensor_service = SensorService(self._auth_lib)
         return self._sensor_service
+
+    @property
+    async def wall_switch_service(self) -> WallSwitchService:
+        """Returns an instance of the switch service"""
+
+        if self._wall_switch_service is None:
+            self._wall_switch_service = WallSwitchService(self._auth_lib)
+        return self._wall_switch_service

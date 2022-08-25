@@ -115,19 +115,14 @@ class ThermostatService(BaseService):
     async def set_preset(self, thermostat: Thermostat, preset: Preset):
         await self._thermostat_set_iot_prop(thermostat, ThermostatProps.CONFIG_SCENARIO, preset.value)
 
+    async def _thermostat_get_iot_prop(self, device: Device) -> Dict[Any, Any]:
+        url = "https://wyze-earth-service.wyzecam.com/plugin/earth/get_iot_prop"
+        keys = 'trigger_off_val,emheat,temperature,humidity,time2temp_val,protect_time,mode_sys,heat_sp,cool_sp,' \
+                'current_scenario,config_scenario,temp_unit,fan_mode,iot_state,w_city_id,w_lat,w_lon,working_state,' \
+                'dev_hold,dev_holdtime,asw_hold,app_version,setup_state,wiring_logic_id,save_comfort_balance,' \
+                'kid_lock,calibrate_humidity,calibrate_temperature,fancirc_time,query_schedule'
+        return await self._get_iot_prop(url, device, keys)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    async def _thermostat_set_iot_prop(self, device: Device, prop: ThermostatProps, value: Any) -> None:
+        url = "https://wyze-earth-service.wyzecam.com/plugin/earth/set_iot_prop_by_topic"
+        return await self._set_iot_prop(url, device, prop.value, value)

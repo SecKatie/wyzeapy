@@ -36,7 +36,7 @@ def olive_create_post_payload(device_mac: str, device_model: str, prop_key: str,
         "did": device_mac,
         "model": device_model,
         "props": {
-            prop_key: str(value)
+            prop_key: value
         },
         "is_sub_device": 0,
         "nonce": str(nonce)

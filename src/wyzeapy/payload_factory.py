@@ -7,7 +7,6 @@ import time
 from typing import Any, Dict
 
 from .const import FORD_APP_KEY
-from .types import ThermostatProps
 from .crypto import ford_create_signature
 
 
@@ -20,27 +19,24 @@ def ford_create_payload(access_token: str, payload: Dict[str, Any],
     return payload
 
 
-def olive_create_get_payload(device_mac: str) -> Dict[str, Any]:
+def olive_create_get_payload(device_mac: str, keys: str) -> Dict[str, Any]:
     nonce = int(time.time() * 1000)
 
     return {
-        'keys': 'trigger_off_val,emheat,temperature,humidity,time2temp_val,protect_time,mode_sys,heat_sp,cool_sp,'
-                'current_scenario,config_scenario,temp_unit,fan_mode,iot_state,w_city_id,w_lat,w_lon,working_state,'
-                'dev_hold,dev_holdtime,asw_hold,app_version,setup_state,wiring_logic_id,save_comfort_balance,'
-                'kid_lock,calibrate_humidity,calibrate_temperature,fancirc_time,query_schedule',
+        'keys': keys,
         'did': device_mac,
         'nonce': nonce
     }
 
 
-def olive_create_post_payload(device_mac: str, device_model: str, prop: ThermostatProps, value: Any) -> Dict[str, Any]:
+def olive_create_post_payload(device_mac: str, device_model: str, prop_key: str, value: Any) -> Dict[str, Any]:
     nonce = int(time.time() * 1000)
 
     return {
         "did": device_mac,
         "model": device_model,
         "props": {
-            prop.value: str(value)
+            prop_key: str(value)
         },
         "is_sub_device": 0,
         "nonce": str(nonce)

@@ -104,6 +104,13 @@ class PropertyIDs(Enum):
     SUN_MATCH = "P1528"
 
 
+class WallSwitchProps(Enum):
+    IOT_STATE = "iot_state"  # Connection state: connected, disconnected
+    SWITCH_POWER = "switch-power"
+    SWITCH_IOT = "switch-iot"
+    SINGLE_PRESS_TYPE = "single_press_type"
+
+
 class ThermostatProps(Enum):
     APP_VERSION = "app_version"
     IOT_STATE = "iot_state"  # Connection state: connected, disconnected

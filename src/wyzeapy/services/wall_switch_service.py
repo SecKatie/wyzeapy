@@ -26,6 +26,18 @@ class WallSwitch(Device):
         self.switch_iot: bool = False
         self.single_press_type: SinglePressType = SinglePressType.CLASSIC
 
+    @property
+    def on(self):
+        if self.single_press_type == SinglePressType.IOT:
+            return self.switch_iot
+        return self.switch_power
+
+    @on.setter
+    def on(self, state: bool):
+        if self.single_press_type == SinglePressType.IOT:
+            self.switch_iot = state
+        self.switch_power = state
+
 
 class WallSwitchService(BaseService):
     async def update(self, switch: WallSwitch) -> WallSwitch:
@@ -60,6 +72,19 @@ class WallSwitchService(BaseService):
                     and device.product_model == "LD_SS1"]
 
         return [WallSwitch(switch.raw_dict) for switch in switches]
+
+    async def turn_on(self, switch: WallSwitch):
+        logging.warn("%s", switch.single_press_type)
+        if switch.single_press_type == SinglePressType.IOT:
+            await self.iot_on(switch)
+        else:
+            await self.power_on(switch)
+
+    async def turn_off(self, switch: WallSwitch):
+        if switch.single_press_type == SinglePressType.IOT:
+            await self.iot_off(switch)
+        else:
+            await self.power_off(switch)
 
     async def power_on(self, switch: WallSwitch):
         await self._wall_switch_set_iot_prop(switch, WallSwitchProps.SWITCH_POWER, True)

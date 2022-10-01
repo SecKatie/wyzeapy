@@ -4,6 +4,9 @@ from heapq import heappush, heappop
 from typing import Any
 from math import ceil
 from ..types import Device
+import logging
+
+_LOGGER = logging.getLogger(__name__)
 
 INTERVAL = 300
 MAX_SLOTS = 225
@@ -32,10 +35,13 @@ class DeviceUpdater(object):
         if self.update_in <= 0:
             # Once it reaches zero and we update the device we want to reset the update_in counter
             self.update_in = ceil(INTERVAL / self.updates_per_interval)
-            # Get the updated info for the device from Wyze's API
-            self.device = await self.service.update(self.device)
-            # Callback to provide the updated info to the subscriber
-            self.device.callback_function(self.device)
+            try:
+                # Get the updated info for the device from Wyze's API
+                self.device = await self.service.update(self.device)
+                # Callback to provide the updated info to the subscriber
+                self.device.callback_function(self.device)
+            except:
+                _LOGGER.exception("Unknow error happened during updating device info")
         else:
             # Don't update and instead just reduce the counter by 1
             self.tick_tock()

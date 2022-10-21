@@ -42,7 +42,7 @@ class CameraService(BaseService):
 
         # Get camera events
         response = await self._get_event_list(10)
-        raw_events = response["data"]["event_list"]
+        raw_events = response['data']['event_list']
         latest_events = [Event(raw_event) for raw_event in raw_events]
 
         if (event := return_event_for_device(camera, latest_events)) is not None:
@@ -50,9 +50,7 @@ class CameraService(BaseService):
             camera.last_event_ts = event.event_ts
 
         # Update camera state
-        state_response: List[Tuple[PropertyIDs, Any]] = await self._get_property_list(
-            camera
-        )
+        state_response: List[Tuple[PropertyIDs, Any]] = await self._get_property_list(camera)
         for property, value in state_response:
             if property is PropertyIDs.AVAILABLE:
                 camera.available = value == "1"
@@ -64,33 +62,19 @@ class CameraService(BaseService):
                 camera.floodlight = value == "1"
             if property is PropertyIDs.NOTIFICATION:
                 camera.notify = value == "1"
-            if property is PropertyIDs.MOTION_DETECTION:
-                camera.motion = value == "1"
 
         return camera
 
-    async def register_for_updates(
-        self, camera: Camera, callback: Callable[[Camera], None]
-    ):
+    async def register_for_updates(self, camera: Camera, callback: Callable[[Camera], None]):
         loop = asyncio.get_event_loop()
         if not self._updater_thread:
-            self._updater_thread = Thread(
-                target=self.update_worker,
-                args=[
-                    loop,
-                ],
-                daemon=True,
-            )
+            self._updater_thread = Thread(target=self.update_worker, args=[loop, ], daemon=True)
             self._updater_thread.start()
 
         self._subscribers.append((camera, callback))
 
     async def deregister_for_updates(self, camera: Camera):
-        self._subscribers = [
-            (cam, callback)
-            for cam, callback in self._subscribers
-            if cam.mac != camera.mac
-        ]
+        self._subscribers = [(cam, callback) for cam, callback in self._subscribers if cam.mac != camera.mac]
 
     def update_worker(self, loop):
         while True:
@@ -99,15 +83,9 @@ class CameraService(BaseService):
             else:
                 for camera, callback in self._subscribers:
                     try:
-                        callback(
-                            asyncio.run_coroutine_threadsafe(
-                                self.update(camera), loop
-                            ).result()
-                        )
+                        callback(asyncio.run_coroutine_threadsafe(self.update(camera), loop).result())
                     except UnknownApiError as e:
-                        _LOGGER.warning(
-                            f"The update method detected an UnknownApiError: {e}"
-                        )
+                        _LOGGER.warning(f"The update method detected an UnknownApiError: {e}")
                     except ClientOSError as e:
                         _LOGGER.error(f"A network error was detected: {e}")
                     except ContentTypeError as e:
@@ -117,9 +95,7 @@ class CameraService(BaseService):
         if self._devices is None:
             self._devices = await self.get_object_list()
 
-        cameras = [
-            device for device in self._devices if device.type is DeviceTypes.CAMERA
-        ]
+        cameras = [device for device in self._devices if device.type is DeviceTypes.CAMERA]
 
         return [Camera(camera.raw_dict) for camera in cameras]
 
@@ -140,19 +116,17 @@ class CameraService(BaseService):
 
     async def floodlight_off(self, camera: Camera):
         await self._set_property(camera, PropertyIDs.FLOOD_LIGHT.value, "2")
-
+        
     async def turn_on_notifications(self, camera: Camera):
-        plist = [create_pid_pair(PropertyIDs.NOTIFICATION, "1")]
+        plist = [
+            create_pid_pair(PropertyIDs.NOTIFICATION, "1")
+        ]
 
         await self._set_property_list(camera, plist)
 
     async def turn_off_notifications(self, camera: Camera):
-        plist = [create_pid_pair(PropertyIDs.NOTIFICATION, "0")]
+        plist = [
+            create_pid_pair(PropertyIDs.NOTIFICATION, "0")
+        ]
 
         await self._set_property_list(camera, plist)
-
-    async def turn_on_motion_detection(self, camera: Camera):
-        await self._set_property(camera, PropertyIDs.MOTION_DETECTION_TOGGLE.value, "1")
-
-    async def turn_off_motion_detection(self, camera: Camera):
-        await self._set_property(camera, PropertyIDs.MOTION_DETECTION_TOGGLE.value, "0")

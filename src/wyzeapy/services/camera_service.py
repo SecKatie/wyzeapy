@@ -134,7 +134,9 @@ class CameraService(BaseService):
         await self._set_property_list(camera, plist)
 
     async def turn_on_motion_detection(self, camera: Camera):
+        await self._set_property(camera, PropertyIDs.MOTION_DETECTION_TOGGLE.value, "0")
         await self._set_property(camera, PropertyIDs.MOTION_DETECTION_TOGGLE.value, "1")
 
     async def turn_off_motion_detection(self, camera: Camera):
+        await self._set_property(camera, PropertyIDs.MOTION_DETECTION_TOGGLE.value, "1")
         await self._set_property(camera, PropertyIDs.MOTION_DETECTION_TOGGLE.value, "0")

@@ -90,6 +90,10 @@ class BulbService(BaseService):
                 bulb.color_mode = value
             elif property_id == PropertyIDs.SUN_MATCH:
                 bulb.sun_match = value == "1"
+            elif property_id == PropertyIDs.LIGHTSTRIP_EFFECTS:
+                bulb.effects = value
+            elif property_id == PropertyIDs.LIGHTSTRIP_MUSIC_MODE:
+                bulb.music_mode = value == "1"
 
         return bulb
 
@@ -191,3 +195,19 @@ class BulbService(BaseService):
             DeviceTypes.MESH_LIGHT
         ]:
             await self._local_bulb_command(bulb, plist)
+
+    async def music_mode_on(self, bulb: Device):
+        plist = [
+            create_pid_pair(PropertyIDs.LIGHTSTRIP_MUSIC_MODE, "1")
+        ]
+
+        await self._run_action_list(bulb, plist)
+
+    async def music_mode_off(self, bulb: Device):
+        plist = [
+            create_pid_pair(PropertyIDs.LIGHTSTRIP_MUSIC_MODE, "0")
+        ]
+
+        await self._run_action_list(bulb, plist)
+
+

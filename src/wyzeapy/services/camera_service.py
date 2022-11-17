@@ -133,6 +133,8 @@ class CameraService(BaseService):
 
         await self._set_property_list(camera, plist)
 
+    # For whatever reason, this property isn't always in line with the status property,
+    # so having both commands makes sure the state is actually toggled.
     async def turn_on_motion_detection(self, camera: Camera):
         await self._set_property(camera, PropertyIDs.MOTION_DETECTION_TOGGLE.value, "0")
         await self._set_property(camera, PropertyIDs.MOTION_DETECTION_TOGGLE.value, "1")

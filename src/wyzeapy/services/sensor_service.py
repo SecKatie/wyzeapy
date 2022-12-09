@@ -11,7 +11,7 @@ from typing import List, Callable, Tuple, Optional
 from aiohttp import ClientOSError, ContentTypeError
 
 from ..exceptions import UnknownApiError
-from .base_service import BaseService
+from .base_service import BaseService, RokuBaseService
 from ..types import Device, PropertyIDs, DeviceTypes
 
 _LOGGER = logging.getLogger(__name__)
@@ -78,3 +78,7 @@ class SensorService(BaseService):
                    device.type is DeviceTypes.MOTION_SENSOR or
                    device.type is DeviceTypes.CONTACT_SENSOR]
         return [Sensor(sensor.raw_dict) for sensor in sensors]
+
+
+class RokuSensorService(SensorService, RokuBaseService):
+    pass

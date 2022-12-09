@@ -7,7 +7,7 @@ import logging
 from enum import Enum
 from typing import Any, Dict, List
 
-from .base_service import BaseService
+from .base_service import BaseService, RokuBaseService
 from ..types import Device, ThermostatProps, DeviceTypes
 
 _LOGGER = logging.getLogger(__name__)
@@ -126,3 +126,7 @@ class ThermostatService(BaseService):
     async def _thermostat_set_iot_prop(self, device: Device, prop: ThermostatProps, value: Any) -> None:
         url = "https://wyze-earth-service.wyzecam.com/plugin/earth/set_iot_prop_by_topic"
         return await self._set_iot_prop(url, device, prop.value, value)
+
+
+class RokuThermostatService(ThermostatService, RokuBaseService):
+    pass

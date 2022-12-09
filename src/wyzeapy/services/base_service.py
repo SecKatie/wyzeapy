@@ -12,7 +12,7 @@ from typing import List, Tuple, Any, Dict, Optional
 import aiohttp
 
 from .update_manager import DeviceUpdater, UpdateManager
-from ..const import PHONE_SYSTEM_TYPE, APP_VERSION, APP_VER, PHONE_ID, APP_NAME, OLIVE_APP_ID, APP_INFO, SC, SV
+from ..const import PHONE_ID, OLIVE_APP_ID
 from ..crypto import olive_create_signature
 from ..payload_factory import olive_create_hms_patch_payload, olive_create_hms_payload, \
     olive_create_hms_get_payload, ford_create_payload, olive_create_get_payload, olive_create_post_payload, \
@@ -34,6 +34,25 @@ class BaseService:
     _update_loop = None
     _updater: DeviceUpdater = None
     _updater_dict = {}
+    _wyze_server = "api.wyzecam.com"
+    _get_device_info_sc = "9f275790cab94a72bd206c8876429f3c"
+    _get_device_info_sv = "c86fa16fc99d4d6580f82ef3b942e586"
+    _get_event_list_sc = "9f275790cab94a72bd206c8876429f3c"
+    _get_event_list_sv = "782ced6909a44d92a1f70d582bbe88be"
+    _get_object_list_sc = "a626948714654991afd3c0dbd7cdb901"
+    _get_object_list_sv = "c417b62d72ee44bf933054bdca183e77"
+    _get_property_list_sc = "9f275790cab94a72bd206c8876429f3c"
+    _get_property_list_sv = "9d74946e652647e9b6c9d59326aef104"
+    _run_action_list_sc = "9f275790cab94a72bd206c8876429f3c"
+    _run_action_list_sv = "9d74946e652647e9b6c9d59326aef104"
+    _run_action_sc = "9f275790cab94a72bd206c8876429f3c"
+    _run_action_sv = "9d74946e652647e9b6c9d59326aef104"
+    _set_property_list_sc = "9f275790cab94a72bd206c8876429f3c"
+    _set_property_list_sv = "9d74946e652647e9b6c9d59326aef104"
+    _set_property_sc = "9f275790cab94a72bd206c8876429f3c"
+    _set_property_sv = "9d74946e652647e9b6c9d59326aef104"
+    _set_push_info_sc = "9f275790cab94a72bd206c8876429f3c"
+    _set_push_info_sv = "9d74946e652647e9b6c9d59326aef104"
 
     def __init__(self, auth_lib: WyzeAuthLib):
         self._auth_lib = auth_lib
@@ -54,21 +73,25 @@ class BaseService:
             BaseService._update_manager.del_updater(self._updater_dict[device])
             del self._updater_dict[device]
 
+    @staticmethod
+    def ts():
+        return int(time.time())
+
     async def set_push_info(self, on: bool) -> None:
         await self._auth_lib.refresh_if_should()
 
-        url = "https://api.wyzecam.com/app/user/set_push_info"
+        url = f"https://{self._wyze_server}/app/user/set_push_info"
         payload = {
-            "phone_system_type": PHONE_SYSTEM_TYPE,
-            "app_version": APP_VERSION,
-            "app_ver": APP_VER,
+            "phone_system_type": self._auth_lib.phone_system_type,
+            "app_version": self._auth_lib.app_version,
+            "app_ver": self._auth_lib.app_ver,
             "push_switch": "1" if on else "2",
-            "sc": SC,
-            "ts": int(time.time()),
-            "sv": SV,
+            "sc": self._set_push_info_sc,
+            "ts": self.ts(),
+            "sv": self._set_push_info_sv,
             "access_token": self._auth_lib.token.access_token,
             "phone_id": PHONE_ID,
-            "app_name": APP_NAME
+            "app_name": self._auth_lib.app_name
         }
 
         response_json = await self._auth_lib.post(url, json=payload)
@@ -84,7 +107,7 @@ class BaseService:
             'Accept-Encoding': 'gzip',
             'User-Agent': 'myapp',
             'appid': OLIVE_APP_ID,
-            'appinfo': APP_INFO,
+            'appinfo': self._auth_lib.app_info,
             'phoneid': PHONE_ID,
             'access_token': self._auth_lib.token.access_token,
             'signature2': signature
@@ -105,19 +128,27 @@ class BaseService:
         await self._auth_lib.refresh_if_should()
 
         payload = {
-            "phone_system_type": PHONE_SYSTEM_TYPE,
-            "app_version": APP_VERSION,
-            "app_ver": APP_VER,
-            "sc": "9f275790cab94a72bd206c8876429f3c",
-            "ts": int(time.time()),
-            "sv": "9d74946e652647e9b6c9d59326aef104",
+            "phone_system_type": self._auth_lib.phone_system_type,
+            "app_version": self._auth_lib.app_version,
+            "app_ver": self._auth_lib.app_ver,
+            "sc": self._get_object_list_sc,
+            "ts": self.ts(),
+            "sv": self._get_object_list_sv,
             "access_token": self._auth_lib.token.access_token,
             "phone_id": PHONE_ID,
-            "app_name": APP_NAME
+            "app_name": self._auth_lib.app_name,
         }
 
-        response_json = await self._auth_lib.post("https://api.wyzecam.com/app/v2/home_page/get_object_list",
-                                                  json=payload)
+        headers = {
+            "User-Agent": self._auth_lib.app_info,
+            "Content-Type": "application/json; charset=utf-8",
+        }
+
+        print('headers =', headers)
+        print('payload =', payload)
+
+        response_json = await self._auth_lib.post(f"https://{self._wyze_server}/app/v2/home_page/get_object_list",
+                                                  json=payload, headers=headers)
 
         check_for_errors_standard(response_json)
 
@@ -147,21 +178,21 @@ class BaseService:
         await self._auth_lib.refresh_if_should()
 
         payload = {
-            "phone_system_type": PHONE_SYSTEM_TYPE,
-            "app_version": APP_VERSION,
-            "app_ver": APP_VER,
-            "sc": "9f275790cab94a72bd206c8876429f3c",
-            "ts": int(time.time()),
-            "sv": "9d74946e652647e9b6c9d59326aef104",
+            "phone_system_type": self._auth_lib.phone_system_type,
+            "app_version": self._auth_lib.app_version,
+            "app_ver": self._auth_lib.app_ver,
+            "sc": self._get_object_list_sc,
+            "ts": self.ts(),
+            "sv": self._get_object_list_sv,
             "access_token": self._auth_lib.token.access_token,
             "phone_id": PHONE_ID,
-            "app_name": APP_NAME,
+            "app_name": self._auth_lib.app_name,
             "device_model": device.product_model,
             "device_mac": device.mac,
             "target_pid_list": []
         }
 
-        response_json = await self._auth_lib.post("https://api.wyzecam.com/app/v2/device/get_property_list",
+        response_json = await self._auth_lib.post(f"https://{self._wyze_server}/app/v2/device/get_property_list",
                                                   json=payload)
 
         check_for_errors_standard(response_json)
@@ -192,21 +223,21 @@ class BaseService:
         await self._auth_lib.refresh_if_should()
 
         payload = {
-            "phone_system_type": PHONE_SYSTEM_TYPE,
-            "app_version": APP_VERSION,
-            "app_ver": APP_VER,
-            "sc": "9f275790cab94a72bd206c8876429f3c",
-            "ts": int(time.time()),
-            "sv": "9d74946e652647e9b6c9d59326aef104",
+            "phone_system_type": self._auth_lib.phone_system_type,
+            "app_version": self._auth_lib.app_version,
+            "app_ver": self._auth_lib.app_ver,
+            "sc": self._set_property_list_sc,
+            "ts": self.ts(),
+            "sv": self._set_property_list_sv,
             "access_token": self._auth_lib.token.access_token,
             "phone_id": PHONE_ID,
-            "app_name": APP_NAME,
+            "app_name": self._auth_lib.app_name,
             "property_list": plist,
             "device_model": device.product_model,
             "device_mac": device.mac
         }
 
-        response_json = await self._auth_lib.post("https://api.wyzecam.com/app/v2/device/set_property_list",
+        response_json = await self._auth_lib.post(f"https://{self._wyze_server}/app/v2/device/set_property_list",
                                                   json=payload)
 
         check_for_errors_standard(response_json)
@@ -221,15 +252,15 @@ class BaseService:
         await self._auth_lib.refresh_if_should()
 
         payload = {
-            "phone_system_type": PHONE_SYSTEM_TYPE,
-            "app_version": APP_VERSION,
-            "app_ver": APP_VER,
-            "sc": "9f275790cab94a72bd206c8876429f3c",
-            "ts": int(time.time()),
-            "sv": "9d74946e652647e9b6c9d59326aef104",
+            "phone_system_type": self._auth_lib.phone_system_type,
+            "app_version": self._auth_lib.app_version,
+            "app_ver": self._auth_lib.app_ver,
+            "sc": self._run_action_list_sc,
+            "ts": self.ts(),
+            "sv": self._run_action_list_sv,
             "access_token": self._auth_lib.token.access_token,
             "phone_id": PHONE_ID,
-            "app_name": APP_NAME,
+            "app_name": self._auth_lib.app_name,
             "action_list": [
                 {
                     "instance_id": device.mac,
@@ -247,7 +278,7 @@ class BaseService:
             ]
         }
 
-        response_json = await self._auth_lib.post("https://api.wyzecam.com/app/v2/auto/run_action_list",
+        response_json = await self._auth_lib.post(f"https://{self._wyze_server}/app/v2/auto/run_action_list",
                                                   json=payload)
 
         check_for_errors_standard(response_json)
@@ -266,9 +297,9 @@ class BaseService:
             "phone_id": PHONE_ID,
             "begin_time": int((time.time() - (60 * 60)) * 1000),
             "event_type": "",
-            "app_name": APP_NAME,
+            "app_name": self._auth_lib.app_name,
             "count": count,
-            "app_version": APP_VERSION,
+            "app_version": self._auth_lib.app_version,
             "order_by": 2,
             "event_value_list": [
                 "1",
@@ -276,19 +307,19 @@ class BaseService:
                 "10",
                 "12"
             ],
-            "sc": "9f275790cab94a72bd206c8876429f3c",
+            "sc": self._get_event_list_sc,
             "device_mac_list": [],
             "event_tag_list": [],
-            "sv": "782ced6909a44d92a1f70d582bbe88be",
+            "sv": self._get_event_list_sv,
             "end_time": int(time.time() * 1000),
-            "phone_system_type": PHONE_SYSTEM_TYPE,
-            "app_ver": APP_VER,
+            "phone_system_type": self._auth_lib.phone_system_type,
+            "app_ver": self._auth_lib.app_ver,
             "ts": 1623612037763,
             "device_mac": "",
             "access_token": self._auth_lib.token.access_token
         }
 
-        response_json = await self._auth_lib.post("https://api.wyzecam.com/app/v2/device/get_event_list",
+        response_json = await self._auth_lib.post(f"https://{self._wyze_server}/app/v2/device/get_event_list",
                                                   json=payload)
 
         check_for_errors_standard(response_json)
@@ -306,15 +337,15 @@ class BaseService:
         await self._auth_lib.refresh_if_should()
 
         payload = {
-            "phone_system_type": PHONE_SYSTEM_TYPE,
-            "app_version": APP_VERSION,
-            "app_ver": APP_VER,
-            "sc": "9f275790cab94a72bd206c8876429f3c",
-            "ts": int(time.time()),
-            "sv": "9d74946e652647e9b6c9d59326aef104",
+            "phone_system_type": self._auth_lib.phone_system_type,
+            "app_version": self._auth_lib.app_version,
+            "app_ver": self._auth_lib.app_ver,
+            "sc": self._run_action_sc,
+            "ts": self.ts(),
+            "sv": self._run_action_sv,
             "access_token": self._auth_lib.token.access_token,
             "phone_id": PHONE_ID,
-            "app_name": APP_NAME,
+            "app_name": self._auth_lib.app_name,
             "provider_key": device.product_model,
             "instance_id": device.mac,
             "action_key": action,
@@ -322,7 +353,7 @@ class BaseService:
             "custom_string": "",
         }
 
-        response_json = await self._auth_lib.post("https://api.wyzecam.com/app/v2/auto/run_action",
+        response_json = await self._auth_lib.post(f"https://{self._wyze_server}/app/v2/auto/run_action",
                                                   json=payload)
 
         check_for_errors_standard(response_json)
@@ -338,22 +369,22 @@ class BaseService:
         await self._auth_lib.refresh_if_should()
 
         payload = {
-            "phone_system_type": PHONE_SYSTEM_TYPE,
-            "app_version": APP_VERSION,
-            "app_ver": APP_VER,
-            "sc": "9f275790cab94a72bd206c8876429f3c",
-            "ts": int(time.time()),
-            "sv": "9d74946e652647e9b6c9d59326aef104",
+            "phone_system_type": self._auth_lib.phone_system_type,
+            "app_version": self._auth_lib.app_version,
+            "app_ver": self._auth_lib.app_ver,
+            "sc": self._set_property_sc,
+            "ts": self.ts(),
+            "sv": self._set_property_sv,
             "access_token": self._auth_lib.token.access_token,
             "phone_id": PHONE_ID,
-            "app_name": APP_NAME,
+            "app_name": self._auth_lib.app_name,
             "pvalue": pvalue,
             "pid": pid,
             "device_model": device.product_model,
             "device_mac": device.mac
         }
 
-        response_json = await self._auth_lib.post("https://api.wyzecam.com/app/v2/device/set_property",
+        response_json = await self._auth_lib.post(f"https://{self._wyze_server}/app/v2/device/set_property",
                                                   json=payload)
 
         check_for_errors_standard(response_json)
@@ -376,7 +407,7 @@ class BaseService:
             'Accept-Encoding': 'gzip',
             'User-Agent': 'myapp',
             'appid': OLIVE_APP_ID,
-            'appinfo': APP_INFO,
+            'appinfo': self._auth_lib.app_info,
             'phoneid': PHONE_ID,
             'access_token': self._auth_lib.token.access_token,
             'signature2': signature,
@@ -412,7 +443,7 @@ class BaseService:
             'Accept-Encoding': 'gzip',
             'User-Agent': 'myapp',
             'appid': OLIVE_APP_ID,
-            'appinfo': APP_INFO,
+            'appinfo': self._auth_lib.app_info,
             'phoneid': PHONE_ID,
             'access_token': self._auth_lib.token.access_token,
             'signature2': signature
@@ -459,7 +490,7 @@ class BaseService:
         headers = {
             'User-Agent': 'myapp',
             'appid': OLIVE_APP_ID,
-            'appinfo': APP_INFO,
+            'appinfo': self._auth_lib.app_info,
             'phoneid': PHONE_ID,
             'access_token': self._auth_lib.token.access_token,
             'signature2': signature,
@@ -517,20 +548,20 @@ class BaseService:
         await self._auth_lib.refresh_if_should()
 
         payload = {
-            "phone_system_type": PHONE_SYSTEM_TYPE,
-            "app_version": APP_VERSION,
-            "app_ver": APP_VER,
+            "phone_system_type": self._auth_lib.phone_system_type,
+            "app_version": self._auth_lib.app_version,
+            "app_ver": self._auth_lib.app_ver,
             "device_mac": device.mac,
-            "sc": "9f275790cab94a72bd206c8876429f3c",
-            "ts": int(time.time()),
+            "sc": self._get_device_info_sc,
+            "ts": self.ts(),
             "device_model": device.product_model,
-            "sv": "c86fa16fc99d4d6580f82ef3b942e586",
+            "sv": self._get_device_info_sv,
             "access_token": self._auth_lib.token.access_token,
             "phone_id": PHONE_ID,
-            "app_name": APP_NAME
+            "app_name": self._auth_lib.app_name
         }
 
-        response_json = await self._auth_lib.post("https://api.wyzecam.com/app/v2/device/get_device_Info",
+        response_json = await self._auth_lib.post(f"https://{self._wyze_server}/app/v2/device/get_device_Info",
                                                   json=payload)
 
         check_for_errors_standard(response_json)
@@ -546,7 +577,7 @@ class BaseService:
             'Accept-Encoding': 'gzip',
             'User-Agent': 'myapp',
             'appid': OLIVE_APP_ID,
-            'appinfo': APP_INFO,
+            'appinfo': self._auth_lib.app_info,
             'phoneid': PHONE_ID,
             'access_token': self._auth_lib.token.access_token,
             'signature2': signature
@@ -569,7 +600,7 @@ class BaseService:
             'Content-Type': 'application/json',
             'User-Agent': 'myapp',
             'appid': OLIVE_APP_ID,
-            'appinfo': APP_INFO,
+            'appinfo': self._auth_lib.app_info,
             'phoneid': PHONE_ID,
             'access_token': self._auth_lib.token.access_token,
             'signature2': signature
@@ -613,3 +644,26 @@ class BaseService:
             _LOGGER.warning("Failed to connect to bulb %s, reverting to cloud." % bulb.mac)
             await self._run_action_list(bulb, plist)
             bulb.cloud_fallback = True
+
+
+class RokuBaseService(BaseService):
+    _wyze_server = "api.wyzeiot.com"
+
+    _get_device_info_sc = "a626948714654991afd3c0dbd7cdb901"
+    _get_device_info_sv = "81d1abc794ba45a39fdd21233d621e84"
+
+    _get_object_list_sc = "a626948714654991afd3c0dbd7cdb901"
+    _get_object_list_sv = "c417b62d72ee44bf933054bdca183e77"
+
+    _get_property_list_sc = "a626948714654991afd3c0dbd7cdb901"
+    _get_property_list_sv = "1df2807c63254e16a06213323fe8dec8"
+
+    _run_action_list_sv = "5e02224ae0c64d328154737602d28833"
+    _run_action_sv = "011a6b42d80a4f32b4cc24bb721c9c96"
+
+    _set_property_list_sv = "ddb9baef0d7f44379cd6bfaa8698e682"
+    _set_property_sv = "44b6d5640c4d4978baba65c8ab9a6d6e"
+
+    @staticmethod
+    def ts():
+        return time.time_ns() // 1000000

@@ -104,6 +104,8 @@ class PropertyIDs(Enum):
     CAMERA_SIREN = "P1049"
     FLOOD_LIGHT = "P1056"
     SUN_MATCH = "P1528"
+    MOTION_DETECTION = "P1047"  # Current Motion Detection State of the Camera
+    MOTION_DETECTION_TOGGLE = "P1001"  # This toggles Camera Motion Detection On/Off
 
 
 class WallSwitchProps(Enum):

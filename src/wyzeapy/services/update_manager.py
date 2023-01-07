@@ -5,6 +5,7 @@ from typing import Any
 from math import ceil
 from ..types import Device
 import logging
+import threading
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -33,8 +34,8 @@ class DeviceUpdater(object):
     async def update(self):
         # We only want to update if the update_in counter is zero
         if self.update_in <= 0:
-            # Once it reaches zero and we update the device we want to reset the update_in counter
-            self.update_in = ceil(INTERVAL / self.updates_per_interval)
+            # Acquire the mutex before making the async call
+            DeviceUpdater.mutex.acquire()
             try:
                 # Get the updated info for the device from Wyze's API
                 self.device = await self.service.update(self.device)
@@ -42,6 +43,11 @@ class DeviceUpdater(object):
                 self.device.callback_function(self.device)
             except:
                 _LOGGER.exception("Unknow error happened during updating device info")
+            finally:
+                # Release the mutex after the async call
+                DeviceUpdater.mutex.release()
+            # Once it reaches zero and we update the device we want to reset the update_in counter
+            self.update_in = ceil(INTERVAL / self.updates_per_interval)
         else:
             # Don't update and instead just reduce the counter by 1
             self.tick_tock()
@@ -60,6 +66,7 @@ class UpdateManager:
     # Holds all the logic for when to update the devices
     updaters = []
     removed_updaters = []
+    mutex = threading.Lock()  # Create a lock object as a class variable
 
     def check_if_removed(self, updater: DeviceUpdater):
         for item in self.removed_updaters:

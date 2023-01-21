@@ -51,6 +51,7 @@ class Thermostat(Device):
         self.heat_set_point: int = 64
         self.fan_mode: FanMode = FanMode.AUTO
         self.hvac_mode: HVACMode = HVACMode.AUTO
+        self.preset: Preset = Preset.HOME
         self.temperature: float = 71
         self.available: bool = True
         self.humidity: int = 50
@@ -81,6 +82,8 @@ class ThermostatService(BaseService):
                 thermostat.fan_mode = FanMode(value)
             elif prop == ThermostatProps.MODE_SYS:
                 thermostat.hvac_mode = HVACMode(value)
+            elif prop == ThermostatProps.CURRENT_SCENARIO:
+                thermostat.preset = Preset(value)
             elif prop == ThermostatProps.TEMPERATURE:
                 thermostat.temperature = float(value)
             elif prop == ThermostatProps.IOT_STATE:
@@ -113,7 +116,7 @@ class ThermostatService(BaseService):
         await self._thermostat_set_iot_prop(thermostat, ThermostatProps.FAN_MODE, fan_mode.value)
 
     async def set_preset(self, thermostat: Thermostat, preset: Preset):
-        await self._thermostat_set_iot_prop(thermostat, ThermostatProps.CONFIG_SCENARIO, preset.value)
+        await self._thermostat_set_iot_prop(thermostat, ThermostatProps.CURRENT_SCENARIO, preset.value)
 
     async def _thermostat_get_iot_prop(self, device: Device) -> Dict[Any, Any]:
         url = "https://wyze-earth-service.wyzecam.com/plugin/earth/get_iot_prop"

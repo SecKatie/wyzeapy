@@ -76,6 +76,9 @@ class UpdateManager:
 
     # This function should be called once every second
     async def update_next(self):
+        # If there are no updaters in the queue we don't need to do anything
+        if (len(self.updaters) == 0):
+            return
         while True:
             # First we get the next updater off the queue
             updater = heappop(self.updaters)

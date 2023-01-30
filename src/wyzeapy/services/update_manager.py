@@ -42,7 +42,7 @@ class DeviceUpdater(object):
                 # Callback to provide the updated info to the subscriber
                 self.device.callback_function(self.device)
             except:
-                _LOGGER.exception("Unknow error happened during updating device info")
+                _LOGGER.exception("Unknown error happened during updating device info")
             finally:
                 # Release the mutex after the async call
                 DeviceUpdater.mutex.release()

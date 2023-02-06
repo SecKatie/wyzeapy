@@ -34,6 +34,7 @@ class DeviceUpdater(object):
     async def update(self):
         # We only want to update if the update_in counter is zero
         if self.update_in <= 0:
+            _LOGGER.debug("Updating device: " + self.device.nickname)
             # Acquire the mutex before making the async call
             DeviceUpdater.mutex.acquire()
             try:
@@ -42,7 +43,7 @@ class DeviceUpdater(object):
                 # Callback to provide the updated info to the subscriber
                 self.device.callback_function(self.device)
             except:
-                _LOGGER.exception("Unknow error happened during updating device info")
+                _LOGGER.exception("Unknown error happened during updating device info")
             finally:
                 # Release the mutex after the async call
                 DeviceUpdater.mutex.release()
@@ -76,6 +77,10 @@ class UpdateManager:
 
     # This function should be called once every second
     async def update_next(self):
+        # If there are no updaters in the queue we don't need to do anything
+        if (len(self.updaters) == 0):
+            _LOGGER.debug("No devices to update in queue")
+            return
         while True:
             # First we get the next updater off the queue
             updater = heappop(self.updaters)
@@ -113,10 +118,12 @@ class UpdateManager:
 
     def add_updater(self, updater: DeviceUpdater):
         if len(self.updaters) >= MAX_SLOTS:
+            _LOGGER.exception("No more devices can be updated within the rate limit")
             raise Exception("No more devices can be updated within the rate limit")
 
         # When we add a new updater it has to fit within the max slots or we will not add it
         while (self.filled_slots() + updater.updates_per_interval) > MAX_SLOTS:
+            _LOGGER.debug("Reducing updates per interval to fit new device as slots are full: %s", self.filled_slots())
             # If we are overflowing the available slots we will reduce the frequency of updates evenly for all devices until we can fit in one more.
             self.decrease_updates_per_interval()
             updater.delay()
@@ -126,3 +133,4 @@ class UpdateManager:
 
     def del_updater(self, updater: DeviceUpdater):
         self.removed_updaters.append(updater)
+        _LOGGER.debug("Removing device from update queue")

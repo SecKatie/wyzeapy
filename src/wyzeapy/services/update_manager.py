@@ -31,12 +31,12 @@ class DeviceUpdater(object):
         self.update_in = 0  # Always initialize at 0 so that we get the first update ASAP. The items will shift based on priority after this.
         self.updates_per_interval = ceil(INTERVAL / update_interval)
 
-    async def update(self):
+    async def update(self, mutex: threading.Lock):
         # We only want to update if the update_in counter is zero
         if self.update_in <= 0:
             _LOGGER.debug("Updating device: " + self.device.nickname)
             # Acquire the mutex before making the async call
-            DeviceUpdater.mutex.acquire()
+            mutex.acquire()
             try:
                 # Get the updated info for the device from Wyze's API
                 self.device = await self.service.update(self.device)
@@ -46,7 +46,7 @@ class DeviceUpdater(object):
                 _LOGGER.exception("Unknown error happened during updating device info")
             finally:
                 # Release the mutex after the async call
-                DeviceUpdater.mutex.release()
+                mutex.release()
             # Once it reaches zero and we update the device we want to reset the update_in counter
             self.update_in = ceil(INTERVAL / self.updates_per_interval)
         else:
@@ -92,7 +92,7 @@ class UpdateManager:
             # We then reduce the counter for all the other updaters
             self.tick_tock()
             # Then we update the target device
-            await updater.update() # It will only update if it is time for it to update. Otherwise it just reduces its update_in counter.
+            await updater.update(self.mutex) # It will only update if it is time for it to update. Otherwise it just reduces its update_in counter.
             # Then we put it back at the end of the queue. Or the front again if it wasn't ready to update
             heappush(self.updaters, updater)
             await sleep(1)

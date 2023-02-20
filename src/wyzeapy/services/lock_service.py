@@ -3,7 +3,7 @@
 #  of the attached license. You should have received a copy of
 #  the license with this file. If not, please write to:
 #  joshua@mulliken.net to receive a copy
-from .base_service import BaseService
+from .base_service import BaseService, RokuBaseService
 from ..types import Device, DeviceTypes
 
 
@@ -42,3 +42,7 @@ class LockService(BaseService):
 
     async def unlock(self, lock: Lock):
         await self._lock_control(lock, "remoteUnlock")
+
+
+class RokuLockService(LockService, RokuBaseService):
+    pass

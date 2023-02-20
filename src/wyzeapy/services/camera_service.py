@@ -12,7 +12,7 @@ from typing import Any, List, Optional, Dict, Callable, Tuple
 from aiohttp import ClientOSError, ContentTypeError
 
 from ..exceptions import UnknownApiError
-from .base_service import BaseService
+from .base_service import BaseService, RokuBaseService
 from .update_manager import DeviceUpdater
 from ..types import Device, DeviceTypes, Event, PropertyIDs
 from ..utils import return_event_for_device, create_pid_pair
@@ -142,3 +142,7 @@ class CameraService(BaseService):
     async def turn_off_motion_detection(self, camera: Camera):
         await self._set_property(camera, PropertyIDs.MOTION_DETECTION_TOGGLE.value, "1")
         await self._set_property(camera, PropertyIDs.MOTION_DETECTION_TOGGLE.value, "0")
+
+
+class RokuCameraService(CameraService, RokuBaseService):
+    pass

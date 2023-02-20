@@ -7,7 +7,7 @@ import logging
 import re
 from typing import Any, Dict, Optional, List
 
-from .base_service import BaseService
+from .base_service import BaseService, RokuBaseService
 from ..types import Device, PropertyIDs, DeviceTypes
 from ..utils import create_pid_pair
 
@@ -211,3 +211,5 @@ class BulbService(BaseService):
         await self._run_action_list(bulb, plist)
 
 
+class RokuBulbService(BulbService, RokuBaseService):
+    pass

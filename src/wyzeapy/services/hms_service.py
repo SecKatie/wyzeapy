@@ -7,7 +7,7 @@ from enum import Enum
 from typing import Optional
 
 from ..wyze_auth_lib import WyzeAuthLib
-from .base_service import BaseService
+from .base_service import BaseService, RokuBaseService
 
 
 class HMSMode(Enum):
@@ -79,10 +79,5 @@ class HMSService(BaseService):
         return None
 
 
-
-
-
-
-
-
-
+class RokuHMSService(HMSService, RokuBaseService):
+    pass

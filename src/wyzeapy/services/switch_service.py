@@ -5,7 +5,7 @@
 #  joshua@mulliken.net to receive a copy
 from typing import List, Dict, Any
 
-from .base_service import BaseService
+from .base_service import BaseService, RokuBaseService
 from ..types import Device, DeviceTypes, PropertyIDs
 
 
@@ -44,3 +44,7 @@ class SwitchService(BaseService):
 
     async def turn_off(self, switch: Switch):
         await self._set_property(switch, PropertyIDs.ON.value, "0")
+
+
+class RokuSwitchService(SwitchService, RokuBaseService):
+    pass

@@ -6,11 +6,16 @@
 import asyncio
 import logging
 import time
+from json import dumps
 from typing import Dict, Any, Optional
 
 from aiohttp import TCPConnector, ClientSession, ContentTypeError
+import boto3
+from botocore.auth import SigV4Auth
+from botocore.awsrequest import AWSRequest
+from botocore.credentials import Credentials
 
-from .const import API_KEY, PHONE_ID, APP_NAME, APP_VERSION, SC, SV, PHONE_SYSTEM_TYPE, APP_VER, APP_INFO
+from .const import API_KEY, PHONE_ID
 from .exceptions import UnknownApiError, TwoFactorAuthenticationEnabled
 from .utils import create_password, check_for_errors_standard
 
@@ -50,6 +55,11 @@ class Token:
     def refresh_time(self):
         return self._refresh_time
 
+    def __str__(self):
+        return f"<Token (access_token='{self.access_token}', " \
+               f"refresh_token='{self.refresh_token}', " \
+               f"refresh_time={self.refresh_time})>"
+
 
 class WyzeAuthLib:
     token: Optional[Token] = None
@@ -64,6 +74,14 @@ class WyzeAuthLib:
         "address",
     ]
     SANITIZE_STRING = "**Sanitized**"
+
+    _refresh_token_sc = "9f275790cab94a72bd206c8876429f3c"
+    _refresh_token_sv = "9d74946e652647e9b6c9d59326aef104"
+    phone_system_type = "1"
+    app_name = "com.hualai.WyzeCam"
+    app_version = "2.18.43"
+    app_ver = "com.hualai.WyzeCam___2.18.43"
+    app_info = "wyze_android_2.19.14"  # Required for the thermostat
 
     def __init__(self, username=None, password=None, token: Token = None, token_callback=None):
         self._username = username
@@ -97,7 +115,7 @@ class WyzeAuthLib:
 
         headers = {
             'Phone-Id': PHONE_ID,
-            'User-Agent': APP_INFO,
+            'User-Agent': self.app_info,
             'X-API-Key': API_KEY,
         }
 
@@ -136,7 +154,7 @@ class WyzeAuthLib:
     async def get_token_with_2fa(self, verification_code) -> Token:
         headers = {
             'Phone-Id': PHONE_ID,
-            'User-Agent': APP_INFO,
+            'User-Agent': self.app_info,
             'X-API-Key': API_KEY,
         }
         # TOTP Payload
@@ -180,12 +198,12 @@ class WyzeAuthLib:
     async def refresh(self) -> None:
         payload = {
             "phone_id": PHONE_ID,
-            "app_name": APP_NAME,
-            "app_version": APP_VERSION,
-            "sc": SC,
-            "sv": SV,
-            "phone_system_type": PHONE_SYSTEM_TYPE,
-            "app_ver": APP_VER,
+            "app_name": self.app_name,
+            "app_version": self.app_version,
+            "sc": self._refresh_token_sc,
+            "sv": self._refresh_token_sv,
+            "phone_system_type": self.phone_system_type,
+            "app_ver": self.app_ver,
             "ts": int(time.time()),
             "refresh_token": self.token.refresh_token
         }
@@ -279,3 +297,74 @@ class WyzeAuthLib:
             except ContentTypeError:
                 _LOGGER.debug(f"Response: {response}")
             return await response.json()
+
+
+class RokuAuthLib(WyzeAuthLib):
+    # Captured from Android app traffic
+    phone_system_type = 2
+    app_name = "com.roku.rokuhome"
+    app_version = "1.1.0.99"
+    app_ver = "com.roku.rokuhome___1.1.0.99"
+    app_info = "Owl_android/1.1.0.99"
+
+    _aws_region = "us-east-1"
+    _aws_id_pool = f"{_aws_region}:11747937-25e8-402f-8e72-6873a618692c"
+    _login_host = "prod.mobile.roku.com"
+    _login_uri = f"https://{_login_host}/iot/user/login"
+
+    def __init__(self, username=None, password=None, token: Token = None, token_callback=None):
+        super().__init__(username, password, token, token_callback)
+
+        # Get an AWS identity as described at
+        # https://docs.aws.amazon.com/cognito/latest/developerguide/getting-credentials.html
+        self.cognito_client = boto3.client("cognito-identity", region_name=self._aws_region)
+        self.cognito_id = self.cognito_client.get_id(IdentityPoolId=self._aws_id_pool)["IdentityId"]
+
+    async def get_token_with_username_password(self, username, password) -> Token:
+        self._username = username
+        self._password = password
+        login_payload = dumps({
+            "email": self._username,
+            "password": self._password
+        }, separators=(",", ":")).encode("utf-8")
+
+        # Get AWS credentials using our identity
+        credentials = self.cognito_client.get_credentials_for_identity(
+            IdentityId=self.cognito_id
+        )["Credentials"]
+
+        # Create a Credentials object from the response JSON
+        credentials = Credentials(
+            credentials["AccessKeyId"],
+            credentials["SecretKey"],
+            credentials["SessionToken"]
+        ).get_frozen_credentials()
+
+        # Set request headers (based on the "Roku Smart Home" Android app)
+        headers = {
+            "Accept": "application/json",
+            "Content-Type": "application/json; charset=UTF-8",
+            "Host": self._login_host,
+            "apiweb-env": "prod",
+            "app": "harold",  # without this, the response is: "Error: Something went wrong 'emailVerified'"
+        }
+
+        # Sign request
+        request = AWSRequest("POST", self._login_uri, headers, login_payload)
+        signer = SigV4Auth(credentials, "execute-api", self._aws_region)
+        signer.add_auth(request)
+
+        # Send request
+        response_json = await self.post(self._login_uri, headers=request.headers, data=login_payload)
+
+        if "message" in response_json:
+            _LOGGER.error(f"Unable to login with response from Roku: {response_json}")
+            raise UnknownApiError(response_json)
+
+        self.token = Token(
+            response_json["data"]["partnerAccess"]["token"],
+            response_json["data"]["oauth"]["refreshToken"]
+        )
+
+        await self.token_callback(self.token)
+        return self.token

@@ -7,7 +7,7 @@ import logging
 from enum import Enum
 from typing import Any, Dict, List
 
-from .base_service import BaseService
+from .base_service import BaseService, RokuBaseService
 from ..types import Device, WallSwitchProps, DeviceTypes
 
 _LOGGER = logging.getLogger(__name__)
@@ -109,3 +109,7 @@ class WallSwitchService(BaseService):
     async def _wall_switch_set_iot_prop(self, device: Device, prop: WallSwitchProps, value: Any) -> None:
         url = "https://wyze-sirius-service.wyzecam.com//plugin/sirius/set_iot_prop_by_topic"
         return await self._set_iot_prop(url, device, prop.value, value)
+
+
+class RokuWallSwitchService(WallSwitchService, RokuBaseService):
+    pass

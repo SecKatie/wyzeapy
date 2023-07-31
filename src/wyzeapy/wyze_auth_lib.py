@@ -65,9 +65,19 @@ class WyzeAuthLib:
     ]
     SANITIZE_STRING = "**Sanitized**"
 
-    def __init__(self, username=None, password=None, token: Token = None, token_callback=None):
+    def __init__(
+        self,
+        username=None,
+        password=None,
+        key_id=None,
+        api_key=None,
+        token: Optional[Token] = None,
+        token_callback=None,
+    ):
         self._username = username
         self._password = password
+        self._key_id = key_id
+        self._api_key = api_key
         self.token = token
         self.session_id = ""
         self.verification_id = ""
@@ -76,8 +86,23 @@ class WyzeAuthLib:
         self.token_callback = token_callback
 
     @classmethod
-    async def create(cls, username=None, password=None, token: Token = None, token_callback=None):
-        self = cls(username=username, password=password, token=token, token_callback=token_callback)
+    async def create(
+        cls,
+        username=None,
+        password=None,
+        key_id=None,
+        api_key=None,
+        token: Optional[Token] = None,
+        token_callback=None,
+    ):
+        self = cls(
+            username=username,
+            password=password,
+            key_id=key_id,
+            api_key=api_key,
+            token=token,
+            token_callback=token_callback,
+        )
 
         if self._username is None and self._password is None and self.token is None:
             raise AttributeError("Must provide a username, password or token")
@@ -87,22 +112,26 @@ class WyzeAuthLib:
 
         return self
 
-    async def get_token_with_username_password(self, username, password) -> Token:
+    async def get_token_with_username_password(
+        self, username, password, key_id, api_key
+    ) -> Token:
         self._username = username
         self._password = create_password(password)
-        login_payload = {
-            "email": self._username,
-            "password": self._password
-        }
+        self._key_id = key_id
+        self._api_key = api_key
+        login_payload = {"email": self._username, "password": self._password}
 
         headers = {
-            'Phone-Id': PHONE_ID,
-            'User-Agent': APP_INFO,
-            'X-API-Key': API_KEY,
+            "keyid": key_id,
+            "apikey": api_key,
+            "User-Agent": "wyzeapy",
         }
 
-        response_json = await self.post("https://auth-prod.api.wyze.com/user/login", headers=headers,
-                                        json=login_payload)
+        response_json = await self.post(
+            "https://auth-prod.api.wyze.com/api/user/login",
+            headers=headers,
+            json=login_payload,
+        )
 
         if response_json.get('errorCode') is not None:
             _LOGGER.error(f"Unable to login with response from Wyze: {response_json}")

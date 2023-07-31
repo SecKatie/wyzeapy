@@ -42,6 +42,8 @@ class Wyzeapy:
         self._wall_switch_service = None
         self._email = None
         self._password = None
+        self._key_id = None
+        self._api_key = None
         self._service: Optional[BaseService] = None
         self._token_callbacks: List[Callable] = []
 
@@ -55,12 +57,16 @@ class Wyzeapy:
         self = cls()
         return self
 
-    async def login(self, email, password, token: Token = None):
+    async def login(
+        self, email, password, key_id, api_key, token: Optional[Token] = None
+    ):
         """
         Logs the user in and retrieves the users token
 
         :param email: Users email
         :param password: Users password
+        :param key_id: Key ID for third-party API access
+        :param api_key: API Key for third-party API access
         :param token: Users existing token from a previous session
 
         :raises:
@@ -69,17 +75,21 @@ class Wyzeapy:
 
         self._email = email
         self._password = password
+        self._key_id = key_id
+        self._api_key = api_key
+
         try:
+            self._auth_lib = await WyzeAuthLib.create(
+                email, password, key_id, api_key, token, self.execute_token_callbacks
+            )
             if token:
                 # User token supplied, lets go ahead and use it and refresh the access token if needed.
-                self._auth_lib = await WyzeAuthLib.create(
-                    email, password, token, token_callback=self.execute_token_callbacks)
                 await self._auth_lib.refresh_if_should()
-                self._service = BaseService(self._auth_lib)
             else:
-                self._auth_lib = await WyzeAuthLib.create(email, password, token_callback=self.execute_token_callbacks)
-                await self._auth_lib.get_token_with_username_password(email, password)
-                self._service = BaseService(self._auth_lib)
+                await self._auth_lib.get_token_with_username_password(
+                    email, password, key_id, api_key
+                )
+            self._service = BaseService(self._auth_lib)
         except TwoFactorAuthenticationEnabled as error:
             raise error
 
@@ -164,17 +174,22 @@ class Wyzeapy:
         await self._service.set_push_info(False)
 
     @classmethod
-    async def valid_login(cls, email: str, password: str) -> bool:
+    async def valid_login(
+        cls, email: str, password: str, key_id: str, api_key: str
+    ) -> bool:
         """
         Checks to see if a username and password return a valid login
 
         :param email: The users email
         :param password: The users password
+        :param key_id: Key ID for third-party API access
+        :param api_key: API Key for third-party API access
         :return: True if the account can connect
         """
 
         self = cls()
-        await self.login(email, password)
+        await self.login(email, password, key_id, api_key)
+
         return not self._auth_lib.should_refresh
 
     @property

@@ -7,6 +7,7 @@ from typing import List, Dict, Any
 
 from .base_service import BaseService
 from ..types import Device, DeviceTypes, PropertyIDs
+from datetime import timedelta, datetime
 
 
 class Switch(Device):
@@ -44,3 +45,19 @@ class SwitchService(BaseService):
 
     async def turn_off(self, switch: Switch):
         await self._set_property(switch, PropertyIDs.ON.value, "0")
+
+
+class SwitchUsageService(SwitchService):
+    """Class to retrieve the last 25 hours of usage data."""
+
+    async def update(self, device: Device):
+        start_time = int(
+            datetime.timestamp((datetime.now() - timedelta(hours=25))) * 1000
+        )
+        end_time = int(datetime.timestamp(datetime.now()) * 1000)
+
+        device.usage_history = await self._get_plug_history(
+            device, start_time, end_time
+        )
+
+        return device

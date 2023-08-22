@@ -9,6 +9,8 @@ from ..types import Device, DeviceTypes
 
 class Lock(Device):
     unlocked = False
+    locking = False
+    unlocking = False
     door_open = False
     trash_mode = False
 
@@ -26,7 +28,13 @@ class LockService(BaseService):
         locker_status = lock.raw_dict.get("locker_status")
         # Check if the door is locked
         lock.unlocked = locker_status.get("hardlock") == 2
-
+        
+        # Reset unlocking and locking if needed
+        if lock.unlocked and lock.unlocking:
+            lock.unlocking = False
+        if not lock.unlocked and lock.locking:
+            lock.locking = False
+        
         return lock
 
     async def get_locks(self):

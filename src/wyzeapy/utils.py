@@ -72,13 +72,12 @@ def create_password(password: str) -> str:
     return hashlib.md5(hex2.encode()).hexdigest()
 
 
-def check_for_errors_standard(call, response_json: Dict[str, Any]) -> None:
+def check_for_errors_standard(response_json: Dict[str, Any]) -> None:
     if response_json['code'] != ResponseCodes.SUCCESS.value:
         if response_json['code'] == ResponseCodes.PARAMETER_ERROR.value:
             raise ParameterError(response_json)
         elif response_json['code'] == ResponseCodes.ACCESS_TOKEN_ERROR.value:
-            call._auth_lib.token.expired = True
-            raise AccessTokenError("Access Token expired, attempting to refresh")
+            raise AccessTokenError
         elif response_json['code'] == ResponseCodes.DEVICE_OFFLINE.value:
             return
         else:

@@ -28,6 +28,7 @@ class Token:
     def __init__(self, access_token, refresh_token, refresh_time: float = None):
         self._access_token: str = access_token
         self._refresh_token: str = refresh_token
+        self.expired = False
         if refresh_time:
             self._refresh_time: float = refresh_time
         else:
@@ -206,9 +207,9 @@ class WyzeAuthLib:
         return time.time() >= self.token.refresh_time
 
     async def refresh_if_should(self):
-        if self.should_refresh:
+        if self.should_refresh or self.token.expired:
             async with self.refresh_lock:
-                if self.should_refresh:
+                if self.should_refresh or self.token.expired:
                     _LOGGER.debug("Should refresh. Refreshing...")
                     await self.refresh()
 
@@ -233,11 +234,12 @@ class WyzeAuthLib:
             response = await _session.post("https://api.wyzecam.com/app/user/refresh_token", headers=headers,
                                            json=payload)
         response_json = await response.json()
-        check_for_errors_standard(response_json)
+        check_for_errors_standard(self, response_json)
 
         self.token.access_token = response_json['data']['access_token']
         self.token.refresh_token = response_json['data']['refresh_token']
         await self.token_callback(self.token)
+        self.token.expired = False
 
     def sanitize(self, data):
         if data and type(data) is dict:

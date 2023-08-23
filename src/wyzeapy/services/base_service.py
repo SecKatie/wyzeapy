@@ -73,7 +73,7 @@ class BaseService:
 
         response_json = await self._auth_lib.post(url, json=payload)
 
-        check_for_errors_standard(response_json)
+        check_for_errors_standard(self, response_json)
 
     async def get_user_profile(self) -> Dict[Any, Any]:
         await self._auth_lib.refresh_if_should()
@@ -119,7 +119,7 @@ class BaseService:
         response_json = await self._auth_lib.post("https://api.wyzecam.com/app/v2/home_page/get_object_list",
                                                   json=payload)
 
-        check_for_errors_standard(response_json)
+        check_for_errors_standard(self, response_json)
 
         # Cache the devices so that update calls can pull more recent device_params
         BaseService._devices = [Device(device) for device in response_json['data']['device_list']]
@@ -164,7 +164,7 @@ class BaseService:
         response_json = await self._auth_lib.post("https://api.wyzecam.com/app/v2/device/get_property_list",
                                                   json=payload)
 
-        check_for_errors_standard(response_json)
+        check_for_errors_standard(self, response_json)
         properties = response_json['data']['property_list']
 
         property_list = []
@@ -209,7 +209,7 @@ class BaseService:
         response_json = await self._auth_lib.post("https://api.wyzecam.com/app/v2/device/set_property_list",
                                                   json=payload)
 
-        check_for_errors_standard(response_json)
+        check_for_errors_standard(self, response_json)
 
     async def _run_action_list(self, device: Device, plist: List[Dict[Any, Any]]) -> None:
         """
@@ -250,7 +250,7 @@ class BaseService:
         response_json = await self._auth_lib.post("https://api.wyzecam.com/app/v2/auto/run_action_list",
                                                   json=payload)
 
-        check_for_errors_standard(response_json)
+        check_for_errors_standard(self, response_json)
 
     async def _get_event_list(self, count: int) -> Dict[Any, Any]:
         """
@@ -291,7 +291,7 @@ class BaseService:
         response_json = await self._auth_lib.post("https://api.wyzecam.com/app/v2/device/get_event_list",
                                                   json=payload)
 
-        check_for_errors_standard(response_json)
+        check_for_errors_standard(self, response_json)
         return response_json
 
     async def _run_action(self, device: Device, action: str) -> None:
@@ -325,7 +325,7 @@ class BaseService:
         response_json = await self._auth_lib.post("https://api.wyzecam.com/app/v2/auto/run_action",
                                                   json=payload)
 
-        check_for_errors_standard(response_json)
+        check_for_errors_standard(self, response_json)
 
     async def _set_property(self, device: Device, pid: str, pvalue: str) -> None:
         """
@@ -356,7 +356,7 @@ class BaseService:
         response_json = await self._auth_lib.post("https://api.wyzecam.com/app/v2/device/set_property",
                                                   json=payload)
 
-        check_for_errors_standard(response_json)
+        check_for_errors_standard(self, response_json)
 
     async def _monitoring_profile_active(self, hms_id: str, home: int, away: int) -> None:
         """
@@ -533,7 +533,7 @@ class BaseService:
         response_json = await self._auth_lib.post("https://api.wyzecam.com/app/v2/device/get_device_Info",
                                                   json=payload)
 
-        check_for_errors_standard(response_json)
+        check_for_errors_standard(self, response_json)
 
         return response_json
 

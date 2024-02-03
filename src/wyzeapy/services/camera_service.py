@@ -120,18 +120,10 @@ class CameraService(BaseService):
         await self._set_property(camera, PropertyIDs.FLOOD_LIGHT.value, "2")
         
     async def turn_on_notifications(self, camera: Camera):
-        plist = [
-            create_pid_pair(PropertyIDs.NOTIFICATION, "1")
-        ]
-
-        await self._set_property_list(camera, plist)
+        await self._set_property(camera, PropertyIDs.NOTIFICATION.value, "1")
 
     async def turn_off_notifications(self, camera: Camera):
-        plist = [
-            create_pid_pair(PropertyIDs.NOTIFICATION, "0")
-        ]
-
-        await self._set_property_list(camera, plist)
+        await self._set_property(camera, PropertyIDs.NOTIFICATION.value, "0")
 
     # For whatever reason, this property isn't always in line with the status property,
     # so having both commands makes sure the state is actually toggled.

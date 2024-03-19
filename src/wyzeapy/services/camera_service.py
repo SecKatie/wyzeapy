@@ -125,12 +125,12 @@ class CameraService(BaseService):
     async def turn_off_notifications(self, camera: Camera):
         await self._set_property(camera, PropertyIDs.NOTIFICATION.value, "0")
 
-    # For whatever reason, this property isn't always in line with the status property,
-    # so having both commands makes sure the state is actually toggled.
+    # Both properties need to be set on newer cams, older cameras seem to only react
+    # to the first property but it doesnt hurt to set both
     async def turn_on_motion_detection(self, camera: Camera):
-        await self._set_property(camera, PropertyIDs.MOTION_DETECTION_TOGGLE.value, "0")
+        await self._set_property(camera, PropertyIDs.MOTION_DETECTION.value, "1")
         await self._set_property(camera, PropertyIDs.MOTION_DETECTION_TOGGLE.value, "1")
 
     async def turn_off_motion_detection(self, camera: Camera):
-        await self._set_property(camera, PropertyIDs.MOTION_DETECTION_TOGGLE.value, "1")
+        await self._set_property(camera, PropertyIDs.MOTION_DETECTION.value, "0")
         await self._set_property(camera, PropertyIDs.MOTION_DETECTION_TOGGLE.value, "0")

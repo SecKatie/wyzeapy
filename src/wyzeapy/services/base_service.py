@@ -2,7 +2,7 @@
 #  You may use, distribute and modify this code under the terms
 #  of the attached license. You should have received a copy of
 #  the license with this file. If not, please write to:
-#  joshua@mulliken.net to receive a copy
+#  katie@mulliken.net to receive a copy
 import asyncio
 import json
 import logging
@@ -613,3 +613,33 @@ class BaseService:
             _LOGGER.warning("Failed to connect to bulb %s, reverting to cloud." % bulb.mac)
             await self._run_action_list(bulb, plist)
             bulb.cloud_fallback = True
+
+    async def _get_plug_history(
+        self, device: Device, start_time, end_time
+    ) -> Dict[Any, Any]:
+        """Wraps the https://api.wyzecam.com/app/v2/plug/usage_record_list endpoint"""
+
+        await self._auth_lib.refresh_if_should()
+
+        payload = {
+            "phone_id": PHONE_ID,
+            "date_begin": start_time,
+            "date_end": end_time,
+            "app_name": APP_NAME,
+            "app_version": APP_VERSION,
+            "sc": SC,
+            "device_mac": device.mac,
+            "sv": SV,
+            "phone_system_type": PHONE_SYSTEM_TYPE,
+            "app_ver": APP_VER,
+            "ts": int(time.time()),
+            "access_token": self._auth_lib.token.access_token,
+        }
+
+        response_json = await self._auth_lib.post(
+            "https://api.wyzecam.com/app/v2/plug/usage_record_list", json=payload
+        )
+
+        check_for_errors_standard(response_json)
+
+        return response_json["data"]["usage_record_list"]

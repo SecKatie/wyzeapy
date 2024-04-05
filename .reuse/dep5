@@ -1,6 +1,6 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: wyzeapy
-Upstream-Contact: Mulliken LLC <joshua@mulliken.net>
+Upstream-Contact: Mulliken LLC <katie@mulliken.net>
 Source: https://github.com/JoshuaMulliken/wyzeapy
 
 # Sample paragraph, commented out:
@@ -9,13 +9,13 @@ Source: https://github.com/JoshuaMulliken/wyzeapy
 # Copyright: $YEAR $NAME <$CONTACT>
 # License: ...
 Files: src/*
-Copyright: 2021 Mulliken, LLC <joshua@mulliken.net>
+Copyright: 2021 Mulliken, LLC <katie@mulliken.net>
 License: GPL-3.0-only
 
 Files: docs/*
-Copyright: 2021 Mulliken, LLC <joshua@mulliken.net>
+Copyright: 2021 Mulliken, LLC <katie@mulliken.net>
 License: GPL-3.0-only
 
 Files: tests/*
-Copyright: 2021 Mulliken, LLC <joshua@mulliken.net>
+Copyright: 2021 Mulliken, LLC <katie@mulliken.net>
 License: GPL-3.0-only

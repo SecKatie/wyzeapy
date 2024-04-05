@@ -2,7 +2,7 @@
 #  You may use, distribute and modify this code under the terms
 #  of the attached license. You should have received a copy of
 #  the license with this file. If not, please write to:
-#  joshua@mulliken.net to receive a copy
+#  katie@mulliken.net to receive a copy
 import logging
 from inspect import iscoroutinefunction
 from typing import List, Optional, Set, Callable
@@ -17,7 +17,7 @@ from .services.camera_service import CameraService
 from .services.hms_service import HMSService
 from .services.lock_service import LockService
 from .services.sensor_service import SensorService
-from .services.switch_service import SwitchService
+from .services.switch_service import SwitchService, SwitchUsageService
 from .services.thermostat_service import ThermostatService
 from .services.wall_switch_service import WallSwitchService
 from .utils import check_for_errors_standard
@@ -40,6 +40,7 @@ class Wyzeapy:
         self._lock_service = None
         self._sensor_service = None
         self._wall_switch_service = None
+        self._switch_usage_service = None
         self._email = None
         self._password = None
         self._key_id = None
@@ -255,3 +256,10 @@ class Wyzeapy:
         if self._wall_switch_service is None:
             self._wall_switch_service = WallSwitchService(self._auth_lib)
         return self._wall_switch_service
+
+    @property
+    async def switch_usage_service(self) -> SwitchUsageService:
+        """Returns an instance of the switch usage service"""
+        if self._switch_usage_service is None:
+            self._switch_usage_service = SwitchUsageService(self._auth_lib)
+        return self._switch_usage_service

@@ -2,7 +2,7 @@
 #  You may use, distribute and modify this code under the terms
 #  of the attached license. You should have received a copy of
 #  the license with this file. If not, please write to:
-#  joshua@mulliken.net to receive a copy
+#  katie@mulliken.net to receive a copy
 import asyncio
 import logging
 import time
@@ -11,7 +11,11 @@ from typing import Dict, Any, Optional
 from aiohttp import TCPConnector, ClientSession, ContentTypeError
 
 from .const import API_KEY, PHONE_ID, APP_NAME, APP_VERSION, SC, SV, PHONE_SYSTEM_TYPE, APP_VER, APP_INFO
-from .exceptions import UnknownApiError, TwoFactorAuthenticationEnabled
+from .exceptions import (
+    UnknownApiError,
+    TwoFactorAuthenticationEnabled,
+    AccessTokenError,
+)
 from .utils import create_password, check_for_errors_standard
 
 _LOGGER = logging.getLogger(__name__)
@@ -136,6 +140,8 @@ class WyzeAuthLib:
 
         if response_json.get('errorCode') is not None:
             _LOGGER.error(f"Unable to login with response from Wyze: {response_json}")
+            if response_json["errorCode"] == 1000:
+                raise AccessTokenError
             raise UnknownApiError(response_json)
 
         if response_json.get('mfa_options') is not None:

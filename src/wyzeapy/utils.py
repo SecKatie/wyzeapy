@@ -110,7 +110,7 @@ def check_for_errors_hms(service, response_json: Dict[Any, Any]) -> None:
             service._auth_lib.token.expired = True
             raise AccessTokenError("Access Token expired, attempting to refresh")
         else:
-            raise AccessTokenError
+            raise UnknownApiError(response_json)
 
 
 def return_event_for_device(device: Device, events: List[Event]) -> Optional[Event]:

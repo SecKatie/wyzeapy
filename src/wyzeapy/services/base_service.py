@@ -393,7 +393,7 @@ class BaseService:
             }
         ]
         response_json = await self._auth_lib.patch(url, headers=headers, params=query, json=payload)
-        check_for_errors_hms(response_json)
+        check_for_errors_hms(self, response_json)
 
     async def _get_plan_binding_list_by_user(self) -> Dict[Any, Any]:
         """
@@ -419,7 +419,7 @@ class BaseService:
         }
 
         response_json = await self._auth_lib.get(url, headers=headers, params=payload)
-        check_for_errors_hms(response_json)
+        check_for_errors_hms(self, response_json)
         return response_json
 
     async def _disable_reme_alarm(self, hms_id: str) -> None:
@@ -441,7 +441,7 @@ class BaseService:
 
         response_json = await self._auth_lib.delete(url, headers=headers, json=payload)
 
-        check_for_errors_hms(response_json)
+        check_for_errors_hms(self, response_json)
 
     async def _monitoring_profile_state_status(self, hms_id: str) -> Dict[Any, Any]:
         """
@@ -469,7 +469,7 @@ class BaseService:
 
         response_json = await self._auth_lib.get(url, headers=headers, params=query)
 
-        check_for_errors_hms(response_json)
+        check_for_errors_hms(self, response_json)
         return response_json
 
     async def _lock_control(self, device: Device, action: str) -> None:
@@ -489,7 +489,7 @@ class BaseService:
 
         response_json = await self._auth_lib.post(url, json=payload)
 
-        check_for_errors_lock(response_json)
+        check_for_errors_lock(self, response_json)
 
     async def _get_lock_info(self, device: Device) -> Dict[str, Optional[Any]]:
         await self._auth_lib.refresh_if_should()
@@ -509,7 +509,7 @@ class BaseService:
 
         response_json = await self._auth_lib.get(url, params=payload)
 
-        check_for_errors_lock(response_json)
+        check_for_errors_lock(self, response_json)
 
         return response_json
 
@@ -554,7 +554,7 @@ class BaseService:
 
         response_json = await self._auth_lib.get(url, headers=headers, params=payload)
 
-        check_for_errors_iot(response_json)
+        check_for_errors_iot(self, response_json)
 
         return response_json
 
@@ -579,7 +579,7 @@ class BaseService:
 
         response_json = await self._auth_lib.post(url, headers=headers, data=payload_str)
 
-        check_for_errors_iot(response_json)
+        check_for_errors_iot(self, response_json)
 
     async def _local_bulb_command(self, bulb, plist):
         # await self._auth_lib.refresh_if_should()
@@ -640,6 +640,6 @@ class BaseService:
             "https://api.wyzecam.com/app/v2/plug/usage_record_list", json=payload
         )
 
-        check_for_errors_standard(response_json)
+        check_for_errors_standard(self, response_json)
 
         return response_json["data"]["usage_record_list"]

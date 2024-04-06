@@ -20,7 +20,6 @@ from .services.sensor_service import SensorService
 from .services.switch_service import SwitchService, SwitchUsageService
 from .services.thermostat_service import ThermostatService
 from .services.wall_switch_service import WallSwitchService
-from .utils import check_for_errors_standard
 from .wyze_auth_lib import WyzeAuthLib, Token
 
 _LOGGER = logging.getLogger(__name__)

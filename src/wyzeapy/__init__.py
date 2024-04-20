@@ -20,7 +20,6 @@ from .services.sensor_service import SensorService
 from .services.switch_service import SwitchService, SwitchUsageService
 from .services.thermostat_service import ThermostatService
 from .services.wall_switch_service import WallSwitchService
-from .utils import check_for_errors_standard
 from .wyze_auth_lib import WyzeAuthLib, Token
 
 _LOGGER = logging.getLogger(__name__)
@@ -84,8 +83,8 @@ class Wyzeapy:
                 email, password, key_id, api_key, token, self.execute_token_callbacks
             )
             if token:
-                # User token supplied, lets go ahead and use it and refresh the access token if needed.
-                await self._auth_lib.refresh_if_should()
+                # User token supplied, refresh on startup
+                await self._auth_lib.refresh()
             else:
                 await self._auth_lib.get_token_with_username_password(
                     email, password, key_id, api_key

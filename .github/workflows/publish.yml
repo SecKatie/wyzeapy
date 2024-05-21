@@ -1,12 +1,9 @@
-name: Upload to Test PyPI
-
+name: Publish to PyPI
 on:
-  push:
-    branches:
-      - release/*
-
+  release:
+    types: [published]
 jobs:
-  test-publish:
+  publish:
     runs-on: ubuntu-latest
     env:
       POETRY_HOME: /opt/poetry
@@ -20,10 +17,9 @@ jobs:
       - name: Install dependencies
         run: |
           $POETRY_HOME/bin/poetry install
-      - name: Configure poetry for Test PyPI repository
+      - name: Configure poetry for PyPI repository
         run: |
-          $POETRY_HOME/bin/poetry config repositories.test-pypi https://test.pypi.org/legacy/
-          $POETRY_HOME/bin/poetry config pypi-token.test-pypi ${{ secrets.TEST_PYPI_TOKEN }}
+          $POETRY_HOME/bin/poetry config pypi-token.pypi ${{ secrets.PYPI_TOKEN }}
       - name: Build and publish package
         run: |
-          $POETRY_HOME/bin/poetry publish --build -r test-pypi
+          $POETRY_HOME/bin/poetry publish --build

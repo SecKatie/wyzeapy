@@ -16,7 +16,7 @@ jobs:
       - name: Install poetry
         run: |
           wget https://raw.githubusercontent.com/python-poetry/install.python-poetry.org/d62875fc05fb20062175cd14d19a96dbefa48640/install-poetry.py
-          python install-poetry.py --version 1.2.0
+          python install-poetry.py --version 1.8.3
       - name: Install dependencies
         run: |
           $POETRY_HOME/bin/poetry install

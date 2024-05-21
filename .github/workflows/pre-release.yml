@@ -1,0 +1,29 @@
+name: Upload to Test PyPI
+
+on:
+  push:
+    tags:
+      - '*.*.*'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      POETRY_HOME: /opt/poetry
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+      - name: Install poetry
+        run: |
+          wget https://raw.githubusercontent.com/python-poetry/install.python-poetry.org/d62875fc05fb20062175cd14d19a96dbefa48640/install-poetry.py
+          python install-poetry.py --version 1.2.0
+      - name: Install dependencies
+        run: |
+          poetry install
+      - name: Configure poetry for Test PyPI repository
+        run: |
+          poetry config repositories.test-pypi https://test.pypi.org/legacy/
+          poetry config pypi-token.test-pypi ${{ secrets.TEST_PYPI_TOKEN }}
+      - name: Build and publish package
+        run: |
+          poetry publish --build -r test-pypi

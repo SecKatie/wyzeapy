@@ -2,8 +2,8 @@ name: Upload to Test PyPI
 
 on:
   push:
-    tags:
-      - '*.*.*'
+    branches:
+      - release/*
 
 jobs:
   deploy:

@@ -19,11 +19,11 @@ jobs:
           python install-poetry.py --version 1.2.0
       - name: Install dependencies
         run: |
-          poetry install
+          $POETRY_HOME/bin/poetry install
       - name: Configure poetry for Test PyPI repository
         run: |
-          poetry config repositories.test-pypi https://test.pypi.org/legacy/
-          poetry config pypi-token.test-pypi ${{ secrets.TEST_PYPI_TOKEN }}
+          $POETRY_HOME/bin/poetry config repositories.test-pypi https://test.pypi.org/legacy/
+          $POETRY_HOME/bin/poetry config pypi-token.test-pypi ${{ secrets.TEST_PYPI_TOKEN }}
       - name: Build and publish package
         run: |
-          poetry publish --build -r test-pypi
+          $POETRY_HOME/bin/poetry publish --build -r test-pypi

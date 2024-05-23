@@ -105,12 +105,9 @@ def check_for_errors_iot(service, response_json: Dict[Any, Any]) -> None:
             raise UnknownApiError(response_json)
 
 def check_for_errors_hms(service, response_json: Dict[Any, Any]) -> None:
-    if response_json['code'] != 1:
-        if str(response_json['code']) == ResponseCodes.ACCESS_TOKEN_ERROR.value:
-            service._auth_lib.token.expired = True
-            raise AccessTokenError("Access Token expired, attempting to refresh")
-        else:
-            raise UnknownApiError(response_json)
+    if response_json['message'] is None:
+        service._auth_lib.token.expired = True
+        raise AccessTokenError("Access Token expired, attempting to refresh")
 
 
 def return_event_for_device(device: Device, events: List[Event]) -> Optional[Event]:

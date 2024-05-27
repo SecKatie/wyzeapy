@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "wyzeapy"
-version = "0.5.22-1"
+version = "0.5.23"
 description = "A library for interacting with Wyze devices"
 authors = ["Katie Mulliken <katie@mulliken.net>"]
 license = "GPL-3.0-only"

@@ -74,7 +74,6 @@ class WallSwitchService(BaseService):
         return [WallSwitch(switch.raw_dict) for switch in switches]
 
     async def turn_on(self, switch: WallSwitch):
-        logging.warn("%s", switch.single_press_type)
         if switch.single_press_type == SinglePressType.IOT:
             await self.iot_on(switch)
         else:

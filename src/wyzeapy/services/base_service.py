@@ -12,14 +12,14 @@ from typing import List, Tuple, Any, Dict, Optional
 import aiohttp
 
 from .update_manager import DeviceUpdater, UpdateManager
-from ..const import PHONE_SYSTEM_TYPE, APP_VERSION, APP_VER, PHONE_ID, APP_NAME, OLIVE_APP_ID, APP_INFO, SC, SV
+from ..const import PHONE_SYSTEM_TYPE, APP_VERSION, APP_VER, PHONE_ID, APP_NAME, OLIVE_APP_ID, APP_INFO, SC, SV, APP_PLATFORM, SOURCE
 from ..crypto import olive_create_signature
 from ..payload_factory import olive_create_hms_patch_payload, olive_create_hms_payload, \
     olive_create_hms_get_payload, ford_create_payload, olive_create_get_payload, olive_create_post_payload, \
-    olive_create_user_info_payload
-from ..types import PropertyIDs, Device
+    olive_create_user_info_payload, devicemgmt_create_capabilities_payload, devicemgmt_get_iot_props_list
+from ..types import PropertyIDs, Device, DeviceMgmtToggleType
 from ..utils import check_for_errors_standard, check_for_errors_hms, check_for_errors_lock, \
-    check_for_errors_iot, wyze_encrypt
+    check_for_errors_iot, wyze_encrypt, check_for_errors_devicemgmt
 from ..wyze_auth_lib import WyzeAuthLib
 
 _LOGGER = logging.getLogger(__name__)
@@ -326,6 +326,121 @@ class BaseService:
                                                   json=payload)
 
         check_for_errors_standard(self, response_json)
+    
+    async def _run_action_devicemgmt(self, device: Device, type: str, value: str) -> None:
+        """
+        Wraps the devicemgmt-service-beta.wyze.com/device-management/api/action/run_action endpoint
+
+        :param device: The device for which to run the action
+        :param state: on or off
+        :return:
+        """
+
+        await self._auth_lib.refresh_if_should()
+
+        capabilities = devicemgmt_create_capabilities_payload(type, value)
+
+        payload = {
+            "capabilities": [
+                capabilities
+            ],
+            "nonce": int(time.time() * 1000),
+            "targetInfo": {
+                "id": device.mac,
+                "productModel": device.product_model,
+                "type": "DEVICE"
+            },
+            "transactionId": "0a5b20591fedd4du1b93f90743ba0csd" # OG cam needs this (doesn't matter what the value is)
+        }
+
+        headers = {
+            "authorization": self._auth_lib.token.access_token,
+        }
+
+        response_json = await self._auth_lib.post("https://devicemgmt-service-beta.wyze.com/device-management/api/action/run_action",
+                                                  json=payload, headers=headers)
+
+        check_for_errors_iot(self, response_json)
+    
+    async def _set_toggle(self, device: Device, toggleType: DeviceMgmtToggleType, state: str) -> None:
+        """
+        Wraps the ai-subscription-service-beta.wyzecam.com/v4/subscription-service/toggle-management endpoint
+
+        :param device: The device for which to get the state
+        :param toggleType: Enum for the toggle type
+        :param state: String state to set for the toggle
+        """
+
+        await self._auth_lib.refresh_if_should()
+
+        payload = {
+            "data": [
+                {
+                    "device_firmware": "1234567890",
+                    "device_id": device.mac,
+                    "device_model": device.product_model,
+                    "page_id": [
+                        toggleType.pageId
+                    ],
+                    "toggle_update": [
+                        {
+                            "toggle_id": toggleType.toggleId,
+                            "toggle_status": state
+                        }
+                    ]
+                }
+            ],
+            "nonce": str(int(time.time() * 1000))
+        }
+
+
+        signature = olive_create_signature(payload, self._auth_lib.token.access_token)
+        headers = {
+            "access_token": self._auth_lib.token.access_token,
+            "timestamp": str(int(time.time() * 1000)),
+            "appid": OLIVE_APP_ID,
+            "source": SOURCE,
+            "signature2": signature,
+            "appplatform": APP_PLATFORM,
+            "appversion": APP_VERSION,
+            "requestid": "35374158s4s313b9a2be7c057f2da5d1"
+        }
+
+        response_json = await self._auth_lib.put("https://ai-subscription-service-beta.wyzecam.com/v4/subscription-service/toggle-management",
+                                                  json=payload, headers=headers)
+        
+        check_for_errors_devicemgmt(self, response_json)
+    
+    async def _get_iot_prop_devicemgmt(self, device: Device) -> Dict[str, Any]:
+        """
+        Wraps the devicemgmt-service-beta.wyze.com/device-management/api/device-property/get_iot_prop endpoint
+
+        :param device: The device for which to get the state
+        :return:
+        """
+
+        await self._auth_lib.refresh_if_should()
+
+        payload = {
+            "capabilities": devicemgmt_get_iot_props_list(device.product_model),
+            "nonce": int(time.time() * 1000),
+            "targetInfo": {
+                "id": device.mac,
+                "productModel": device.product_model,
+                "type": "DEVICE"
+            }
+        }
+
+        headers = {
+            "authorization": self._auth_lib.token.access_token,
+        }
+
+        response_json = await self._auth_lib.post("https://devicemgmt-service-beta.wyze.com/device-management/api/device-property/get_iot_prop",
+                                                  json=payload, headers=headers)
+        
+        check_for_errors_iot(self, response_json)
+
+        return response_json
 
     async def _set_property(self, device: Device, pid: str, pvalue: str) -> None:
         """

@@ -96,6 +96,15 @@ def check_for_errors_lock(service, response_json: Dict[str, Any]) -> None:
             raise UnknownApiError(response_json)
 
 
+def check_for_errors_devicemgmt(service, response_json: Dict[Any, Any]) -> None:
+    if response_json['status'] != 200:
+        if "InvalidTokenError>" in response_json['response']['errors'][0]['message']:
+            service._auth_lib.token.expired = True
+            raise AccessTokenError("Access Token expired, attempting to refresh")
+        else:
+            raise UnknownApiError(response_json)
+
+
 def check_for_errors_iot(service, response_json: Dict[Any, Any]) -> None:
     if response_json['code'] != 1:
         if str(response_json['code']) == ResponseCodes.ACCESS_TOKEN_ERROR.value:

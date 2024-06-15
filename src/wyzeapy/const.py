@@ -15,6 +15,9 @@ PHONE_ID = str(uuid.uuid4())
 APP_INFO = 'wyze_android_2.19.14'  # Required for the thermostat
 SC = "9f275790cab94a72bd206c8876429f3c"
 SV = "9d74946e652647e9b6c9d59326aef104"
+CLIENT_VER = "2"
+SOURCE = "ios/WZCameraSDK"
+APP_PLATFORM = "ios"
 
 # Crypto secrets
 OLIVE_SIGNING_SECRET = 'wyze_app_secret_key_132'  # Required for the thermostat

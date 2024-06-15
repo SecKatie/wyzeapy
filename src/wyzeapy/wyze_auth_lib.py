@@ -267,6 +267,23 @@ class WyzeAuthLib:
             except ContentTypeError:
                 _LOGGER.debug(f"Response: {response}")
             return await response.json()
+    
+    async def put(self, url, json=None, headers=None, data=None) -> Dict[Any, Any]:
+        async with ClientSession(connector=TCPConnector(ttl_dns_cache=(30 * 60))) as _session:
+            response = await _session.put(url, json=json, headers=headers, data=data)
+            # Relocated these below as the sanitization seems to modify the data before it goes to the post.
+            _LOGGER.debug("Request:")
+            _LOGGER.debug(f"url: {url}")
+            _LOGGER.debug(f"json: {self.sanitize(json)}")
+            _LOGGER.debug(f"headers: {self.sanitize(headers)}")
+            _LOGGER.debug(f"data: {self.sanitize(data)}")
+            # Log the response.json() if it exists, if not log the response.
+            try:
+                response_json = await response.json()
+                _LOGGER.debug(f"Response Json: {self.sanitize(response_json)}")
+            except ContentTypeError:
+                _LOGGER.debug(f"Response: {response}")
+            return await response.json()
 
     async def get(self, url, headers=None, params=None) -> Dict[Any, Any]:
         async with ClientSession(connector=TCPConnector(ttl_dns_cache=(30 * 60))) as _session:

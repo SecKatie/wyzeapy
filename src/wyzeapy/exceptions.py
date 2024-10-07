@@ -26,8 +26,7 @@ class LoginError(Exception):
 
 
 class UnknownApiError(Exception):
-    def __init__(self, response_json: Dict[str, Any]):
-        super(UnknownApiError, self).__init__(str(response_json))
+    pass
 
 
 class TwoFactorAuthenticationEnabled(Exception):

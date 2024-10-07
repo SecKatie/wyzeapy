@@ -73,22 +73,23 @@ def create_password(password: str) -> str:
 
 
 def check_for_errors_standard(service, response_json: Dict[str, Any]) -> None:
-    if response_json['code'] != ResponseCodes.SUCCESS.value:
-        if response_json['code'] == ResponseCodes.PARAMETER_ERROR.value:
-            raise ParameterError(response_json)
-        elif response_json['code'] == ResponseCodes.ACCESS_TOKEN_ERROR.value:
+    response_code = response_json['code']
+    if response_code != ResponseCodes.SUCCESS.value:
+        if response_code == ResponseCodes.PARAMETER_ERROR.value:
+            raise ParameterError(response_code, response_json['msg'])
+        elif response_code == ResponseCodes.ACCESS_TOKEN_ERROR.value:
             service._auth_lib.token.expired = True
-            raise AccessTokenError("Access Token expired, attempting to refresh")
-        elif response_json['code'] == ResponseCodes.DEVICE_OFFLINE.value:
+            raise AccessTokenError(response_code, "Access Token expired, attempting to refresh")
+        elif response_code == ResponseCodes.DEVICE_OFFLINE.value:
             return
         else:
-            raise UnknownApiError(response_json)
+            raise UnknownApiError(response_code, response_json['msg'])
 
 
 def check_for_errors_lock(service, response_json: Dict[str, Any]) -> None:
     if response_json['ErrNo'] != 0:
         if response_json.get('code') == ResponseCodes.PARAMETER_ERROR.value:
-            raise ParameterError
+            raise ParameterError(response_json)
         elif response_json.get('code') == ResponseCodes.ACCESS_TOKEN_ERROR.value:
             service._auth_lib.token.expired = True
             raise AccessTokenError("Access Token expired, attempting to refresh")

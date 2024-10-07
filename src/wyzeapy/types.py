@@ -102,10 +102,11 @@ class PropertyIDs(Enum):
     CONTACT_STATE = "P1301"
     MOTION_STATE = "P1302"
     CAMERA_SIREN = "P1049"
-    FLOOD_LIGHT = "P1056"
+    FLOOD_LIGHT = "P1056" # Also lamp socket on v3/v4 with lamp socket accessory
     SUN_MATCH = "P1528"
     MOTION_DETECTION = "P1047"  # Current Motion Detection State of the Camera
     MOTION_DETECTION_TOGGLE = "P1001"  # This toggles Camera Motion Detection On/Off
+    WCO_MOTION_DETECTION = "P1029" # Wyze cam outdoor requires both P1047 and P1029 to be set.  P1029 is set via set_property_list
 
 
 class WallSwitchProps(Enum):
@@ -207,10 +208,13 @@ class HMSStatus(Enum):
     AWAY = 'away'
 
 
+class DeviceMgmtToggleType:
+    def __init__(self, pageId, toggleId):
+        self.pageId = pageId
+        self.toggleId = toggleId
 
 
-
-
-
-
+class DeviceMgmtToggleProps(Enum):
+    EVENT_RECORDING_TOGGLE = DeviceMgmtToggleType("cam_event_recording", "ge.motion_detect_recording")
+    NOTIFICATION_TOGGLE = DeviceMgmtToggleType("cam_device_notify", "ge.push_switch")
 

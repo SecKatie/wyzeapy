@@ -9,6 +9,66 @@ All notable changes to this project will be documented in this file.
 See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## 0.5.0..0.5.26 - 2023-12-08
+
+### Bug Fixes
+
+* Update device UUID extraction logic in BaseService
+* Add CodeQL configuration for improved security analysis
+* Better handle token expiration (#83)
+* Update notification endpoint (#81)
+* Update motion properties (#82)
+* Fix aiohttp conflict with homeassistant
+* Fixed toggles and properties for many camera models
+* Fix value error that might occur under certain conditions
+* Pass mutex to DeviceUpdater (#64)
+* Guard against empty queue in update_manager
+* Fix lock querying - update access_token (#57)
+* Protect update function in update_manager.py (#54)
+* Handle sun match (#49)
+* Remove color mode change (#47)
+
+### Features
+
+* Add support for UnLocking and Locking states for Wyze Lock (#75)
+* Add support for outdoor plug energy sensors (#79)
+* Add API Key/ID support (#70)
+* Support for camera sirens (#42)
+* Add option to unload entities (#37)
+* Add cloud fallback when local control is unavailable (#35)
+* Support for lightstrips (#32)
+* Local control for color bulbs (#31)
+* Support for Floodlight (#45)
+* Support music mode (#44)
+* Add global local control option (#38)
+* Update manager - use a mutex (#60)
+* Re-enable and fix thermostat presets (#59)
+* Add Camera motion detection switch (#56)
+* Handle music mode switch (#55)
+* Add new Wyze wall switch (#52)
+* Add notification property (#46)
+
+### Dependencies
+
+* Bump aiohttp from 3.8.1 to 3.8.5 (#69)
+* Bump aiohttp from 3.10.9 to 3.10.11
+* Bump idna from 3.6 to 3.7 (#90)
+* Bump aiohttp from 3.9.3 to 3.9.4 (#89)
+
+### Continuous Integration
+
+* Add publish workflow and adjust job names
+* Add prerelease github workflow
+
+### Miscellaneous Chores
+
+* Bump patch version
+* Update repository name
+* Update poetry
+* Fix wall switch service compatibility
+* Update exceptions handling
+
+- - -
 ## 0.4.4..0.5.0 - 2021-10-06
 
 

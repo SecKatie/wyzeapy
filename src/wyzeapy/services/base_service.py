@@ -592,7 +592,7 @@ class BaseService:
 
         url_path = "/openapi/lock/v1/control"
 
-        device_uuid = device.mac.split(".")[2]
+        device_uuid = device.mac.split(".")[-1]
 
         payload = {
             "uuid": device_uuid,
@@ -611,7 +611,7 @@ class BaseService:
 
         url_path = "/openapi/lock/v1/info"
 
-        device_uuid = device.mac.split(".")[2]
+        device_uuid = device.mac.split(".")[-1]
 
         payload = {
             "uuid": device_uuid,

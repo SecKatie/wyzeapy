@@ -8,7 +8,9 @@ from typing import Dict, Any
 
 class ActionNotSupported(Exception):
     def __init__(self, device_type: str):
-        message = "The action specified is not supported by device type: {}".format(device_type)
+        message = "The action specified is not supported by device type: {}".format(
+            device_type
+        )
 
         super().__init__(message)
 

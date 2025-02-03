@@ -4,6 +4,7 @@ from wyzeapy.services.lock_service import LockService, Lock
 from wyzeapy.types import DeviceTypes
 from wyzeapy.exceptions import UnknownApiError
 
+
 class TestLockService(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
         mock_auth_lib = MagicMock()
@@ -12,14 +13,16 @@ class TestLockService(unittest.IsolatedAsyncioTestCase):
         self.lock_service._lock_control = AsyncMock()
 
     async def test_update_lock_online(self):
-        mock_lock = Lock({
-            "device_type": "Lock",
-            "onoff_line": 1,
-            "door_open_status": 0,
-            "trash_mode": 0,
-            "locker_status": {"hardlock": 2},
-            "raw_dict": {}
-        })
+        mock_lock = Lock(
+            {
+                "device_type": "Lock",
+                "onoff_line": 1,
+                "door_open_status": 0,
+                "trash_mode": 0,
+                "locker_status": {"hardlock": 2},
+                "raw_dict": {},
+            }
+        )
         self.lock_service._get_lock_info.return_value = {
             "device": {
                 "onoff_line": 1,
@@ -40,14 +43,16 @@ class TestLockService(unittest.IsolatedAsyncioTestCase):
         self.lock_service._get_lock_info.assert_awaited_once_with(mock_lock)
 
     async def test_update_lock_offline(self):
-        mock_lock = Lock({
-            "device_type": "Lock",
-            "onoff_line": 0,
-            "door_open_status": 1,
-            "trash_mode": 1,
-            "locker_status": {"hardlock": 1},
-            "raw_dict": {}
-        })
+        mock_lock = Lock(
+            {
+                "device_type": "Lock",
+                "onoff_line": 0,
+                "door_open_status": 1,
+                "trash_mode": 1,
+                "locker_status": {"hardlock": 1},
+                "raw_dict": {},
+            }
+        )
         self.lock_service._get_lock_info.return_value = {
             "device": {
                 "onoff_line": 0,
@@ -81,29 +86,22 @@ class TestLockService(unittest.IsolatedAsyncioTestCase):
         self.lock_service.get_object_list.assert_awaited_once()
 
     async def test_lock(self):
-        mock_lock = Lock({
-            "device_type": "Lock",
-            "raw_dict": {}
-        })
+        mock_lock = Lock({"device_type": "Lock", "raw_dict": {}})
 
         await self.lock_service.lock(mock_lock)
         self.lock_service._lock_control.assert_awaited_with(mock_lock, "remoteLock")
 
     async def test_unlock(self):
-        mock_lock = Lock({
-            "device_type": "Lock",
-            "raw_dict": {}
-        })
+        mock_lock = Lock({"device_type": "Lock", "raw_dict": {}})
 
         await self.lock_service.unlock(mock_lock)
         self.lock_service._lock_control.assert_awaited_with(mock_lock, "remoteUnlock")
 
     async def test_lock_control_error_handling(self):
-        mock_lock = Lock({
-            "device_type": "Lock",
-            "raw_dict": {}
-        })
-        self.lock_service._lock_control.side_effect = UnknownApiError("Failed to lock/unlock")
+        mock_lock = Lock({"device_type": "Lock", "raw_dict": {}})
+        self.lock_service._lock_control.side_effect = UnknownApiError(
+            "Failed to lock/unlock"
+        )
 
         with self.assertRaises(UnknownApiError):
             await self.lock_service.lock(mock_lock)
@@ -111,4 +109,5 @@ class TestLockService(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(UnknownApiError):
             await self.lock_service.unlock(mock_lock)
 
-# ... other test cases ... 
+
+# ... other test cases ...

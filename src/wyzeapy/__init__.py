@@ -7,7 +7,17 @@ import logging
 from inspect import iscoroutinefunction
 from typing import List, Optional, Set, Callable
 
-from .const import PHONE_SYSTEM_TYPE, APP_VERSION, SC, APP_VER, SV, PHONE_ID, APP_NAME, OLIVE_APP_ID, APP_INFO
+from .const import (
+    PHONE_SYSTEM_TYPE,
+    APP_VERSION,
+    SC,
+    APP_VER,
+    SV,
+    PHONE_ID,
+    APP_NAME,
+    OLIVE_APP_ID,
+    APP_INFO,
+)
 from .crypto import olive_create_signature
 from .exceptions import TwoFactorAuthenticationEnabled
 from .payload_factory import olive_create_user_info_payload
@@ -27,6 +37,7 @@ _LOGGER = logging.getLogger(__name__)
 
 class Wyzeapy:
     """A module to assist developers in interacting with the Wyze service"""
+
     # _client: Client
     _auth_lib: WyzeAuthLib
 
@@ -161,7 +172,7 @@ class Wyzeapy:
         """
 
         response_json = await self._service.get_user_profile()
-        return response_json['data']['notification']
+        return response_json["data"]["notification"]
 
     async def enable_notifications(self):
         """Enables notifications on the account"""

@@ -12,12 +12,15 @@ _LOGGER = logging.getLogger(__name__)
 INTERVAL = 300
 MAX_SLOTS = 225
 
+
 @dataclass(order=True)
 class DeviceUpdater(object):
-    device: Device=field(compare=False)  # The device that will be updated
-    service: Any=field(compare=False)
-    update_in: int # A countdown to zero that will tell the priority queue that it is time to update this device
-    updates_per_interval: int=field(compare=False) # The number of updates that should happen every 5 minutes
+    device: Device = field(compare=False)  # The device that will be updated
+    service: Any = field(compare=False)
+    update_in: int  # A countdown to zero that will tell the priority queue that it is time to update this device
+    updates_per_interval: int = field(
+        compare=False
+    )  # The number of updates that should happen every 5 minutes
 
     def __init__(self, service, device: Device, update_interval: int):
         """
@@ -63,6 +66,7 @@ class DeviceUpdater(object):
         if self.updates_per_interval > 1:
             self.updates_per_interval -= 1
 
+
 class UpdateManager:
     # Holds all the logic for when to update the devices
     updaters = []
@@ -78,7 +82,7 @@ class UpdateManager:
     # This function should be called once every second
     async def update_next(self):
         # If there are no updaters in the queue we don't need to do anything
-        if (len(self.updaters) == 0):
+        if len(self.updaters) == 0:
             _LOGGER.debug("No devices to update in queue")
             return
         while True:
@@ -92,11 +96,12 @@ class UpdateManager:
             # We then reduce the counter for all the other updaters
             self.tick_tock()
             # Then we update the target device
-            await updater.update(self.mutex) # It will only update if it is time for it to update. Otherwise it just reduces its update_in counter.
+            await updater.update(
+                self.mutex
+            )  # It will only update if it is time for it to update. Otherwise it just reduces its update_in counter.
             # Then we put it back at the end of the queue. Or the front again if it wasn't ready to update
             heappush(self.updaters, updater)
             await sleep(1)
-
 
     def filled_slots(self):
         # This just returns the number of available slots
@@ -123,7 +128,10 @@ class UpdateManager:
 
         # When we add a new updater it has to fit within the max slots or we will not add it
         while (self.filled_slots() + updater.updates_per_interval) > MAX_SLOTS:
-            _LOGGER.debug("Reducing updates per interval to fit new device as slots are full: %s", self.filled_slots())
+            _LOGGER.debug(
+                "Reducing updates per interval to fit new device as slots are full: %s",
+                self.filled_slots(),
+            )
             # If we are overflowing the available slots we will reduce the frequency of updates evenly for all devices until we can fit in one more.
             self.decrease_updates_per_interval()
             updater.delay()

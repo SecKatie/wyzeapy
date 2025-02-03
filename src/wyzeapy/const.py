@@ -12,7 +12,7 @@ APP_VERSION = "2.18.43"
 APP_VER = "com.hualai.WyzeCam___2.18.43"
 APP_NAME = "com.hualai.WyzeCam"
 PHONE_ID = str(uuid.uuid4())
-APP_INFO = 'wyze_android_2.19.14'  # Required for the thermostat
+APP_INFO = "wyze_android_2.19.14"  # Required for the thermostat
 SC = "9f275790cab94a72bd206c8876429f3c"
 SV = "9d74946e652647e9b6c9d59326aef104"
 CLIENT_VER = "2"
@@ -20,7 +20,7 @@ SOURCE = "ios/WZCameraSDK"
 APP_PLATFORM = "ios"
 
 # Crypto secrets
-OLIVE_SIGNING_SECRET = 'wyze_app_secret_key_132'  # Required for the thermostat
-OLIVE_APP_ID = '9319141212m2ik'  # Required for the thermostat
+OLIVE_SIGNING_SECRET = "wyze_app_secret_key_132"  # Required for the thermostat
+OLIVE_APP_ID = "9319141212m2ik"  # Required for the thermostat
 FORD_APP_KEY = "275965684684dbdaf29a0ed9"  # Required for the locks
 FORD_APP_SECRET = "4deekof1ba311c5c33a9cb8e12787e8c"  # Required for the locks

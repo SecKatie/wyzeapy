@@ -11,16 +11,16 @@ from .base_service import BaseService
 
 
 class HMSMode(Enum):
-    CHANGING = 'changing'
-    DISARMED = 'disarm'
-    AWAY = 'away'
-    HOME = 'home'
+    CHANGING = "changing"
+    DISARMED = "disarm"
+    AWAY = "away"
+    HOME = "home"
 
 
 class HMSService(BaseService):
     async def update(self, hms_id: str):
         hms_mode = await self._monitoring_profile_state_status(hms_id)
-        return HMSMode(hms_mode['message'])
+        return HMSMode(hms_mode["message"])
 
     def __init__(self, auth_lib: WyzeAuthLib):
         super().__init__(auth_lib)
@@ -67,22 +67,13 @@ class HMSService(BaseService):
             return self._hms_id
 
         response = await self._get_plan_binding_list_by_user()
-        hms_subs = response['data']
+        hms_subs = response["data"]
 
         if len(hms_subs) >= 1:
             for sub in hms_subs:
-                if (devices := sub.get('deviceList')) is not None and len(devices) >= 1:
+                if (devices := sub.get("deviceList")) is not None and len(devices) >= 1:
                     for device in devices:
-                        self._hms_id = str(device['device_id'])
+                        self._hms_id = str(device["device_id"])
                         return self._hms_id
 
         return None
-
-
-
-
-
-
-
-
-

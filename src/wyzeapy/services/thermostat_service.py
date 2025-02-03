@@ -37,9 +37,9 @@ class Preset(Enum):
 
 
 class HVACState(Enum):
-    COOLING = 'cooling'
-    HEATING = 'heating'
-    IDLE = 'idle'
+    COOLING = "cooling"
+    HEATING = "heating"
+    IDLE = "idle"
 
 
 class Thermostat(Device):
@@ -60,7 +60,7 @@ class Thermostat(Device):
 
 class ThermostatService(BaseService):
     async def update(self, thermostat: Thermostat) -> Thermostat:
-        properties = (await self._thermostat_get_iot_prop(thermostat))['data']['props']
+        properties = (await self._thermostat_get_iot_prop(thermostat))["data"]["props"]
 
         device_props = []
         for property in properties:
@@ -87,7 +87,7 @@ class ThermostatService(BaseService):
             elif prop == ThermostatProps.TEMPERATURE:
                 thermostat.temperature = float(value)
             elif prop == ThermostatProps.IOT_STATE:
-                thermostat.available = value == 'connected'
+                thermostat.available = value == "connected"
             elif prop == ThermostatProps.HUMIDITY:
                 thermostat.humidity = int(value)
             elif prop == ThermostatProps.WORKING_STATE:
@@ -99,7 +99,9 @@ class ThermostatService(BaseService):
         if self._devices is None:
             self._devices = await self.get_object_list()
 
-        thermostats = [device for device in self._devices if device.type is DeviceTypes.THERMOSTAT]
+        thermostats = [
+            device for device in self._devices if device.type is DeviceTypes.THERMOSTAT
+        ]
 
         return [Thermostat(thermostat.raw_dict) for thermostat in thermostats]
 
@@ -110,22 +112,34 @@ class ThermostatService(BaseService):
         await self._thermostat_set_iot_prop(thermostat, ThermostatProps.HEAT_SP, temp)
 
     async def set_hvac_mode(self, thermostat: Device, hvac_mode: HVACMode):
-        await self._thermostat_set_iot_prop(thermostat, ThermostatProps.MODE_SYS, hvac_mode.value)
+        await self._thermostat_set_iot_prop(
+            thermostat, ThermostatProps.MODE_SYS, hvac_mode.value
+        )
 
     async def set_fan_mode(self, thermostat: Device, fan_mode: FanMode):
-        await self._thermostat_set_iot_prop(thermostat, ThermostatProps.FAN_MODE, fan_mode.value)
+        await self._thermostat_set_iot_prop(
+            thermostat, ThermostatProps.FAN_MODE, fan_mode.value
+        )
 
     async def set_preset(self, thermostat: Thermostat, preset: Preset):
-        await self._thermostat_set_iot_prop(thermostat, ThermostatProps.CURRENT_SCENARIO, preset.value)
+        await self._thermostat_set_iot_prop(
+            thermostat, ThermostatProps.CURRENT_SCENARIO, preset.value
+        )
 
     async def _thermostat_get_iot_prop(self, device: Device) -> Dict[Any, Any]:
         url = "https://wyze-earth-service.wyzecam.com/plugin/earth/get_iot_prop"
-        keys = 'trigger_off_val,emheat,temperature,humidity,time2temp_val,protect_time,mode_sys,heat_sp,cool_sp,' \
-                'current_scenario,config_scenario,temp_unit,fan_mode,iot_state,w_city_id,w_lat,w_lon,working_state,' \
-                'dev_hold,dev_holdtime,asw_hold,app_version,setup_state,wiring_logic_id,save_comfort_balance,' \
-                'kid_lock,calibrate_humidity,calibrate_temperature,fancirc_time,query_schedule'
+        keys = (
+            "trigger_off_val,emheat,temperature,humidity,time2temp_val,protect_time,mode_sys,heat_sp,cool_sp,"
+            "current_scenario,config_scenario,temp_unit,fan_mode,iot_state,w_city_id,w_lat,w_lon,working_state,"
+            "dev_hold,dev_holdtime,asw_hold,app_version,setup_state,wiring_logic_id,save_comfort_balance,"
+            "kid_lock,calibrate_humidity,calibrate_temperature,fancirc_time,query_schedule"
+        )
         return await self._get_iot_prop(url, device, keys)
 
-    async def _thermostat_set_iot_prop(self, device: Device, prop: ThermostatProps, value: Any) -> None:
-        url = "https://wyze-earth-service.wyzecam.com/plugin/earth/set_iot_prop_by_topic"
+    async def _thermostat_set_iot_prop(
+        self, device: Device, prop: ThermostatProps, value: Any
+    ) -> None:
+        url = (
+            "https://wyze-earth-service.wyzecam.com/plugin/earth/set_iot_prop_by_topic"
+        )
         return await self._set_iot_prop(url, device, prop.value, value)

@@ -31,9 +31,9 @@ class SensorService(BaseService):
             sensor.device_params = await self.get_updated_params(sensor.mac)
         properties = await self._get_device_info(sensor)
 
-        for property in properties['data']['property_list']:
-            pid = property['pid']
-            value = property['value']
+        for property in properties["data"]["property_list"]:
+            pid = property["pid"]
+            value = property["value"]
 
             try:
                 if PropertyIDs(pid) == PropertyIDs.CONTACT_STATE:
@@ -45,26 +45,44 @@ class SensorService(BaseService):
 
         return sensor
 
-    async def register_for_updates(self, sensor: Sensor, callback: Callable[[Sensor], None]):
+    async def register_for_updates(
+        self, sensor: Sensor, callback: Callable[[Sensor], None]
+    ):
         _LOGGER.debug(f"Registering sensor: {sensor.nickname} for updates")
         loop = asyncio.get_event_loop()
         if not self._updater_thread:
-            self._updater_thread = Thread(target=self.update_worker, args=[loop, ], daemon=True)
+            self._updater_thread = Thread(
+                target=self.update_worker,
+                args=[
+                    loop,
+                ],
+                daemon=True,
+            )
             self._updater_thread.start()
 
         self._subscribers.append((sensor, callback))
 
     async def deregister_for_updates(self, sensor: Sensor):
-        self._subscribers = [(sense, callback) for sense, callback in self._subscribers if sense.mac != sensor.mac]
+        self._subscribers = [
+            (sense, callback)
+            for sense, callback in self._subscribers
+            if sense.mac != sensor.mac
+        ]
 
     def update_worker(self, loop):
         while True:
             for sensor, callback in self._subscribers:
                 _LOGGER.debug(f"Providing update for {sensor.nickname}")
                 try:
-                    callback(asyncio.run_coroutine_threadsafe(self.update(sensor), loop).result())
+                    callback(
+                        asyncio.run_coroutine_threadsafe(
+                            self.update(sensor), loop
+                        ).result()
+                    )
                 except UnknownApiError as e:
-                    _LOGGER.warning(f"The update method detected an UnknownApiError: {e}")
+                    _LOGGER.warning(
+                        f"The update method detected an UnknownApiError: {e}"
+                    )
                 except ClientOSError as e:
                     _LOGGER.error(f"A network error was detected: {e}")
                 except ContentTypeError as e:
@@ -74,7 +92,10 @@ class SensorService(BaseService):
         if self._devices is None:
             self._devices = await self.get_object_list()
 
-        sensors = [Sensor(device.raw_dict) for device in self._devices if
-                   device.type is DeviceTypes.MOTION_SENSOR or
-                   device.type is DeviceTypes.CONTACT_SENSOR]
+        sensors = [
+            Sensor(device.raw_dict)
+            for device in self._devices
+            if device.type is DeviceTypes.MOTION_SENSOR
+            or device.type is DeviceTypes.CONTACT_SENSOR
+        ]
         return [Sensor(sensor.raw_dict) for sensor in sensors]

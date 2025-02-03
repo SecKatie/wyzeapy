@@ -41,7 +41,7 @@ class WallSwitch(Device):
 
 class WallSwitchService(BaseService):
     async def update(self, switch: WallSwitch) -> WallSwitch:
-        properties = (await self._wall_switch_get_iot_prop(switch))['data']['props']
+        properties = (await self._wall_switch_get_iot_prop(switch))["data"]["props"]
 
         device_props = []
         for prop_key, prop_value in properties.items():
@@ -67,9 +67,11 @@ class WallSwitchService(BaseService):
         if self._devices is None:
             self._devices = await self.get_object_list()
 
-        switches = [device for device in self._devices
-                    if device.type is DeviceTypes.COMMON 
-                    and device.product_model == "LD_SS1"]
+        switches = [
+            device
+            for device in self._devices
+            if device.type is DeviceTypes.COMMON and device.product_model == "LD_SS1"
+        ]
 
         return [WallSwitch(switch.raw_dict) for switch in switches]
 
@@ -89,7 +91,9 @@ class WallSwitchService(BaseService):
         await self._wall_switch_set_iot_prop(switch, WallSwitchProps.SWITCH_POWER, True)
 
     async def power_off(self, switch: WallSwitch):
-        await self._wall_switch_set_iot_prop(switch, WallSwitchProps.SWITCH_POWER, False)
+        await self._wall_switch_set_iot_prop(
+            switch, WallSwitchProps.SWITCH_POWER, False
+        )
 
     async def iot_on(self, switch: WallSwitch):
         await self._wall_switch_set_iot_prop(switch, WallSwitchProps.SWITCH_IOT, True)
@@ -97,14 +101,20 @@ class WallSwitchService(BaseService):
     async def iot_off(self, switch: WallSwitch):
         await self._wall_switch_set_iot_prop(switch, WallSwitchProps.SWITCH_IOT, False)
 
-    async def set_single_press_type(self, switch: WallSwitch, single_press_type: SinglePressType):
-        await self._wall_switch_set_iot_prop(switch, WallSwitchProps.SINGLE_PRESS_TYPE, single_press_type.value)
+    async def set_single_press_type(
+        self, switch: WallSwitch, single_press_type: SinglePressType
+    ):
+        await self._wall_switch_set_iot_prop(
+            switch, WallSwitchProps.SINGLE_PRESS_TYPE, single_press_type.value
+        )
 
     async def _wall_switch_get_iot_prop(self, device: Device) -> Dict[Any, Any]:
         url = "https://wyze-sirius-service.wyzecam.com//plugin/sirius/get_iot_prop"
         keys = "iot_state,switch-power,switch-iot,single_press_type"
         return await self._get_iot_prop(url, device, keys)
 
-    async def _wall_switch_set_iot_prop(self, device: Device, prop: WallSwitchProps, value: Any) -> None:
+    async def _wall_switch_set_iot_prop(
+        self, device: Device, prop: WallSwitchProps, value: Any
+    ) -> None:
         url = "https://wyze-sirius-service.wyzecam.com//plugin/sirius/set_iot_prop_by_topic"
         return await self._set_iot_prop(url, device, prop.value, value)

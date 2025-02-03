@@ -43,6 +43,7 @@ class DeviceTypes(Enum):
     KEYPAD = "Keypad"
     LIGHTSTRIP = "LightStrip"
 
+
 class Device:
     product_type: str
     product_model: str
@@ -77,15 +78,17 @@ class Sensor(Device):
     @property
     def activity_detected(self) -> int:
         if self.type is DeviceTypes.CONTACT_SENSOR:
-            return int(self.device_params['open_close_state'])
+            return int(self.device_params["open_close_state"])
         elif self.type is DeviceTypes.MOTION_SENSOR:
-            return int(self.device_params['motion_state'])
+            return int(self.device_params["motion_state"])
         else:
-            raise AssertionError("Device must be of type CONTACT_SENSOR or MOTION_SENSOR")
+            raise AssertionError(
+                "Device must be of type CONTACT_SENSOR or MOTION_SENSOR"
+            )
 
     @property
     def is_low_battery(self) -> int:
-        return int(self.device_params['is_low_battery'])
+        return int(self.device_params["is_low_battery"])
 
 
 class PropertyIDs(Enum):
@@ -102,11 +105,11 @@ class PropertyIDs(Enum):
     CONTACT_STATE = "P1301"
     MOTION_STATE = "P1302"
     CAMERA_SIREN = "P1049"
-    FLOOD_LIGHT = "P1056" # Also lamp socket on v3/v4 with lamp socket accessory
+    FLOOD_LIGHT = "P1056"  # Also lamp socket on v3/v4 with lamp socket accessory
     SUN_MATCH = "P1528"
     MOTION_DETECTION = "P1047"  # Current Motion Detection State of the Camera
     MOTION_DETECTION_TOGGLE = "P1001"  # This toggles Camera Motion Detection On/Off
-    WCO_MOTION_DETECTION = "P1029" # Wyze cam outdoor requires both P1047 and P1029 to be set.  P1029 is set via set_property_list
+    WCO_MOTION_DETECTION = "P1029"  # Wyze cam outdoor requires both P1047 and P1029 to be set.  P1029 is set via set_property_list
 
 
 class WallSwitchProps(Enum):
@@ -151,7 +154,7 @@ class ResponseCodes(Enum):
     SUCCESS = "1"
     PARAMETER_ERROR = "1001"
     ACCESS_TOKEN_ERROR = "2001"
-    DEVICE_OFFLINE = '3019'
+    DEVICE_OFFLINE = "3019"
 
 
 class ResponseCodesLock(Enum):
@@ -203,9 +206,9 @@ class Event:
 
 
 class HMSStatus(Enum):
-    DISARMED = 'disarmed'
-    HOME = 'home'
-    AWAY = 'away'
+    DISARMED = "disarmed"
+    HOME = "home"
+    AWAY = "away"
 
 
 class DeviceMgmtToggleType:
@@ -215,6 +218,7 @@ class DeviceMgmtToggleType:
 
 
 class DeviceMgmtToggleProps(Enum):
-    EVENT_RECORDING_TOGGLE = DeviceMgmtToggleType("cam_event_recording", "ge.motion_detect_recording")
+    EVENT_RECORDING_TOGGLE = DeviceMgmtToggleType(
+        "cam_event_recording", "ge.motion_detect_recording"
+    )
     NOTIFICATION_TOGGLE = DeviceMgmtToggleType("cam_device_notify", "ge.push_switch")
-

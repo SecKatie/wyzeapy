@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import AsyncMock, MagicMock
-from wyzeapy.services.camera_service import CameraService, Camera, DEVICEMGMT_API_MODELS
-from wyzeapy.types import DeviceTypes, PropertyIDs, Event
+from wyzeapy.services.camera_service import CameraService, Camera
+from wyzeapy.types import DeviceTypes, PropertyIDs
 from wyzeapy.wyze_auth_lib import WyzeAuthLib
 
 

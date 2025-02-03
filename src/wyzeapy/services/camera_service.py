@@ -13,7 +13,6 @@ from aiohttp import ClientOSError, ContentTypeError
 
 from ..exceptions import UnknownApiError
 from .base_service import BaseService
-from .update_manager import DeviceUpdater
 from ..types import Device, DeviceTypes, Event, PropertyIDs, DeviceMgmtToggleProps
 from ..utils import return_event_for_device, create_pid_pair
 

@@ -3,7 +3,6 @@
 #  of the attached license. You should have received a copy of
 #  the license with this file. If not, please write to:
 #  katie@mulliken.net to receive a copy
-from typing import Dict, Any
 
 
 class ActionNotSupported(Exception):

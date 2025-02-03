@@ -1,18 +1,19 @@
-[tool.poetry]
+[project]
 name = "wyzeapy"
 version = "0.5.26"
 description = "A library for interacting with Wyze devices"
-authors = ["Katie Mulliken <katie@mulliken.net>"]
+authors = [{ name = "Katie Mulliken", email = "katie@mulliken.net" }]
+requires-python = ">=3.11.0"
 license = "GPL-3.0-only"
+dependencies = [
+    "aiohttp>=3.10.8,<4",
+    "aiodns>=3.2.0,<4",
+    "pycryptodome>=3.21.0,<4",
+]
 
-[tool.poetry.dependencies]
-python = ">=3.11.0"
-aiohttp = "^3.10.8"
-aiodns = "^3.2.0"
-pycryptodome = "^3.21.0"
-
-[tool.poetry.dev-dependencies]
+[dependency-groups]
+dev = []
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"

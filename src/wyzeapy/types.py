@@ -28,6 +28,7 @@ class DeviceTypes(Enum):
     CHIME_SENSOR = "ChimeSensor"
     CONTACT_SENSOR = "ContactSensor"
     MOTION_SENSOR = "MotionSensor"
+    LEAK_SENSOR = "LeakSensor"
     WRIST = "Wrist"
     BASE_STATION = "BaseStation"
     SCALE = "WyzeScale"
@@ -42,6 +43,8 @@ class DeviceTypes(Enum):
     SENSE_V2_GATEWAY = "S1Gateway"
     KEYPAD = "Keypad"
     LIGHTSTRIP = "LightStrip"
+    GARAGE_DOOR = "GarageDoor"
+
 
 class Device:
     product_type: str
@@ -102,7 +105,7 @@ class PropertyIDs(Enum):
     CONTACT_STATE = "P1301"
     MOTION_STATE = "P1302"
     CAMERA_SIREN = "P1049"
-    FLOOD_LIGHT = "P1056" # Also lamp socket on v3/v4 with lamp socket accessory
+    FLOOD_LIGHT = "P1056" # Also lamp socket on v3/v4 with lamp socket accessory. And also garage door state on v3 with garage door accessory.
     SUN_MATCH = "P1528"
     MOTION_DETECTION = "P1047"  # Current Motion Detection State of the Camera
     MOTION_DETECTION_TOGGLE = "P1001"  # This toggles Camera Motion Detection On/Off

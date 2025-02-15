@@ -29,7 +29,7 @@ class BaseService:
     _devices: Optional[List[Device]] = None
     _last_updated_time: time = 0  # preload a value of 0 so that comparison will succeed on the first run
     _min_update_time = 1200  # lets let the device_params update every 20 minutes for now. This could probably reduced signicficantly.
-    _update_lock: asyncio.Lock = asyncio.Lock()
+    _update_lock: asyncio.Lock() = asyncio.Lock()
     _update_manager: UpdateManager = UpdateManager()
     _update_loop = None
     _updater: DeviceUpdater = None
@@ -120,9 +120,21 @@ class BaseService:
                                                   json=payload)
 
         check_for_errors_standard(self, response_json)
-
         # Cache the devices so that update calls can pull more recent device_params
         BaseService._devices = [Device(device) for device in response_json['data']['device_list']]
+
+        garage_doors = []
+        for device in self._devices:
+            if 'dongle_product_model' not in device.device_params:
+                continue
+            if device.device_params['dongle_product_model'] == "HL_CGDC":
+                garage_doors.append(Device({
+                    "product_type": "GarageDoor",
+                    "product_model": "HL_CGDC",
+                    "mac": device.mac,
+                    "device_params": device.device_params
+                }))
+        BaseService._devices.extend(garage_doors)
 
         return BaseService._devices
 
@@ -166,7 +178,6 @@ class BaseService:
 
         check_for_errors_standard(self, response_json)
         properties = response_json['data']['property_list']
-
         property_list = []
         for prop in properties:
             try:

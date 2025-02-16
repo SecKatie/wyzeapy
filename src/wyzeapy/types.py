@@ -43,7 +43,6 @@ class DeviceTypes(Enum):
     SENSE_V2_GATEWAY = "S1Gateway"
     KEYPAD = "Keypad"
     LIGHTSTRIP = "LightStrip"
-    GARAGE_DOOR = "GarageDoor"
 
 
 class Device:

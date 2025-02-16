@@ -1,3 +1,4 @@
+from typing import Any, Dict
 from .base_service import BaseService
 from ..types import Device, DeviceTypes
 
@@ -11,10 +12,10 @@ class GarageService(BaseService):
         async with BaseService._update_lock:
             garage.device_params = await self.get_updated_params(garage.mac) 
 
-        device_info = await self._get_garage_info(garage)
-        garage.raw_dict = device_info["device"]
+        device_info = await self._get_device_info(garage)
+        garage.raw_dict = device_info
 
-        garage.available = garage.raw_dict.get("power_switch") == 1
+        garage.available = True
 
         # store the nested dict for easier reference below
         property_list = await self._get_property_list(garage)

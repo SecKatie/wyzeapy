@@ -44,7 +44,7 @@ class TestCameraService(unittest.IsolatedAsyncioTestCase):
             (PropertyIDs.AVAILABLE, "1"),
             (PropertyIDs.ON, "1"),
             (PropertyIDs.CAMERA_SIREN, "0"),
-            (PropertyIDs.FLOOD_LIGHT, "0"),
+            (PropertyIDs.ACCESSORY, "0"),
             (PropertyIDs.NOTIFICATION, "1"),
             (PropertyIDs.MOTION_DETECTION, "1")
         ]
@@ -125,14 +125,14 @@ class TestCameraService(unittest.IsolatedAsyncioTestCase):
         await self.camera_service.floodlight_on(self.test_camera)
         self.camera_service._set_property.assert_awaited_with(
             self.test_camera, 
-            PropertyIDs.FLOOD_LIGHT.value, 
+            PropertyIDs.ACCESSORY.value, 
             "1"
         )
 
         await self.camera_service.floodlight_off(self.test_camera)
         self.camera_service._set_property.assert_awaited_with(
             self.test_camera, 
-            PropertyIDs.FLOOD_LIGHT.value, 
+            PropertyIDs.ACCESSORY.value, 
             "2"
         )
 

@@ -79,8 +79,8 @@ class CameraService(BaseService):
                     camera.siren = value == "1"
                 if property is PropertyIDs.ACCESSORY:
                     camera.floodlight = value == "1"
-                if property is PropertyIDs.ACCESSORY and camera.device_params["dongle_product_model"] == "HL_CGDC":
-                    camera.garage = value == "1" # 1 = open, 2 = closed by automation or smart platform (Alexa, Google Home, Rules), 0 = closed by app
+                    if camera.device_params["dongle_product_model"] == "HL_CGDC":
+                        camera.garage = value == "1" # 1 = open, 2 = closed by automation or smart platform (Alexa, Google Home, Rules), 0 = closed by app
                 if property is PropertyIDs.NOTIFICATION:
                     camera.notify = value == "1"
                 if property is PropertyIDs.MOTION_DETECTION:

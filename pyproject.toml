@@ -4,6 +4,7 @@ version = "0.5.27"
 description = "A library for interacting with Wyze devices"
 authors = ["Katie Mulliken <katie@mulliken.net>"]
 license = "GPL-3.0-only"
+readme = "README.md"
 
 [tool.poetry.dependencies]
 python = ">=3.11.0"

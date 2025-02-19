@@ -239,7 +239,7 @@ class Wyzeapy:
         if self._lock_service is None:
             self._lock_service = LockService(self._auth_lib)
         return self._lock_service
-    
+
     @property
     async def sensor_service(self) -> SensorService:
         """Returns an instance of the sensor service"""

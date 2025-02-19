@@ -77,9 +77,9 @@ class CameraService(BaseService):
                     camera.on = value == "1"
                 if property is PropertyIDs.CAMERA_SIREN:
                     camera.siren = value == "1"
-                if property is PropertyIDs.FLOOD_LIGHT:
+                if property is PropertyIDs.ACCESSORY:
                     camera.floodlight = value == "1"
-                if property is PropertyIDs.FLOOD_LIGHT and camera.device_params["dongle_product_model"] == "HL_CGDC":
+                if property is PropertyIDs.ACCESSORY and camera.device_params["dongle_product_model"] == "HL_CGDC":
                     camera.garage = value == "1" # 1 = open, 2 = closed by automation or smart platform (Alexa, Google Home, Rules), 0 = closed by app
                 if property is PropertyIDs.NOTIFICATION:
                     camera.notify = value == "1"
@@ -142,13 +142,13 @@ class CameraService(BaseService):
     async def floodlight_on(self, camera: Camera):
         if (camera.product_model == "AN_RSCW"): await self._run_action_devicemgmt(camera, "spotlight", "1") # Battery cam pro integrated spotlight is controllable
         elif (camera.product_model in DEVICEMGMT_API_MODELS): await self._run_action_devicemgmt(camera, "floodlight", "1") # Some camera models use a diffrent api
-        else: await self._set_property(camera, PropertyIDs.FLOOD_LIGHT.value, "1")
+        else: await self._set_property(camera, PropertyIDs.ACCESSORY.value, "1")
 
     # Also controls lamp socket and BCP spotlight
     async def floodlight_off(self, camera: Camera):
         if (camera.product_model == "AN_RSCW"): await self._run_action_devicemgmt(camera, "spotlight", "0") # Battery cam pro integrated spotlight is controllable
         elif (camera.product_model in DEVICEMGMT_API_MODELS): await self._run_action_devicemgmt(camera, "floodlight", "0") # Some camera models use a diffrent api
-        else: await self._set_property(camera, PropertyIDs.FLOOD_LIGHT.value, "2")
+        else: await self._set_property(camera, PropertyIDs.ACCESSORY.value, "2")
 
     # Garage door trigger uses run action on all models
     async def garage_door_open(self, camera: Camera):

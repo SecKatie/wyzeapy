@@ -104,7 +104,7 @@ class PropertyIDs(Enum):
     CONTACT_STATE = "P1301"
     MOTION_STATE = "P1302"
     CAMERA_SIREN = "P1049"
-    FLOOD_LIGHT = "P1056" # Also lamp socket on v3/v4 with lamp socket accessory. And also garage door state on v3 with garage door accessory.
+    ACCESSORY = "P1056" # Is state for camera accessories, like garage doors, light sockets, and floodlights.
     SUN_MATCH = "P1528"
     MOTION_DETECTION = "P1047"  # Current Motion Detection State of the Camera
     MOTION_DETECTION_TOGGLE = "P1001"  # This toggles Camera Motion Detection On/Off

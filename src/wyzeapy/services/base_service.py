@@ -626,6 +626,25 @@ class BaseService:
 
         return response_json
 
+    async def _get_lock_ble_token(self, device: Device) -> Dict[str, Optional[Any]]:
+        await self._auth_lib.refresh_if_should()
+
+        url_path = "/openapi/lock/v1/ble/token"
+
+        payload = {
+            "uuid": device.mac
+        }
+
+        payload = ford_create_payload(self._auth_lib.token.access_token, payload, url_path, "get")
+
+        url = f"https://yd-saas-toc.wyzecam.com{url_path}"
+
+        response_json = await self._auth_lib.get(url, params=payload)
+
+        check_for_errors_lock(self, response_json)
+
+        return response_json
+
     async def _get_device_info(self, device: Device) -> Dict[Any, Any]:
         await self._auth_lib.refresh_if_should()
 

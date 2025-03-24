@@ -4,6 +4,7 @@
 #  the license with this file. If not, please write to:
 #  katie@mulliken.net to receive a copy
 import base64
+import binascii
 import hashlib
 from typing import Dict, Any, List, Optional
 
@@ -64,6 +65,20 @@ def wyze_decrypt(key, enc):
     decrypt_txt = decrypt.decode("ascii")
 
     return decrypt_txt
+
+
+def wyze_decrypt_cbc(key: str, enc_hex_str: str) -> str:
+    key_hash = hashlib.md5(key.encode("utf-8")).digest()
+    
+    iv = b"0123456789ABCDEF"
+    cipher = AES.new(key_hash, AES.MODE_CBC, iv)
+    
+    encrypted_bytes = binascii.unhexlify(enc_hex_str)
+    decrypted_bytes = cipher.decrypt(encrypted_bytes)
+    
+    # PKCS5Padding
+    padding_length = decrypted_bytes[-1]
+    return decrypted_bytes[:-padding_length].decode()
 
 
 def create_password(password: str) -> str:

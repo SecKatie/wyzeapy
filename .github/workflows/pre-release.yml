@@ -12,7 +12,7 @@ jobs:
       POETRY_HOME: /opt/poetry
     steps:
       - uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5 # v2
-      - uses: actions/setup-python@e9aba2c848f5ebd159c070c61ea2c4e2b122355e # v2
+      - uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55 # v2
       - name: Install poetry
         run: |
           wget https://raw.githubusercontent.com/python-poetry/install.python-poetry.org/d62875fc05fb20062175cd14d19a96dbefa48640/install-poetry.py

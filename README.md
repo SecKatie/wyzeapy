@@ -6,13 +6,12 @@ SPDX-License-Identifier: GPL-3.0-only
 
 # Wyzeapy
 
-A python library for the (unofficial) Wyze Labs web APIs.
+A Python library for the (unofficial) Wyze Labs web APIs.
 
 ## Used By
 
-This project is used by the [ha-wyzeapi](https://github.com/JoshuaMulliken/ha-wyzeapi) project. Let me know if you are utilizing it so that I can feature your project here!
+This project is used by the [ha-wyzeapi](https://github.com/SecKatie/ha-wyzeapi) project.  Let me know if you are utilizing it so that I can feature your project here!
 
-  
 ## Usage/Examples
 
 Getting logged in:
@@ -42,10 +41,23 @@ if __name__ == "__main__":
 
 [GNU GPLv3](https://choosealicense.com/licenses/gpl-3.0/)
 
-  
+## Author
+
+Developed by Katie Mulliken ([SecKatie](https://github.com/SecKatie))
+
 ## Appendix
 
-[Full doc reference](https://joshuamulliken.github.io/wyzeapy/wyzeapy/) - Please note that I am still working on doc 
-strings so please be patient
+### Documentation
 
-  
+Docs are generated using [pdoc](https://pdoc.dev/). To generate docs for this project, run:
+
+```bash
+# Activate the poetry environment (that includes the dev dependencies)
+eval "$(poetry env activate)"
+
+# Generate docs
+pdoc --output-dir=docs src/wyzeapy
+```
+
+[Full doc reference](https://SecKatie.github.io/wyzeapy/wyzeapy/) - Please note that I am still working on doc strings so please be patient.
+

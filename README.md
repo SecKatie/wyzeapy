@@ -59,5 +59,5 @@ eval "$(poetry env activate)"
 pdoc --output-dir=docs src/wyzeapy
 ```
 
-[Full doc reference](https://SecKatie.github.io/wyzeapy/wyzeapy/) - Please note that I am still working on doc strings so please be patient.
+[Full doc reference](https://seckatie.github.io/wyzeapy/) - Please note that I am still working on doc strings so please be patient.
 

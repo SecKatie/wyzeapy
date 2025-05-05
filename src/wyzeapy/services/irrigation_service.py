@@ -109,7 +109,7 @@ class Irrigation(Device):
         self.IP: str = "10.0.1.154"
         self.wifi_mac: str = "00:00:00:00:00:00"
         self.sn: str = "SN123456789"
-        self.iot_state: str = "connected"
+        self.available: bool = True
         self.ssid: str = "SSID"
         # the below comes from the device_info call
         #self.enable_schedules: bool = False

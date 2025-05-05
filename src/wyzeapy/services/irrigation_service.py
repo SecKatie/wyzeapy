@@ -53,11 +53,12 @@ class SoilType(Enum):
 
 class Zone:
     """Represents a single irrigation zone."""
-    def __init__(self, zone_id: str, name: str, enabled: bool, zone_number: int):
-        self.zone_number: int = 1
-        self.name: str = "Zone 1"
-        self.enabled: bool = True
-        self.zone_id: str = "zone_id"
+    def __init__(self, dictionary: Dict[Any, Any]):
+        self.zone_number: int = dictionary.get('zone_number', 1)
+        self.name: str = dictionary.get('name', 'Zone 1')
+        self.enabled: bool = dictionary.get('enabled', True)
+        self.zone_id: str = dictionary.get('zone_id', 'zone_id')
+        self.quickrun_duration: int = dictionary.get('quickrun_duration', 600)
         #self.device_id: str = "device_id"
         #self.did_uid: str = "did_uid"
         #self.latest_events = latest_events[]
@@ -155,12 +156,7 @@ class IrrigationService(BaseService):
         # Get the zones for the device
         zones = (await self._irrigation_get_zone_by_device(irrigation))['data']['zones']
         for zone_data in zones:
-            zone = Zone(
-                enabled=zone_data["enabled"],
-                name=zone_data["name"],
-                zone_id=zone_data["zone_id"],
-                zone_number=zone_data["zone_number"],
-            )
+            zone = Zone(zone_data)
             irrigation.zones.append(zone)
         
         '''
@@ -198,10 +194,12 @@ class IrrigationService(BaseService):
             elif prop == IrrigationZoneProps.ZONE_ID:
                 zone.zone_id = str(value)
             '''
-        for zone_data in zones:
-            print("zone_data")
+        #for zone_data in zones:
+            #print("line 203 - irrigation service")
+            #print(zone_data)
             #irrigation.zones.append(zone)
 
+        #print(vars(irrigation.zones[0]))
         return irrigation
 
     async def get_irrigations(self) -> List[Irrigation]:
@@ -249,6 +247,6 @@ class IrrigationService(BaseService):
             'skip_rain,skip_saturation'
         return await self._irrigation_device_info(url, device, keys)
 
-    async def _irrigation_get_zone_by_device(self, device: Device) -> Dict[Any, Any]:
+    async def _irrigation_get_zone_by_device(self, device: Device) -> List[Dict[Any, Any]]:
         url = "https://wyze-lockwood-service.wyzecam.com/plugin/irrigation/zone"
         return await self._get_zone_by_device(url, device)

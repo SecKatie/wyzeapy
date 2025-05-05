@@ -775,3 +775,69 @@ class BaseService:
         check_for_errors_standard(self, response_json)
 
         return response_json["data"]["usage_record_list"]
+
+# todo
+    async def _get_zone_by_device(self, url: str, device: Device) -> Dict[Any, Any]:
+        await self._auth_lib.refresh_if_should()
+
+        payload = olive_create_get_payload(device.mac)
+        signature = olive_create_signature(payload, self._auth_lib.token.access_token)
+        headers = {
+            'Accept-Encoding': 'gzip',
+            'User-Agent': 'myapp',
+            'appid': OLIVE_APP_ID,
+            'appinfo': APP_INFO,
+            'phoneid': PHONE_ID,
+            'access_token': self._auth_lib.token.access_token,
+            'signature2': signature
+        }
+
+        response_json = await self._auth_lib.get(url, headers=headers, params=payload)
+
+        check_for_errors_iot(self, response_json)
+
+        return response_json
+
+# todo  
+    async def _stop_running_schedule(self, url: str, device: Device, action: str) -> Dict[Any, Any]:
+        await self._auth_lib.refresh_if_should()
+
+        payload = olive_create_post_payload(device.mac, action)
+        signature = olive_create_signature(payload, self._auth_lib.token.access_token)
+        headers = {
+            'Accept-Encoding': 'gzip',
+            'User-Agent': 'myapp',
+            'appid': OLIVE_APP_ID,
+            'appinfo': APP_INFO,
+            'phoneid': PHONE_ID,
+            'access_token': self._auth_lib.token.access_token,
+            'signature2': signature
+        }
+
+        response_json = await self._auth_lib.post(url, headers=headers, params=payload)
+
+        check_for_errors_iot(self, response_json)
+
+        return response_json
+
+# todo
+    async def _start_zone(self, url: str, device: Device, zone_number: int, duration: int) -> Dict[Any, Any]:
+        await self._auth_lib.refresh_if_should()
+
+        payload = olive_create_post_payload(device.mac, zone_number, duration)
+        signature = olive_create_signature(payload, self._auth_lib.token.access_token)
+        headers = {
+            'Accept-Encoding': 'gzip',
+            'User-Agent': 'myapp',
+            'appid': OLIVE_APP_ID,
+            'appinfo': APP_INFO,
+            'phoneid': PHONE_ID,
+            'access_token': self._auth_lib.token.access_token,
+            'signature2': signature
+        }
+
+        response_json = await self._auth_lib.post(url, headers=headers, params=payload)
+
+        check_for_errors_iot(self, response_json)
+
+        return response_json

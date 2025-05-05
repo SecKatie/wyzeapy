@@ -19,6 +19,7 @@ from .services.lock_service import LockService
 from .services.sensor_service import SensorService
 from .services.switch_service import SwitchService, SwitchUsageService
 from .services.thermostat_service import ThermostatService
+from .services.irrigation_service import IrrigationService
 from .services.wall_switch_service import WallSwitchService
 from .wyze_auth_lib import WyzeAuthLib, Token
 
@@ -38,6 +39,7 @@ class Wyzeapy:
         self._hms_service = None
         self._lock_service = None
         self._sensor_service = None
+        self._irrigation_service = None
         self._wall_switch_service = None
         self._switch_usage_service = None
         self._email = None
@@ -247,6 +249,14 @@ class Wyzeapy:
         if self._sensor_service is None:
             self._sensor_service = SensorService(self._auth_lib)
         return self._sensor_service
+    
+    @property
+    async def irrigation_service(self) -> IrrigationService:
+        """Returns an instance of the irrigation service"""
+
+        if self._irrigation_service is None:
+            self._irrigation_service = IrrigationService(self._auth_lib)
+        return self._irrigation_service
 
     @property
     async def wall_switch_service(self) -> WallSwitchService:

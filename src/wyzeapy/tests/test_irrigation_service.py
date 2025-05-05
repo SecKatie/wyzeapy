@@ -19,8 +19,8 @@ class TestIrrigationService(unittest.IsolatedAsyncioTestCase):
 
         # Create test irrigation
         self.test_irrigation = Irrigation({
-            "device_type": DeviceTypes.THERMOSTAT.value,
-            "product_model": "WLPTH1",
+            "device_type": DeviceTypes.IRRIGATION.value,
+            "product_model": "BS_WK1",
             "mac": "IRRIG123",
             "nickname": "Test Irrigation",
             "device_params": {"ip": "192.168.1.100"},
@@ -31,13 +31,13 @@ class TestIrrigationService(unittest.IsolatedAsyncioTestCase):
         self.irrigation_service._irrigation_get_iot_prop.return_value = {
             'data': {
                 'props': {
-                    'temp_unit': 'F',
-                    'cool_sp': '74',
-                    'heat_sp': '64',
-                    'fan_mode': 'auto',
-                    'mode_sys': 'auto',
-                    'current_scenario': 'home',
-                    'temperature': '71.5',
+                    'RSSI': '3',
+                    'device_model': 'BS_WK1',
+                    'app_version': '1.0.10',
+                    'IP': '10.0.1.154',
+                    'wifi_mac': '192.168.1.100',
+                    'sn': 'SN123456789',
+                    'ssid': 'SSID',
                     'iot_state': 'connected',
                     'humidity': '50',
                     'working_state': 'idle'
@@ -60,10 +60,10 @@ class TestIrrigationService(unittest.IsolatedAsyncioTestCase):
 
     async def test_get_irrigations(self):
         mock_irrigation = MagicMock()
-        mock_irrigation.type = DeviceTypes.THERMOSTAT
+        mock_irrigation.type = DeviceTypes.IRRIGATION
         mock_irrigation.raw_dict = {
-            "device_type": DeviceTypes.THERMOSTAT.value,
-            "product_model": "WLPTH1",
+            "device_type": DeviceTypes.IRRIGATION.value,
+            "product_model": "BS_WK1",
             "mac": "IRRIG123"
         }
 
@@ -74,6 +74,15 @@ class TestIrrigationService(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(irrigations), 1)
         self.assertIsInstance(irrigations[0], Irrigation)
         self.irrigation_service.get_object_list.assert_awaited_once()
+
+
+# functions to test
+# start a zone
+# stop a zone
+# get_iot_prop
+# set_iot_prop
+# get_zone_by_device
+# get_device_info
 
     async def test_set_cool_point(self):
         await self.irrigation_service.set_cool_point(self.test_irrigation, 75)

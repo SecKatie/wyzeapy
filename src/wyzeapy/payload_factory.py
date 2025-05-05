@@ -28,6 +28,14 @@ def olive_create_get_payload(device_mac: str, keys: str) -> Dict[str, Any]:
         'nonce': nonce
     }
 
+def olive_create_get_payload_irrigation(device_mac: str) -> Dict[str, Any]:
+    nonce = int(time.time() * 1000)
+
+    return {
+        'device_id': device_mac,
+        'nonce': nonce
+    }
+
 
 def olive_create_post_payload(device_mac: str, device_model: str, prop_key: str, value: Any) -> Dict[str, Any]:
     nonce = int(time.time() * 1000)

@@ -43,7 +43,7 @@ class DeviceTypes(Enum):
     SENSE_V2_GATEWAY = "S1Gateway"
     KEYPAD = "Keypad"
     LIGHTSTRIP = "LightStrip"
-    IRRIGATION = "Irrigation"
+    IRRIGATION = "Common"
 
 
 class Device:
@@ -168,6 +168,11 @@ class IrrigationProps(Enum):
     #EXIT_SETUP_SCHEDULE = "exit_setup_schedule"
     #SETUP_STEP = "setup_step"
 
+class IrrigationZoneProps(Enum):
+    ZONE_NUMBER = "zone_number"
+    NAME = "name"
+    ENABLED = "enabled"
+    ZONE_ID = "zone_id"
 
 class ResponseCodes(Enum):
     SUCCESS = "1"

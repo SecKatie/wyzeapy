@@ -3,7 +3,7 @@ from enum import Enum
 from typing import Any, Dict, List
 
 from .base_service import BaseService
-from ..types import Device, IrrigationProps, DeviceTypes
+from ..types import Device, IrrigationProps, IrrigationZoneProps, DeviceTypes
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -53,7 +53,7 @@ class SoilType(Enum):
 
 class Zone:
     """Represents a single irrigation zone."""
-    def __init__(self, zone_id: str, state: str, last_updated: str):
+    def __init__(self, zone_id: str, name: str, enabled: bool, zone_number: int):
         self.zone_number: int = 1
         self.name: str = "Zone 1"
         self.enabled: bool = True
@@ -103,14 +103,13 @@ class Irrigation(Device):
         #self.offline_schedule
         #self.quickrun_durations
         # the below comes from the get_iot_prop call
-        self.RSSI: int = 3
-        self.device_model: str = "BS_WK1"
-        self.app_version: str = "1.0.10"
-        self.IP: str = "10.0.1.154"
+        self.RSSI: int = 0
+        self.app_version: str = "1.0.0"
+        self.IP: str = "192.168.1.100"
         self.wifi_mac: str = "00:00:00:00:00:00"
         self.sn: str = "SN123456789"
         self.available: bool = True
-        self.ssid: str = "SSID"
+        self.ssid: str = "ssid"
         # the below comes from the device_info call
         #self.enable_schedules: bool = False
         #self.skip_low_temp: int = 32
@@ -140,8 +139,6 @@ class IrrigationService(BaseService):
         for prop, value in irrigation_props:
             if prop == IrrigationProps.RSSI:
                 irrigation.RSSI = int(value)
-            elif prop == IrrigationProps.device_model:
-                irrigation.device_model = str(value)
             elif prop == IrrigationProps.APP_VERSION:
                 irrigation.app_version = str(value)
             elif prop == IrrigationProps.IP:
@@ -155,49 +152,55 @@ class IrrigationService(BaseService):
             elif prop == IrrigationProps.IOT_STATE:
                 irrigation.available = value == 'connected'
 
-        settings = (await self._irrigation_get_device_info(irrigation))['data']['settings']
-
-        device_settings = []
-        for setting in settings:
-            try:
-                sett = IrrigationProps(setting)
-                device_settings.append((sett, settings[setting]))
-            except ValueError as e:
-                _LOGGER.debug(f"{e} with value {settings[setting]}")
-
-        irrigation_setts = device_settings
-        for sett, value in irrigation_setts:
-            if prop == IrrigationProps.enable_schedules:
-                irrigation.enable_schedules = bool(value)
-            elif prop == IrrigationProps.skip_low_temp:
-                irrigation.skip_low_temp = int(value)
-            elif prop == IrrigationProps.skip_wind:
-                irrigation.skip_wind = int(value)
-            elif prop == IrrigationProps.skip_rain:
-                irrigation.skip_rain = float(value)
-            elif prop == IrrigationProps.skip_saturation:
-                irrigation.skip_saturation = int(value)
-            elif prop == IrrigationProps.exit_setup_zonetest:
-                irrigation.exit_setup_zonetest = int(value)
-            elif prop == IrrigationProps.exit_setup_schedule:
-                irrigation.exit_setup_schedule = int(value)
-            elif prop == IrrigationProps.setup_step:
-                irrigation.setup_step = int(value)
-
         # Get the zones for the device
         zones = (await self._irrigation_get_zone_by_device(irrigation))['data']['zones']
         for zone_data in zones:
             zone = Zone(
+                enabled=zone_data["enabled"],
+                name=zone_data["name"],
+                zone_id=zone_data["zone_id"],
+                zone_number=zone_data["zone_number"],
+            )
+            irrigation.zones.append(zone)
+        
+        '''
+        for zone_data in zones:
+            print("begin zone data")
+            print(zone_data)
+            zone = Zone(
                 zone_id=zone_data.get("zone_id", ""),
-                state=zone_data.get("state", ""),
-                last_updated=zone_data.get("last_updated", "")
+                zone_number=zone_data.get("zone_number", ""),
+                enabled=zone_data.get("enabled", ""),
+                name=zone_data.get("name", "")
             )
             # Populate additional attributes if available in the payload
-            zone.zone_number = zone_data.get("zone_number", zone.zone_number)
-            zone.name = zone_data.get("name", zone.name)
-            zone.enabled = zone_data.get("enabled", zone.enabled)
+            #zone.zone_number = zone_data.get("zone_number", zone.zone_number)
+            #zone.name = zone_data.get("name", zone.name)
+            #zone.enabled = zone_data.get("enabled", zone.enabled)
 
-            irrigation.zones.append(zone)
+        zones_props = []
+        for zone in zones:
+            try:
+                zo = IrrigationZoneProps(zone)
+                zones_props.append((zo, zones[zone]))
+            except ValueError as e:
+                #_LOGGER.debug(f"{e} with value {zones[zone]}")
+                _LOGGER.debug(f"{e} with value {zone}")
+
+        zo_props = device_props
+        for prop, value in zo_props:
+            if prop == IrrigationZoneProps.ZONE_NUMBER:
+                zone.zone_number = int(value)
+            elif prop == IrrigationZoneProps.NAME:
+                zone.name = str(value)
+            elif prop == IrrigationZoneProps.ENABLED:
+                zone.enabled = bool(value)
+            elif prop == IrrigationZoneProps.ZONE_ID:
+                zone.zone_id = str(value)
+            '''
+        for zone_data in zones:
+            print("zone_data")
+            #irrigation.zones.append(zone)
 
         return irrigation
 
@@ -205,7 +208,7 @@ class IrrigationService(BaseService):
         if self._devices is None:
             self._devices = await self.get_object_list()
 
-        irrigations = [device for device in self._devices if device.type is DeviceTypes.IRRIGATION]
+        irrigations = [device for device in self._devices if device.type is DeviceTypes.IRRIGATION and "BS_WK1" in device.product_model]
 
         return [Irrigation(irrigation.raw_dict) for irrigation in irrigations]
 
@@ -230,8 +233,9 @@ class IrrigationService(BaseService):
 
     async def _irrigation_get_iot_prop(self, device: Device) -> Dict[Any, Any]:
         url = "https://wyze-lockwood-service.wyzecam.com/plugin/irrigation/get_iot_prop"
-        keys = 'zone_state,iot_state,iot_state_update_time,app_version,iot_state,RSSI,' \
-                'wifi_mac,sn,device_model,ssid,IP'
+        keys = 'zone_state,iot_state,iot_state_update_time,app_version,RSSI,' \
+            'wifi_mac,sn,device_model,ssid,IP'
+        #keys = "app_version"
         return await self._get_iot_prop(url, device, keys)
 
     async def _irrigation_set_iot_prop(self, device: Device, prop: IrrigationProps, value: Any) -> None:
@@ -248,6 +252,3 @@ class IrrigationService(BaseService):
     async def _irrigation_get_zone_by_device(self, device: Device) -> Dict[Any, Any]:
         url = "https://wyze-lockwood-service.wyzecam.com/plugin/irrigation/zone"
         return await self._get_zone_by_device(url, device)
-    
-
-    

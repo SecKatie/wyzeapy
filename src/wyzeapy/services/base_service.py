@@ -16,7 +16,8 @@ from ..const import PHONE_SYSTEM_TYPE, APP_VERSION, APP_VER, PHONE_ID, APP_NAME,
 from ..crypto import olive_create_signature
 from ..payload_factory import olive_create_hms_patch_payload, olive_create_hms_payload, \
     olive_create_hms_get_payload, ford_create_payload, olive_create_get_payload, olive_create_post_payload, \
-    olive_create_user_info_payload, devicemgmt_create_capabilities_payload, devicemgmt_get_iot_props_list
+    olive_create_user_info_payload, devicemgmt_create_capabilities_payload, devicemgmt_get_iot_props_list, \
+    olive_create_get_payload_irrigation
 from ..types import PropertyIDs, Device, DeviceMgmtToggleType
 from ..utils import check_for_errors_standard, check_for_errors_hms, check_for_errors_lock, \
     check_for_errors_iot, wyze_encrypt, check_for_errors_devicemgmt
@@ -780,7 +781,7 @@ class BaseService:
     async def _get_zone_by_device(self, url: str, device: Device) -> Dict[Any, Any]:
         await self._auth_lib.refresh_if_should()
 
-        payload = olive_create_get_payload(device.mac)
+        payload = olive_create_get_payload_irrigation(device.mac)
         signature = olive_create_signature(payload, self._auth_lib.token.access_token)
         headers = {
             'Accept-Encoding': 'gzip',

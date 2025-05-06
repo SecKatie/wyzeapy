@@ -154,8 +154,8 @@ class IrrigationProps(Enum):
     APP_VERSION = "app_version"
     IOT_STATE = "iot_state"  # Connection state: connected, disconnected
     SETUP_STATE = "setup_state"
-    RSSI = "rssi"
-    IP = "ip"
+    RSSI = "RSSI"
+    IP = "IP"
     WIFI_MAC = "wifi_mac"
     SN = "sn"
     SSID = "ssid"
@@ -168,11 +168,6 @@ class IrrigationProps(Enum):
     #EXIT_SETUP_SCHEDULE = "exit_setup_schedule"
     #SETUP_STEP = "setup_step"
 
-class IrrigationZoneProps(Enum):
-    ZONE_NUMBER = "zone_number"
-    NAME = "name"
-    ENABLED = "enabled"
-    ZONE_ID = "zone_id"
 
 class ResponseCodes(Enum):
     SUCCESS = "1"

@@ -3,7 +3,7 @@ from enum import Enum
 from typing import Any, Dict, List
 
 from .base_service import BaseService
-from ..types import Device, IrrigationProps, IrrigationZoneProps, DeviceTypes
+from ..types import Device, IrrigationProps, DeviceTypes
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -58,7 +58,8 @@ class Zone:
         self.name: str = dictionary.get('name', 'Zone 1')
         self.enabled: bool = dictionary.get('enabled', True)
         self.zone_id: str = dictionary.get('zone_id', 'zone_id')
-        self.quickrun_duration: int = dictionary.get('quickrun_duration', 600)
+        self.smart_duration: int = dictionary.get('smart_duration', 600)
+        self.quickrun_duration: int = 600  # Default to 10 minutes
         #self.device_id: str = "device_id"
         #self.did_uid: str = "did_uid"
         #self.latest_events = latest_events[]
@@ -83,7 +84,6 @@ class Zone:
         #self.nozzle_type: NozzleType = NozzleType.FIXED_SPRAY_HEAD
         #self.root_depth: float = 6.0
         #self.slope_type: SlopeType = SlopeType.FLAT
-        #self.smart_duration: int = 1636
         #self.soil_moisture_level_at_end_of_day_pct: float = 0.5
         #self.soil_type: SoilType = SoilType.CLAY_LOAM
         #self.updated: int = 1715919469326
@@ -156,50 +156,12 @@ class IrrigationService(BaseService):
         # Get the zones for the device
         zones = (await self._irrigation_get_zone_by_device(irrigation))['data']['zones']
         for zone_data in zones:
-            zone = Zone(zone_data)
+            try:
+                zone = Zone(zone_data)
+            except ValueError as e:
+                _LOGGER.debug(f"{e} with value ", str(zone_data))
             irrigation.zones.append(zone)
         
-        '''
-        for zone_data in zones:
-            print("begin zone data")
-            print(zone_data)
-            zone = Zone(
-                zone_id=zone_data.get("zone_id", ""),
-                zone_number=zone_data.get("zone_number", ""),
-                enabled=zone_data.get("enabled", ""),
-                name=zone_data.get("name", "")
-            )
-            # Populate additional attributes if available in the payload
-            #zone.zone_number = zone_data.get("zone_number", zone.zone_number)
-            #zone.name = zone_data.get("name", zone.name)
-            #zone.enabled = zone_data.get("enabled", zone.enabled)
-
-        zones_props = []
-        for zone in zones:
-            try:
-                zo = IrrigationZoneProps(zone)
-                zones_props.append((zo, zones[zone]))
-            except ValueError as e:
-                #_LOGGER.debug(f"{e} with value {zones[zone]}")
-                _LOGGER.debug(f"{e} with value {zone}")
-
-        zo_props = device_props
-        for prop, value in zo_props:
-            if prop == IrrigationZoneProps.ZONE_NUMBER:
-                zone.zone_number = int(value)
-            elif prop == IrrigationZoneProps.NAME:
-                zone.name = str(value)
-            elif prop == IrrigationZoneProps.ENABLED:
-                zone.enabled = bool(value)
-            elif prop == IrrigationZoneProps.ZONE_ID:
-                zone.zone_id = str(value)
-            '''
-        #for zone_data in zones:
-            #print("line 203 - irrigation service")
-            #print(zone_data)
-            #irrigation.zones.append(zone)
-
-        #print(vars(irrigation.zones[0]))
         return irrigation
 
     async def get_irrigations(self) -> List[Irrigation]:
@@ -213,12 +175,9 @@ class IrrigationService(BaseService):
 # do stuff to the irrigation device
 
 # start a zone
-    async def _irrigation_start_zone(self, irrigation: Device, zone: Zone):
+    async def _irrigation_start_zone(self, irrigation: Device, zone_number: int, quickrun_duration: int):
         url = "https://wyze-lockwood-service.wyzecam.com/plugin/irrigation/quickrun"
-        zone_number = zone.zone_number
-        duration = 600
-
-        return await self._start_zone(irrigation, url, zone_number, duration)
+        return await self._start_zone(irrigation, url, zone_number, quickrun_duration)
 
 # stop a zone
     async def _irrigation_stop_running_schedule(self, device: Device) -> Dict[Any, Any]:
@@ -227,18 +186,13 @@ class IrrigationService(BaseService):
 
         return await self._stop_running_schedule(url, device, action)
 
-# functions that help create the irrigation device
-
+# get the iot properties
     async def _irrigation_get_iot_prop(self, device: Device) -> Dict[Any, Any]:
         url = "https://wyze-lockwood-service.wyzecam.com/plugin/irrigation/get_iot_prop"
         keys = 'zone_state,iot_state,iot_state_update_time,app_version,RSSI,' \
             'wifi_mac,sn,device_model,ssid,IP'
         #keys = "app_version"
         return await self._get_iot_prop(url, device, keys)
-
-    async def _irrigation_set_iot_prop(self, device: Device, prop: IrrigationProps, value: Any) -> None:
-        url = "https://wyze-lockwood-service.wyzecam.com/plugin/irrigation/set_iot_prop_by_topic"
-        return await self._set_iot_prop(url, device, prop.value, value)
     
     async def _irrigation_get_device_info(self, device: Device) -> Dict[Any, Any]:
         url = "https://wyze-lockwood-service.wyzecam.com/plugin/irrigation/device_info"
@@ -247,6 +201,16 @@ class IrrigationService(BaseService):
             'skip_rain,skip_saturation'
         return await self._irrigation_device_info(url, device, keys)
 
+# get the zones for the device
     async def _irrigation_get_zone_by_device(self, device: Device) -> List[Dict[Any, Any]]:
         url = "https://wyze-lockwood-service.wyzecam.com/plugin/irrigation/zone"
         return await self._get_zone_by_device(url, device)
+
+# set the quickrun duration for a specific zone
+# intended to beused by HA to run a zone for a specific duration
+    async def _irrigation_set_zone_quickrun_duration(self, irrigation: Irrigation, zone_number: int, duration: int) -> None:
+        """Set the quickrun duration for a specific zone."""
+        for zone in irrigation.zones:
+            if zone.zone_number == zone_number:
+                zone.quickrun_duration = duration
+                break

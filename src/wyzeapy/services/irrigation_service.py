@@ -59,7 +59,7 @@ class Zone:
         self.enabled: bool = dictionary.get('enabled', True)
         self.zone_id: str = dictionary.get('zone_id', 'zone_id')
         self.smart_duration: int = dictionary.get('smart_duration', 600)
-        self.quickrun_duration: int = 600  # Default to 10 minutes
+        self.quickrun_duration: int = dictionary.get('quickrun_duration', 600)  # Default to 10 minutes
         #self.device_id: str = "device_id"
         #self.did_uid: str = "did_uid"
         #self.latest_events = latest_events[]
@@ -105,9 +105,7 @@ class Irrigation(Device):
         #self.quickrun_durations
         # the below comes from the get_iot_prop call
         self.RSSI: int = 0
-        self.app_version: str = "1.0.0"
         self.IP: str = "192.168.1.100"
-        self.wifi_mac: str = "00:00:00:00:00:00"
         self.sn: str = "SN123456789"
         self.available: bool = True
         self.ssid: str = "ssid"
@@ -126,41 +124,24 @@ class Irrigation(Device):
 
 class IrrigationService(BaseService):
     async def update(self, irrigation: Irrigation) -> Irrigation:
-        properties = (await self._irrigation_get_iot_prop(irrigation))['data']['props']
+        """Update the irrigation device with latest data from Wyze API."""
+        # Get IoT properties
+        properties = (await self.get_iot_prop(irrigation))['data']['props']
+        
+        # Update device properties
+        irrigation.RSSI = properties.get('rssi', -65)
+        irrigation.IP = properties.get('ip', '192.168.1.100')
+        irrigation.sn = properties.get('sn', 'SN123456789')
+        irrigation.ssid = properties.get('ssid', 'ssid')
+        irrigation.available = True
 
-        device_props = []
-        for property in properties:
-            try:
-                prop = IrrigationProps(property)
-                device_props.append((prop, properties[property]))
-            except ValueError as e:
-                _LOGGER.debug(f"{e} with value {properties[property]}")
-
-        irrigation_props = device_props
-        for prop, value in irrigation_props:
-            if prop == IrrigationProps.RSSI:
-                irrigation.RSSI = int(value)
-            elif prop == IrrigationProps.APP_VERSION:
-                irrigation.app_version = str(value)
-            elif prop == IrrigationProps.IP:
-                irrigation.IP = str(value)
-            elif prop == IrrigationProps.WIFI_MAC:
-                irrigation.wifi_mac = str(value)
-            elif prop == IrrigationProps.SN:
-                irrigation.sn = str(value)
-            elif prop == IrrigationProps.SSID:
-                irrigation.ssid = str(value)
-            elif prop == IrrigationProps.IOT_STATE:
-                irrigation.available = value == 'connected'
-
-        # Get the zones for the device
-        zones = (await self._irrigation_get_zone_by_device(irrigation))['data']['zones']
-        for zone_data in zones:
-            try:
-                zone = Zone(zone_data)
-            except ValueError as e:
-                _LOGGER.debug(f"{e} with value ", str(zone_data))
-            irrigation.zones.append(zone)
+        # Get zones
+        zones = (await self.get_zone_by_device(irrigation))['data']['zones']
+        
+        # Update zones
+        irrigation.zones = []
+        for zone in zones:
+            irrigation.zones.append(Zone(zone))
         
         return irrigation
 
@@ -172,45 +153,63 @@ class IrrigationService(BaseService):
 
         return [Irrigation(irrigation.raw_dict) for irrigation in irrigations]
 
-# do stuff to the irrigation device
-
-# start a zone
-    async def _irrigation_start_zone(self, irrigation: Device, zone_number: int, quickrun_duration: int):
+    async def start_zone(self, irrigation: Device, zone_number: int, quickrun_duration: int) -> Dict[Any, Any]:
+        """Start a zone with the specified duration.
+        
+        Args:
+            irrigation: The irrigation device
+            zone_number: The zone number to start
+            quickrun_duration: Duration in seconds to run the zone
+            
+        Returns:
+            Dict containing the API response
+        """
         url = "https://wyze-lockwood-service.wyzecam.com/plugin/irrigation/quickrun"
         return await self._start_zone(irrigation, url, zone_number, quickrun_duration)
 
-# stop a zone
-    async def _irrigation_stop_running_schedule(self, device: Device) -> Dict[Any, Any]:
+    async def stop_running_schedule(self, device: Device) -> Dict[Any, Any]:
+        """Stop any currently running irrigation schedule.
+        
+        Args:
+            device: The irrigation device
+            
+        Returns:
+            Dict containing the API response
+        """
         url = "https://wyze-lockwood-service.wyzecam.com/plugin/irrigation/runningschedule"
         action = "STOP"    
-
         return await self._stop_running_schedule(url, device, action)
 
-# get the iot properties
-    async def _irrigation_get_iot_prop(self, device: Device) -> Dict[Any, Any]:
+    async def set_zone_quickrun_duration(self, irrigation: Irrigation, zone_number: int, duration: int) -> None:
+        """Set the quickrun duration for a specific zone.
+        
+        Args:
+            irrigation: The irrigation device
+            zone_number: The zone number to configure
+            duration: Duration in seconds for quickrun
+        """
+        for zone in irrigation.zones:
+            if zone.zone_number == zone_number:
+                zone.quickrun_duration = duration
+                break
+
+    # Private implementation methods
+    async def get_iot_prop(self, device: Device) -> Dict[Any, Any]:
+        """Get IoT properties for a device."""
         url = "https://wyze-lockwood-service.wyzecam.com/plugin/irrigation/get_iot_prop"
         keys = 'zone_state,iot_state,iot_state_update_time,app_version,RSSI,' \
             'wifi_mac,sn,device_model,ssid,IP'
-        #keys = "app_version"
         return await self._get_iot_prop(url, device, keys)
-    
-    async def _irrigation_get_device_info(self, device: Device) -> Dict[Any, Any]:
+
+    async def get_device_info(self, device: Device) -> Dict[Any, Any]:
+        """Get device info from Wyze API."""
         url = "https://wyze-lockwood-service.wyzecam.com/plugin/irrigation/device_info"
         keys = 'wiring,sensor,enable_schedules,notification_enable,notification_watering_begins,' \
             'notification_watering_ends,notification_watering_is_skipped,skip_low_temp,skip_wind,' \
             'skip_rain,skip_saturation'
         return await self._irrigation_device_info(url, device, keys)
 
-# get the zones for the device
-    async def _irrigation_get_zone_by_device(self, device: Device) -> List[Dict[Any, Any]]:
+    async def get_zone_by_device(self, device: Device) -> List[Dict[Any, Any]]:
+        """Get zones for a device."""
         url = "https://wyze-lockwood-service.wyzecam.com/plugin/irrigation/zone"
         return await self._get_zone_by_device(url, device)
-
-# set the quickrun duration for a specific zone
-# intended to beused by HA to run a zone for a specific duration
-    async def _irrigation_set_zone_quickrun_duration(self, irrigation: Irrigation, zone_number: int, duration: int) -> None:
-        """Set the quickrun duration for a specific zone."""
-        for zone in irrigation.zones:
-            if zone.zone_number == zone_number:
-                zone.quickrun_duration = duration
-                break

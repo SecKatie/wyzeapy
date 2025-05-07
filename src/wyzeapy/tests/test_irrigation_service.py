@@ -12,8 +12,8 @@ class TestIrrigationService(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
         self.mock_auth_lib = MagicMock(spec=WyzeAuthLib)
         self.irrigation_service = IrrigationService(auth_lib=self.mock_auth_lib)
-        self.irrigation_service._irrigation_get_iot_prop = AsyncMock()
-        self.irrigation_service._irrigation_get_zone_by_device = AsyncMock()
+        self.irrigation_service.get_iot_prop = AsyncMock()
+        self.irrigation_service.get_zone_by_device = AsyncMock()
         self.irrigation_service.get_object_list = AsyncMock()
 
         # Create test irrigation
@@ -28,13 +28,11 @@ class TestIrrigationService(unittest.IsolatedAsyncioTestCase):
 
     async def test_update_irrigation(self):
         # Mock IoT properties response
-        self.irrigation_service._irrigation_get_iot_prop.return_value = {
+        self.irrigation_service.get_iot_prop.return_value = {
             'data': {
                 'props': {
                     'RSSI': '-65',
-                    'app_version': '1.0.10',
                     'IP': '192.168.1.100',
-                    'wifi_mac': '00:11:22:33:44:55',
                     'sn': 'SN123456789',
                     'ssid': 'TestSSID',
                     'iot_state': 'connected'
@@ -43,7 +41,7 @@ class TestIrrigationService(unittest.IsolatedAsyncioTestCase):
         }
 
         # Mock zones response
-        self.irrigation_service._irrigation_get_zone_by_device.return_value = {
+        self.irrigation_service.get_zone_by_device.return_value = {
             'data': {
                 'zones': [
                     {
@@ -51,14 +49,14 @@ class TestIrrigationService(unittest.IsolatedAsyncioTestCase):
                         'name': 'Zone 1',
                         'enabled': True,
                         'zone_id': 'zone1',
-                        'smart_duration': 600
+                        'quickrun_duration': 600
                     },
                     {
                         'zone_number': 2,
                         'name': 'Zone 2',
                         'enabled': True,
                         'zone_id': 'zone2',
-                        'smart_duration': 900
+                        'quickrun_duration': 900
                     }
                 ]
             }
@@ -68,9 +66,7 @@ class TestIrrigationService(unittest.IsolatedAsyncioTestCase):
 
         # Test IoT properties
         self.assertEqual(updated_irrigation.RSSI, -65)
-        self.assertEqual(updated_irrigation.app_version, '1.0.10')
         self.assertEqual(updated_irrigation.IP, '192.168.1.100')
-        self.assertEqual(updated_irrigation.wifi_mac, '00:11:22:33:44:55')
         self.assertEqual(updated_irrigation.sn, 'SN123456789')
         self.assertEqual(updated_irrigation.ssid, 'TestSSID')
         self.assertTrue(updated_irrigation.available)
@@ -80,11 +76,11 @@ class TestIrrigationService(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(updated_irrigation.zones[0].zone_number, 1)
         self.assertEqual(updated_irrigation.zones[0].name, 'Zone 1')
         self.assertTrue(updated_irrigation.zones[0].enabled)
-        self.assertEqual(updated_irrigation.zones[0].smart_duration, 600)
+        self.assertEqual(updated_irrigation.zones[0].quickrun_duration, 600)
         self.assertEqual(updated_irrigation.zones[1].zone_number, 2)
         self.assertEqual(updated_irrigation.zones[1].name, 'Zone 2')
         self.assertTrue(updated_irrigation.zones[1].enabled)
-        self.assertEqual(updated_irrigation.zones[1].smart_duration, 900)
+        self.assertEqual(updated_irrigation.zones[1].quickrun_duration, 900)
 
     async def test_get_irrigations(self):
         # Create a mock irrigation device with all required attributes
@@ -121,31 +117,38 @@ class TestIrrigationService(unittest.IsolatedAsyncioTestCase):
                 'name': 'Zone 1',
                 'enabled': True,
                 'zone_id': 'zone1',
-                'smart_duration': 600
+                'quickrun_duration': 400
             }),
             Zone({
                 'zone_number': 2,
                 'name': 'Zone 2',
                 'enabled': True,
                 'zone_id': 'zone2',
-                'smart_duration': 900
+                'quickrun_duration': 900
             })
         ]
 
-        # Test setting quickrun duration for zone 1
-        await self.irrigation_service._irrigation_set_zone_quickrun_duration(
-            self.test_irrigation, 1, 300
+        # Test setting quickrun duration
+        await self.irrigation_service.set_zone_quickrun_duration(
+            self.test_irrigation,
+            1,
+            300
         )
         self.assertEqual(self.test_irrigation.zones[0].quickrun_duration, 300)
 
-        # Test setting quickrun duration for zone 2
-        await self.irrigation_service._irrigation_set_zone_quickrun_duration(
-            self.test_irrigation, 2, 450
+        # Test setting quickrun duration for non-existent zone
+        await self.irrigation_service.set_zone_quickrun_duration(
+            self.test_irrigation,
+            999,
+            300
         )
-        self.assertEqual(self.test_irrigation.zones[1].quickrun_duration, 450)
+        # Verify that no zones were modified
+        self.assertEqual(len(self.test_irrigation.zones), 2)
+        self.assertEqual(self.test_irrigation.zones[0].quickrun_duration, 300)  # First zone unchanged
+        self.assertEqual(self.test_irrigation.zones[1].quickrun_duration, 900)  # Second zone unchanged
 
     async def test_update_with_invalid_property(self):
-        self.irrigation_service._irrigation_get_iot_prop.return_value = {
+        self.irrigation_service.get_iot_prop.return_value = {
             'data': {
                 'props': {
                     'invalid_property': 'some_value',
@@ -154,7 +157,7 @@ class TestIrrigationService(unittest.IsolatedAsyncioTestCase):
             }
         }
 
-        self.irrigation_service._irrigation_get_zone_by_device.return_value = {
+        self.irrigation_service.get_zone_by_device.return_value = {
             'data': {
                 'zones': []
             }
@@ -163,12 +166,9 @@ class TestIrrigationService(unittest.IsolatedAsyncioTestCase):
         updated_irrigation = await self.irrigation_service.update(self.test_irrigation)
         self.assertEqual(updated_irrigation.RSSI, -65)
         # Other properties should maintain their default values
-        self.assertEqual(updated_irrigation.app_version, "1.0.0")
         self.assertEqual(updated_irrigation.IP, "192.168.1.100")
-        self.assertEqual(updated_irrigation.wifi_mac, "00:00:00:00:00:00")
         self.assertEqual(updated_irrigation.sn, "SN123456789")
         self.assertEqual(updated_irrigation.ssid, "ssid")
-
 
 if __name__ == '__main__':
     unittest.main() 

@@ -107,7 +107,7 @@ class Irrigation(Device):
         self.RSSI: int = 0
         self.IP: str = "192.168.1.100"
         self.sn: str = "SN123456789"
-        self.available: bool = True
+        self.available: bool = False
         self.ssid: str = "ssid"
         # the below comes from the device_info call
         #self.enable_schedules: bool = False
@@ -133,7 +133,7 @@ class IrrigationService(BaseService):
         irrigation.IP = properties.get('ip', '192.168.1.100')
         irrigation.sn = properties.get('sn', 'SN123456789')
         irrigation.ssid = properties.get('ssid', 'ssid')
-        irrigation.available = True
+        irrigation.available = (properties.get(IrrigationProps.IOT_STATE.value) == "connected")
 
         # Get zones
         zones = (await self.get_zone_by_device(irrigation))['data']['zones']
@@ -143,6 +143,20 @@ class IrrigationService(BaseService):
         for zone in zones:
             irrigation.zones.append(Zone(zone))
         
+        return irrigation
+    
+    async def update_device_props(self, irrigation: Irrigation) -> Irrigation:
+        """Update the irrigation device with latest data from Wyze API."""
+        # Get IoT properties
+        properties = (await self.get_iot_prop(irrigation))['data']['props']
+        
+        # Update device properties
+        irrigation.RSSI = properties.get('rssi')
+        irrigation.IP = properties.get('ip')
+        irrigation.sn = properties.get('sn')
+        irrigation.ssid = properties.get('ssid')
+        irrigation.available = (properties.get(IrrigationProps.IOT_STATE.value) == 'connected')
+
         return irrigation
 
     async def get_irrigations(self) -> List[Irrigation]:

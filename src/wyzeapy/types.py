@@ -151,14 +151,14 @@ class ThermostatProps(Enum):
 
 
 class IrrigationProps(Enum):
-    APP_VERSION = "app_version"
     IOT_STATE = "iot_state"  # Connection state: connected, disconnected
-    SETUP_STATE = "setup_state"
     RSSI = "RSSI"
     IP = "IP"
-    WIFI_MAC = "wifi_mac"
     SN = "sn"
     SSID = "ssid"
+    #APP_VERSION = "app_version"
+    #SETUP_STATE = "setup_state"
+    #WIFI_MAC = "wifi_mac"
     #ENABLE_SCHEDULES = "enable_schedules"
     #SKIP_LOW_TEMP = "skip_low_temp"
     #SKIP_WIND = "skip_wind"

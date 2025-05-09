@@ -17,7 +17,8 @@ from ..crypto import olive_create_signature
 from ..payload_factory import olive_create_hms_patch_payload, olive_create_hms_payload, \
     olive_create_hms_get_payload, ford_create_payload, olive_create_get_payload, olive_create_post_payload, \
     olive_create_user_info_payload, devicemgmt_create_capabilities_payload, devicemgmt_get_iot_props_list, \
-    olive_create_get_payload_irrigation, olive_create_post_payload_irrigation_quickrun
+    olive_create_get_payload_irrigation, olive_create_post_payload_irrigation_stop,\
+    olive_create_post_payload_irrigation_quickrun
 from ..types import PropertyIDs, Device, DeviceMgmtToggleType
 from ..utils import check_for_errors_standard, check_for_errors_hms, check_for_errors_lock, \
     check_for_errors_iot, wyze_encrypt, check_for_errors_devicemgmt
@@ -799,14 +800,17 @@ class BaseService:
 
         return response_json
 
-# todo  
+
     async def _stop_running_schedule(self, url: str, device: Device, action: str) -> Dict[Any, Any]:
         await self._auth_lib.refresh_if_should()
 
-        payload = olive_create_post_payload(device.mac, action)
-        signature = olive_create_signature(payload, self._auth_lib.token.access_token)
+        payload = olive_create_post_payload_irrigation_stop(device.mac, action)
+        print(payload)
+        signature = olive_create_signature(json.dumps(payload, separators=(',', ':')),
+                                           self._auth_lib.token.access_token)
         headers = {
             'Accept-Encoding': 'gzip',
+            'Content-Type': 'application/json',
             'User-Agent': 'myapp',
             'appid': OLIVE_APP_ID,
             'appinfo': APP_INFO,
@@ -815,7 +819,8 @@ class BaseService:
             'signature2': signature
         }
 
-        response_json = await self._auth_lib.post(url, headers=headers, params=payload)
+        payload_str = json.dumps(payload, separators=(',', ':'))
+        response_json = await self._auth_lib.post(url, headers=headers, data=payload_str)
 
         check_for_errors_iot(self, response_json)
 
@@ -826,9 +831,11 @@ class BaseService:
         await self._auth_lib.refresh_if_should()
 
         payload = olive_create_post_payload_irrigation_quickrun(device.mac, zone_number, duration)
-        signature = olive_create_signature(payload, self._auth_lib.token.access_token)
+        signature = olive_create_signature(json.dumps(payload, separators=(',', ':')),
+                                           self._auth_lib.token.access_token)
         headers = {
             'Accept-Encoding': 'gzip',
+            'Content-Type': 'application/json',
             'User-Agent': 'myapp',
             'appid': OLIVE_APP_ID,
             'appinfo': APP_INFO,
@@ -837,7 +844,8 @@ class BaseService:
             'signature2': signature
         }
 
-        response_json = await self._auth_lib.post(url, headers=headers, params=payload)
+        payload_str = json.dumps(payload, separators=(',', ':'))
+        response_json = await self._auth_lib.post(url, headers=headers, data=payload_str)
 
         check_for_errors_iot(self, response_json)
 

@@ -59,7 +59,12 @@ class Zone:
         self.enabled: bool = dictionary.get('enabled', True)
         self.zone_id: str = dictionary.get('zone_id', 'zone_id')
         self.smart_duration: int = dictionary.get('smart_duration', 600)
-        self.quickrun_duration: int = dictionary.get('quickrun_duration', 600)  # Default to 10 minutes
+        
+        # this quickrun duration is used only for running a zone manually
+        # the wyze api has no such value, but takes a duration as part of the api call
+        # the default value grabs the wyze smart_duration but all further updates
+        # are managed through the home assistant state
+        self.quickrun_duration: int = dictionary.get('smart_duration', 600)
         #self.device_id: str = "device_id"
         #self.did_uid: str = "did_uid"
         #self.latest_events = latest_events[]
@@ -129,8 +134,8 @@ class IrrigationService(BaseService):
         properties = (await self.get_iot_prop(irrigation))['data']['props']
         
         # Update device properties
-        irrigation.RSSI = properties.get('rssi', -65)
-        irrigation.IP = properties.get('ip', '192.168.1.100')
+        irrigation.RSSI = properties.get('RSSI', -65)
+        irrigation.IP = properties.get('IP', '192.168.1.100')
         irrigation.sn = properties.get('sn', 'SN123456789')
         irrigation.ssid = properties.get('ssid', 'ssid')
         irrigation.available = (properties.get(IrrigationProps.IOT_STATE.value) == "connected")
@@ -151,8 +156,8 @@ class IrrigationService(BaseService):
         properties = (await self.get_iot_prop(irrigation))['data']['props']
         
         # Update device properties
-        irrigation.RSSI = properties.get('rssi')
-        irrigation.IP = properties.get('ip')
+        irrigation.RSSI = properties.get('RSSI')
+        irrigation.IP = properties.get('IP')
         irrigation.sn = properties.get('sn')
         irrigation.ssid = properties.get('ssid')
         irrigation.available = (properties.get(IrrigationProps.IOT_STATE.value) == 'connected')

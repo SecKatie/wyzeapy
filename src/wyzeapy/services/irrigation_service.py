@@ -199,7 +199,7 @@ class IrrigationService(BaseService):
         action = "STOP"    
         return await self._stop_running_schedule(url, device, action)
 
-    async def set_zone_quickrun_duration(self, irrigation: Irrigation, zone_number: int, duration: int) -> None:
+    async def set_zone_quickrun_duration(self, irrigation: Irrigation, zone_number: int, duration: int) -> Irrigation:
         """Set the quickrun duration for a specific zone.
         
         Args:
@@ -211,6 +211,8 @@ class IrrigationService(BaseService):
             if zone.zone_number == zone_number:
                 zone.quickrun_duration = duration
                 break
+        
+        return irrigation
 
     # Private implementation methods
     async def get_iot_prop(self, device: Device) -> Dict[Any, Any]:

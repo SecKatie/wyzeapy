@@ -52,12 +52,9 @@ Developed by Katie Mulliken ([SecKatie](https://github.com/SecKatie))
 Docs are generated using [pdoc](https://pdoc.dev/). To generate docs for this project, run:
 
 ```bash
-# Activate the poetry environment (that includes the dev dependencies)
-eval "$(poetry env activate)"
+# Install development dependencies
+uv sync --group dev
 
 # Generate docs
-pdoc --output-dir=docs src/wyzeapy
+uv run pdoc --output-dir=docs src/wyzeapy
 ```
-
-[Full doc reference](https://seckatie.github.io/wyzeapy/) - Please note that I am still working on doc strings so please be patient.
-

@@ -1,25 +1,36 @@
 name: Publish to PyPI
+
 on:
   release:
     types: [published]
+
 jobs:
   publish:
     runs-on: ubuntu-latest
-    env:
-      POETRY_HOME: /opt/poetry
+
     steps:
-      - uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5 # v2
-      - uses: actions/setup-python@e9aba2c848f5ebd159c070c61ea2c4e2b122355e # v2
-      - name: Install poetry
-        run: |
-          wget https://raw.githubusercontent.com/python-poetry/install.python-poetry.org/d62875fc05fb20062175cd14d19a96dbefa48640/install-poetry.py
-          python install-poetry.py --version 1.8.3
-      - name: Install dependencies
-        run: |
-          $POETRY_HOME/bin/poetry install
-      - name: Configure poetry for PyPI repository
-        run: |
-          $POETRY_HOME/bin/poetry config pypi-token.pypi ${{ secrets.PYPI_TOKEN }}
-      - name: Build and publish package
-        run: |
-          $POETRY_HOME/bin/poetry publish --build
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Install build & twine
+        run: uv pip install --system build twine
+
+      - name: Sync project dependencies
+        run: uv sync --all-groups
+
+      - name: Build distribution
+        run: uv run python -m build --sdist --wheel
+
+      - name: Publish package to PyPI
+        env:
+          TWINE_USERNAME: "__token__"
+          TWINE_PASSWORD: "${{ secrets.PYPI_TOKEN }}"
+        run: uv run twine upload dist/*

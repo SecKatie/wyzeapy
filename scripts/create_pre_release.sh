@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# Bump the version in the package.json file
-poetry version patch
+# Bump the version in the pyproject.toml file
+uv run hatch version patch
 
 # Get the new version
-version=$(poetry version -s)
+version=$(uv run hatch version)
 
 # Create a new branch
 git checkout -b release/$version

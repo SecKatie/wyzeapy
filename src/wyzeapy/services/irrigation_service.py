@@ -19,7 +19,7 @@ class CropType(Enum):
     GARDEN = "garden"
 
 
-class ExposureType(Enum):  # auto, on
+class ExposureType(Enum):
     LOTS_OF_SUN = "lots_of_sun"
     SOME_SHADE = "some_shade"
 

@@ -805,7 +805,6 @@ class BaseService:
         await self._auth_lib.refresh_if_should()
 
         payload = olive_create_post_payload_irrigation_stop(device.mac, action)
-        print(payload)
         signature = olive_create_signature(json.dumps(payload, separators=(',', ':')),
                                            self._auth_lib.token.access_token)
         headers = {

@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, MagicMock
 from wyzeapy.services.irrigation_service import (
     IrrigationService, Irrigation, Zone
 )
-from wyzeapy.types import DeviceTypes
+from wyzeapy.types import DeviceTypes, Device
 from wyzeapy.wyze_auth_lib import WyzeAuthLib
 
 # todo: add tests for irrigation service
@@ -15,6 +15,9 @@ class TestIrrigationService(unittest.IsolatedAsyncioTestCase):
         self.irrigation_service.get_iot_prop = AsyncMock()
         self.irrigation_service.get_zone_by_device = AsyncMock()
         self.irrigation_service.get_object_list = AsyncMock()
+        self.irrigation_service._get_iot_prop = AsyncMock()
+        self.irrigation_service._get_zone_by_device = AsyncMock()
+        self.irrigation_service._irrigation_device_info = AsyncMock()
 
         # Create test irrigation
         self.test_irrigation = Irrigation({
@@ -49,14 +52,14 @@ class TestIrrigationService(unittest.IsolatedAsyncioTestCase):
                         'name': 'Zone 1',
                         'enabled': True,
                         'zone_id': 'zone1',
-                        'quickrun_duration': 600
+                        'smart_duration': 600
                     },
                     {
                         'zone_number': 2,
                         'name': 'Zone 2',
                         'enabled': True,
                         'zone_id': 'zone2',
-                        'quickrun_duration': 900
+                        'smart_duration': 900
                     }
                 ]
             }
@@ -65,7 +68,7 @@ class TestIrrigationService(unittest.IsolatedAsyncioTestCase):
         updated_irrigation = await self.irrigation_service.update(self.test_irrigation)
 
         # Test IoT properties
-        self.assertEqual(updated_irrigation.RSSI, -65)
+        self.assertEqual(updated_irrigation.RSSI, '-65')
         self.assertEqual(updated_irrigation.IP, '192.168.1.100')
         self.assertEqual(updated_irrigation.sn, 'SN123456789')
         self.assertEqual(updated_irrigation.ssid, 'TestSSID')
@@ -117,14 +120,14 @@ class TestIrrigationService(unittest.IsolatedAsyncioTestCase):
                 'name': 'Zone 1',
                 'enabled': True,
                 'zone_id': 'zone1',
-                'quickrun_duration': 400
+                'smart_duration': 400
             }),
             Zone({
                 'zone_number': 2,
                 'name': 'Zone 2',
                 'enabled': True,
                 'zone_id': 'zone2',
-                'quickrun_duration': 900
+                'smart_duration': 900
             })
         ]
 
@@ -144,8 +147,8 @@ class TestIrrigationService(unittest.IsolatedAsyncioTestCase):
         )
         # Verify that no zones were modified
         self.assertEqual(len(self.test_irrigation.zones), 2)
-        self.assertEqual(self.test_irrigation.zones[0].quickrun_duration, 300)  # First zone unchanged
-        self.assertEqual(self.test_irrigation.zones[1].quickrun_duration, 900)  # Second zone unchanged
+        self.assertEqual(self.test_irrigation.zones[0].quickrun_duration, 300)  # First zone changed to 300
+        self.assertEqual(self.test_irrigation.zones[1].quickrun_duration, 900)  # Second zone should be unchanged at 900
 
     async def test_update_with_invalid_property(self):
         self.irrigation_service.get_iot_prop.return_value = {
@@ -164,11 +167,370 @@ class TestIrrigationService(unittest.IsolatedAsyncioTestCase):
         }
 
         updated_irrigation = await self.irrigation_service.update(self.test_irrigation)
-        self.assertEqual(updated_irrigation.RSSI, -65)
+        self.assertEqual(updated_irrigation.RSSI, '-65')
         # Other properties should maintain their default values
         self.assertEqual(updated_irrigation.IP, "192.168.1.100")
         self.assertEqual(updated_irrigation.sn, "SN123456789")
         self.assertEqual(updated_irrigation.ssid, "ssid")
+
+    async def test_start_zone(self):
+        # Mock the _start_zone method
+        self.irrigation_service._start_zone = AsyncMock()
+        expected_response = {'data': {'result': 'success'}}
+        self.irrigation_service._start_zone.return_value = expected_response
+
+        # Test starting a zone
+        result = await self.irrigation_service.start_zone(
+            self.test_irrigation,
+            zone_number=1,
+            quickrun_duration=300
+        )
+
+        # Verify the call was made with correct parameters
+        self.irrigation_service._start_zone.assert_awaited_once_with(
+            "https://wyze-lockwood-service.wyzecam.com/plugin/irrigation/quickrun",
+            self.test_irrigation,
+            1,
+            300
+        )
+        self.assertEqual(result, expected_response)
+
+    async def test_stop_running_schedule(self):
+        # Mock the _stop_running_schedule method
+        self.irrigation_service._stop_running_schedule = AsyncMock()
+        expected_response = {'data': {'result': 'stopped'}}
+        self.irrigation_service._stop_running_schedule.return_value = expected_response
+
+        # Test stopping running schedule
+        result = await self.irrigation_service.stop_running_schedule(self.test_irrigation)
+
+        # Verify the call was made with correct parameters
+        self.irrigation_service._stop_running_schedule.assert_awaited_once_with(
+            "https://wyze-lockwood-service.wyzecam.com/plugin/irrigation/runningschedule",
+            self.test_irrigation,
+            "STOP"
+        )
+        self.assertEqual(result, expected_response)
+
+    async def test_update_device_props(self):
+        # Mock IoT properties response
+        self.irrigation_service.get_iot_prop.return_value = {
+            'data': {
+                'props': {
+                    'RSSI': '-70',
+                    'IP': '192.168.1.101',
+                    'sn': 'SN987654321',
+                    'ssid': 'NewSSID',
+                    'iot_state': 'connected'
+                }
+            }
+        }
+
+        updated_irrigation = await self.irrigation_service.update_device_props(self.test_irrigation)
+
+        # Test that properties were updated correctly
+        self.assertEqual(updated_irrigation.RSSI, '-70')
+        self.assertEqual(updated_irrigation.IP, '192.168.1.101')
+        self.assertEqual(updated_irrigation.sn, 'SN987654321')
+        self.assertEqual(updated_irrigation.ssid, 'NewSSID')
+        self.assertTrue(updated_irrigation.available)
+
+    async def test_update_device_props_disconnected(self):
+        # Mock IoT properties response with disconnected state
+        self.irrigation_service.get_iot_prop.return_value = {
+            'data': {
+                'props': {
+                    'RSSI': '-80',
+                    'IP': '192.168.1.102',
+                    'sn': 'SN555666777',
+                    'ssid': 'TestSSID2',
+                    'iot_state': 'disconnected'
+                }
+            }
+        }
+
+        updated_irrigation = await self.irrigation_service.update_device_props(self.test_irrigation)
+
+        # Test that device is marked as unavailable
+        self.assertFalse(updated_irrigation.available)
+        self.assertEqual(updated_irrigation.RSSI, '-80')
+        self.assertEqual(updated_irrigation.IP, '192.168.1.102')
+
+    async def test_get_iot_prop(self):
+        # Mock the get_iot_prop method directly to test the public interface
+        expected_response = {'data': {'props': {'RSSI': '-65'}}}
+        self.irrigation_service.get_iot_prop.return_value = expected_response
+
+        # Test get_iot_prop
+        result = await self.irrigation_service.get_iot_prop(self.test_irrigation)
+
+        # Verify the call was made and returned expected result
+        self.irrigation_service.get_iot_prop.assert_awaited_once_with(self.test_irrigation)
+        self.assertEqual(result, expected_response)
+
+    async def test_get_device_info(self):
+        # Mock the _irrigation_device_info method
+        self.irrigation_service._irrigation_device_info = AsyncMock()
+        expected_response = {'data': {'props': {'enable_schedules': True}}}
+        self.irrigation_service._irrigation_device_info.return_value = expected_response
+
+        # Test get_device_info
+        result = await self.irrigation_service.get_device_info(self.test_irrigation)
+
+        # Verify the call was made with correct parameters
+        expected_keys = 'wiring,sensor,enable_schedules,notification_enable,notification_watering_begins,notification_watering_ends,notification_watering_is_skipped,skip_low_temp,skip_wind,skip_rain,skip_saturation'
+        self.irrigation_service._irrigation_device_info.assert_awaited_once_with(
+            "https://wyze-lockwood-service.wyzecam.com/plugin/irrigation/device_info",
+            self.test_irrigation,
+            expected_keys
+        )
+        self.assertEqual(result, expected_response)
+
+    async def test_get_zone_by_device_method(self):
+        # Mock the get_zone_by_device method directly to test the public interface
+        expected_response = {'data': {'zones': [{'zone_number': 1, 'name': 'Zone 1'}]}}
+        self.irrigation_service.get_zone_by_device.return_value = expected_response
+
+        # Test get_zone_by_device
+        result = await self.irrigation_service.get_zone_by_device(self.test_irrigation)
+
+        # Verify the call was made and returned expected result
+        self.irrigation_service.get_zone_by_device.assert_awaited_once_with(self.test_irrigation)
+        self.assertEqual(result, expected_response)
+
+
+class TestZone(unittest.TestCase):
+    def test_zone_initialization_with_defaults(self):
+        # Test zone initialization with minimal data
+        zone_data = {'zone_number': 3, 'name': 'Test Zone'}
+        zone = Zone(zone_data)
+        
+        self.assertEqual(zone.zone_number, 3)
+        self.assertEqual(zone.name, 'Test Zone')
+        self.assertTrue(zone.enabled)  # Default value
+        self.assertEqual(zone.zone_id, 'zone_id')  # Default value
+        self.assertEqual(zone.smart_duration, 600)  # Default value
+        self.assertEqual(zone.quickrun_duration, 600)  # Default value from smart_duration
+
+    def test_zone_initialization_with_all_data(self):
+        # Test zone initialization with all data
+        zone_data = {
+            'zone_number': 2,
+            'name': 'Garden Zone',
+            'enabled': False,
+            'zone_id': 'zone_garden',
+            'smart_duration': 1200
+        }
+        zone = Zone(zone_data)
+        
+        self.assertEqual(zone.zone_number, 2)
+        self.assertEqual(zone.name, 'Garden Zone')
+        self.assertFalse(zone.enabled)
+        self.assertEqual(zone.zone_id, 'zone_garden')
+        self.assertEqual(zone.smart_duration, 1200)
+        self.assertEqual(zone.quickrun_duration, 1200)  # Should use smart_duration
+
+    def test_zone_initialization_empty_dict(self):
+        # Test zone initialization with empty dict
+        zone = Zone({})
+        
+        self.assertEqual(zone.zone_number, 1)  # Default value
+        self.assertEqual(zone.name, 'Zone 1')  # Default value
+        self.assertTrue(zone.enabled)  # Default value
+        self.assertEqual(zone.zone_id, 'zone_id')  # Default value
+        self.assertEqual(zone.smart_duration, 600)  # Default value
+        self.assertEqual(zone.quickrun_duration, 600)  # Default value
+
+
+class TestIrrigation(unittest.TestCase):
+    def test_irrigation_initialization(self):
+        # Test irrigation device initialization
+        irrigation_data = {
+            "device_type": DeviceTypes.IRRIGATION.value,
+            "product_model": "BS_WK1",
+            "mac": "IRRIG456",
+            "nickname": "Backyard Sprinkler",
+            "device_params": {"ip": "192.168.1.200"}
+        }
+        irrigation = Irrigation(irrigation_data)
+        
+        self.assertEqual(irrigation.product_model, "BS_WK1")
+        self.assertEqual(irrigation.mac, "IRRIG456")
+        self.assertEqual(irrigation.nickname, "Backyard Sprinkler")
+        
+        # Test default values
+        self.assertEqual(irrigation.RSSI, 0)
+        self.assertEqual(irrigation.IP, "192.168.1.100")
+        self.assertEqual(irrigation.sn, "SN123456789")
+        self.assertFalse(irrigation.available)
+        self.assertEqual(irrigation.ssid, "ssid")
+        self.assertEqual(len(irrigation.zones), 0)
+
+    def test_irrigation_inheritance(self):
+        # Test that Irrigation inherits from Device
+        irrigation_data = {
+            "product_type": DeviceTypes.IRRIGATION.value,
+            "product_model": "BS_WK1",
+            "mac": "IRRIG789",
+            "nickname": "Front Yard Sprinkler"
+        }
+        irrigation = Irrigation(irrigation_data)
+        
+        # Test inherited Device properties
+        self.assertIsInstance(irrigation, Device)
+        self.assertEqual(irrigation.type, DeviceTypes.IRRIGATION)
+
+
+class TestIrrigationServiceEdgeCases(unittest.IsolatedAsyncioTestCase):
+    async def asyncSetUp(self):
+        self.mock_auth_lib = MagicMock(spec=WyzeAuthLib)
+        self.irrigation_service = IrrigationService(auth_lib=self.mock_auth_lib)
+        self.irrigation_service.get_iot_prop = AsyncMock()
+        self.irrigation_service.get_zone_by_device = AsyncMock()
+        self.irrigation_service.get_object_list = AsyncMock()
+
+        # Create test irrigation
+        self.test_irrigation = Irrigation({
+            "device_type": DeviceTypes.IRRIGATION.value,
+            "product_model": "BS_WK1",
+            "mac": "IRRIG123",
+            "nickname": "Test Irrigation",
+            "device_params": {"ip": "192.168.1.100"},
+            "raw_dict": {}
+        })
+
+    async def test_update_with_empty_zones(self):
+        # Mock IoT properties response
+        self.irrigation_service.get_iot_prop.return_value = {
+            'data': {
+                'props': {
+                    'RSSI': '-65',
+                    'IP': '192.168.1.100',
+                    'sn': 'SN123456789',
+                    'ssid': 'TestSSID',
+                    'iot_state': 'connected'
+                }
+            }
+        }
+
+        # Mock empty zones response
+        self.irrigation_service.get_zone_by_device.return_value = {
+            'data': {
+                'zones': []
+            }
+        }
+
+        updated_irrigation = await self.irrigation_service.update(self.test_irrigation)
+
+        # Verify empty zones list
+        self.assertEqual(len(updated_irrigation.zones), 0)
+        self.assertTrue(updated_irrigation.available)
+
+    async def test_update_with_missing_iot_props(self):
+        # Mock IoT properties response with missing props
+        self.irrigation_service.get_iot_prop.return_value = {
+            'data': {
+                'props': {}
+            }
+        }
+
+        self.irrigation_service.get_zone_by_device.return_value = {
+            'data': {
+                'zones': []
+            }
+        }
+
+        updated_irrigation = await self.irrigation_service.update(self.test_irrigation)
+
+        # Verify default values are used
+        self.assertEqual(updated_irrigation.RSSI, -65)
+        self.assertEqual(updated_irrigation.IP, '192.168.1.100')
+        self.assertEqual(updated_irrigation.sn, 'SN123456789')
+        self.assertEqual(updated_irrigation.ssid, 'ssid')
+        self.assertFalse(updated_irrigation.available)  # iot_state missing, so not connected
+
+    async def test_get_irrigations_empty_device_list(self):
+        # Mock empty device list
+        self.irrigation_service.get_object_list.return_value = []
+
+        irrigations = await self.irrigation_service.get_irrigations()
+        
+        # Verify empty list returned
+        self.assertEqual(len(irrigations), 0)
+        self.irrigation_service.get_object_list.assert_awaited_once()
+
+    async def test_get_irrigations_no_irrigation_devices(self):
+        # Mock device list with non-irrigation devices
+        mock_camera = MagicMock()
+        mock_camera.type = DeviceTypes.CAMERA
+        mock_camera.product_model = "CAM_V1"
+        
+        mock_bulb = MagicMock()
+        mock_bulb.type = DeviceTypes.LIGHT
+        mock_bulb.product_model = "LIGHT_V1"
+
+        self.irrigation_service.get_object_list.return_value = [mock_camera, mock_bulb]
+
+        irrigations = await self.irrigation_service.get_irrigations()
+        
+        # Verify no irrigation devices returned
+        self.assertEqual(len(irrigations), 0)
+
+    async def test_get_irrigations_wrong_product_model(self):
+        # Mock device list with irrigation type but wrong product model
+        mock_irrigation = MagicMock()
+        mock_irrigation.type = DeviceTypes.IRRIGATION
+        mock_irrigation.product_model = "WRONG_MODEL"
+        mock_irrigation.raw_dict = {
+            "device_type": DeviceTypes.IRRIGATION.value,
+            "product_model": "WRONG_MODEL",
+            "mac": "IRRIG123",
+            "nickname": "Test Irrigation"
+        }
+
+        self.irrigation_service.get_object_list.return_value = [mock_irrigation]
+
+        irrigations = await self.irrigation_service.get_irrigations()
+        
+        # Verify no irrigation devices returned due to wrong product model
+        self.assertEqual(len(irrigations), 0)
+
+    async def test_set_zone_quickrun_duration_zone_not_found(self):
+        # Setup test irrigation with zones
+        self.test_irrigation.zones = [
+            Zone({
+                'zone_number': 1,
+                'name': 'Zone 1',
+                'enabled': True,
+                'zone_id': 'zone1',
+                'smart_duration': 600
+            })
+        ]
+
+        # Try to set duration for non-existent zone
+        result = await self.irrigation_service.set_zone_quickrun_duration(
+            self.test_irrigation,
+            99,  # Non-existent zone
+            300
+        )
+
+        # Verify existing zone unchanged
+        self.assertEqual(self.test_irrigation.zones[0].quickrun_duration, 600)
+        self.assertEqual(result, self.test_irrigation)
+
+    async def test_set_zone_quickrun_duration_no_zones(self):
+        # Test with irrigation that has no zones
+        self.test_irrigation.zones = []
+
+        result = await self.irrigation_service.set_zone_quickrun_duration(
+            self.test_irrigation,
+            1,
+            300
+        )
+
+        # Verify no error and empty zones list
+        self.assertEqual(len(self.test_irrigation.zones), 0)
+        self.assertEqual(result, self.test_irrigation)
 
 if __name__ == '__main__':
     unittest.main() 

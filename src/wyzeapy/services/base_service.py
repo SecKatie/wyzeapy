@@ -26,6 +26,10 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class BaseService:
+    """Base service class for interacting with Wyze devices.
+    
+    This class provides the base functionality for interacting with Wyze devices.
+    """
     _devices: Optional[List[Device]] = None
     _last_updated_time: time = 0  # preload a value of 0 so that comparison will succeed on the first run
     _min_update_time = 1200  # lets let the device_params update every 20 minutes for now. This could probably reduced signicficantly.
@@ -36,25 +40,43 @@ class BaseService:
     _updater_dict = {}
 
     def __init__(self, auth_lib: WyzeAuthLib):
+        """Initialize the base service.
+        
+        :param auth_lib: The authentication library to use.
+        """
         self._auth_lib = auth_lib
 
     @staticmethod
     async def start_update_manager():
+        """Start the update manager."""
         if BaseService._update_loop is None:
             BaseService._update_loop = asyncio.get_event_loop()
             BaseService._update_loop.create_task(BaseService._update_manager.update_next())
 
     def register_updater(self, device: Device, interval):
+        """Register a device to be updated at a specific interval.
+
+        :param device: The device to register.
+        :param interval: The interval in seconds.
+        """
         self._updater = DeviceUpdater(self, device, interval)
         BaseService._update_manager.add_updater(self._updater)
         self._updater_dict[self._updater.device] = self._updater
 
     def unregister_updater(self, device: Device):
+        """Unregister a device from being updated.
+        
+        :param device: The device to unregister.
+        """
         if self._updater:
             BaseService._update_manager.del_updater(self._updater_dict[device])
             del self._updater_dict[device]
 
-    async def set_push_info(self, on: bool) -> None:
+    async def set_push_info(self, on: bool):
+        """Set push info for the user.
+
+        :param on: Whether to enable or disable push notifications.
+        """
         await self._auth_lib.refresh_if_should()
 
         url = "https://api.wyzecam.com/app/user/set_push_info"
@@ -76,6 +98,10 @@ class BaseService:
         check_for_errors_standard(self, response_json)
 
     async def get_user_profile(self) -> Dict[Any, Any]:
+        """Get user profile.
+        
+        :return: User profile.
+        """
         await self._auth_lib.refresh_if_should()
 
         payload = olive_create_user_info_payload()
@@ -97,8 +123,7 @@ class BaseService:
         return response_json
 
     async def get_object_list(self) -> List[Device]:
-        """
-        Wraps the api.wyzecam.com/app/v2/home_page/get_object_list endpoint
+        """Wraps the api.wyzecam.com/app/v2/home_page/get_object_list endpoint
 
         :return: List of devices
         """
@@ -126,6 +151,11 @@ class BaseService:
         return BaseService._devices
 
     async def get_updated_params(self, device_mac: str = None) -> Dict[str, Optional[Any]]:
+        """Get updated params for a device.
+        
+        :param device_mac: The device mac to get updated params for.
+        :return: Updated params for the device.
+        """
         if time.time() - BaseService._last_updated_time >= BaseService._min_update_time:
             await self.get_object_list()
             BaseService._last_updated_time = time.time()
@@ -136,8 +166,7 @@ class BaseService:
         return ret_params
 
     async def _get_property_list(self, device: Device) -> List[Tuple[PropertyIDs, Any]]:
-        """
-        Wraps the api.wyzecam.com/app/v2/device/get_property_list endpoint
+        """Wraps the api.wyzecam.com/app/v2/device/get_property_list endpoint
 
         :param device: Device to get properties for
         :return: List of PropertyIDs and values
@@ -178,13 +207,11 @@ class BaseService:
 
         return property_list
 
-    async def _set_property_list(self, device: Device, plist: List[Dict[str, str]]) -> None:
-        """
-        Wraps the api.wyzecam.com/app/v2/device/set_property_list endpoint
+    async def _set_property_list(self, device: Device, plist: List[Dict[str, str]]):
+        """Wraps the api.wyzecam.com/app/v2/device/set_property_list endpoint
 
         :param device: The device for which to set the property(ies)
         :param plist: A list of properties [{"pid": pid, "pvalue": pvalue},...]
-        :return:
         """
 
         await self._auth_lib.refresh_if_should()
@@ -209,9 +236,8 @@ class BaseService:
 
         check_for_errors_standard(self, response_json)
 
-    async def _run_action_list(self, device: Device, plist: List[Dict[Any, Any]]) -> None:
-        """
-        Wraps the api.wyzecam.com/app/v2/auto/run_action_list endpoint
+    async def _run_action_list(self, device: Device, plist: List[Dict[Any, Any]]):
+        """Wraps the api.wyzecam.com/app/v2/auto/run_action_list endpoint
 
         :param device: The device for which to run the action list
         :param plist: A list of properties [{"pid": pid, "pvalue": pvalue},...]
@@ -251,11 +277,10 @@ class BaseService:
         check_for_errors_standard(self, response_json)
 
     async def _get_event_list(self, count: int) -> Dict[Any, Any]:
-        """
-        Wraps the api.wyzecam.com/app/v2/device/get_event_list endpoint
+        """Wraps the api.wyzecam.com/app/v2/device/get_event_list endpoint
 
         :param count: Number of events to gather
-        :return: Response from the server
+        :return: Response from the server after being validated
         """
 
         await self._auth_lib.refresh_if_should()
@@ -292,13 +317,11 @@ class BaseService:
         check_for_errors_standard(self, response_json)
         return response_json
 
-    async def _run_action(self, device: Device, action: str) -> None:
-        """
-        Wraps the api.wyzecam.com/app/v2/auto/run_action endpoint
+    async def _run_action(self, device: Device, action: str):
+        """Wraps the api.wyzecam.com/app/v2/auto/run_action endpoint
 
         :param device: The device for which to run the action
         :param action: The action to run
-        :return:
         """
 
         await self._auth_lib.refresh_if_should()
@@ -325,13 +348,12 @@ class BaseService:
 
         check_for_errors_standard(self, response_json)
     
-    async def _run_action_devicemgmt(self, device: Device, type: str, value: str) -> None:
-        """
-        Wraps the devicemgmt-service-beta.wyze.com/device-management/api/action/run_action endpoint
+    async def _run_action_devicemgmt(self, device: Device, type: str, value: str):
+        """Wraps the devicemgmt-service-beta.wyze.com/device-management/api/action/run_action endpoint
 
         :param device: The device for which to run the action
-        :param state: on or off
-        :return:
+        :param type: The type of action to run
+        :param value: The value of the action to run
         """
 
         await self._auth_lib.refresh_if_should()
@@ -360,9 +382,8 @@ class BaseService:
 
         check_for_errors_iot(self, response_json)
     
-    async def _set_toggle(self, device: Device, toggleType: DeviceMgmtToggleType, state: str) -> None:
-        """
-        Wraps the ai-subscription-service-beta.wyzecam.com/v4/subscription-service/toggle-management endpoint
+    async def _set_toggle(self, device: Device, toggleType: DeviceMgmtToggleType, state: str):
+        """Wraps the ai-subscription-service-beta.wyzecam.com/v4/subscription-service/toggle-management endpoint
 
         :param device: The device for which to get the state
         :param toggleType: Enum for the toggle type
@@ -410,11 +431,10 @@ class BaseService:
         check_for_errors_devicemgmt(self, response_json)
     
     async def _get_iot_prop_devicemgmt(self, device: Device) -> Dict[str, Any]:
-        """
-        Wraps the devicemgmt-service-beta.wyze.com/device-management/api/device-property/get_iot_prop endpoint
+        """Wraps the devicemgmt-service-beta.wyze.com/device-management/api/device-property/get_iot_prop endpoint
 
         :param device: The device for which to get the state
-        :return:
+        :return: Response from the server after being validated
         """
 
         await self._auth_lib.refresh_if_should()
@@ -440,9 +460,8 @@ class BaseService:
 
         return response_json
 
-    async def _set_property(self, device: Device, pid: str, pvalue: str) -> None:
-        """
-        Wraps the api.wyzecam.com/app/v2/device/set_property endpoint
+    async def _set_property(self, device: Device, pid: str, pvalue: str):
+        """Wraps the api.wyzecam.com/app/v2/device/set_property endpoint
 
         :param device: The device for which to set the property
         :param pid: The property id
@@ -471,14 +490,12 @@ class BaseService:
 
         check_for_errors_standard(self, response_json)
 
-    async def _monitoring_profile_active(self, hms_id: str, home: int, away: int) -> None:
-        """
-        Wraps the hms.api.wyze.com/api/v1/monitoring/v1/profile/active endpoint
+    async def _monitoring_profile_active(self, hms_id: str, home: int, away: int):
+        """Wraps the hms.api.wyze.com/api/v1/monitoring/v1/profile/active endpoint
 
         :param hms_id: The hms id
         :param home: 1 for home 0 for not
         :param away: 1 for away 0 for not
-        :return:
         """
         await self._auth_lib.refresh_if_should()
 
@@ -509,8 +526,7 @@ class BaseService:
         check_for_errors_hms(self, response_json)
 
     async def _get_plan_binding_list_by_user(self) -> Dict[Any, Any]:
-        """
-        Wraps the wyze-membership-service.wyzecam.com/platform/v2/membership/get_plan_binding_list_by_user endpoint
+        """Wraps the wyze-membership-service.wyzecam.com/platform/v2/membership/get_plan_binding_list_by_user endpoint
 
         :return: The response to gathering the plan for the current user
         """
@@ -619,6 +635,25 @@ class BaseService:
         payload = ford_create_payload(self._auth_lib.token.access_token, payload, url_path, "get")
 
         url = "https://yd-saas-toc.wyzecam.com/openapi/lock/v1/info"
+
+        response_json = await self._auth_lib.get(url, params=payload)
+
+        check_for_errors_lock(self, response_json)
+
+        return response_json
+
+    async def _get_lock_ble_token(self, device: Device) -> Dict[str, Optional[Any]]:
+        await self._auth_lib.refresh_if_should()
+
+        url_path = "/openapi/lock/v1/ble/token"
+
+        payload = {
+            "uuid": device.mac
+        }
+
+        payload = ford_create_payload(self._auth_lib.token.access_token, payload, url_path, "get")
+
+        url = f"https://yd-saas-toc.wyzecam.com{url_path}"
 
         response_json = await self._auth_lib.get(url, params=payload)
 

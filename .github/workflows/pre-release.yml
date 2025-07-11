@@ -8,22 +8,30 @@ on:
 jobs:
   test-publish:
     runs-on: ubuntu-latest
-    env:
-      POETRY_HOME: /opt/poetry
+
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
-      - name: Install poetry
-        run: |
-          wget https://raw.githubusercontent.com/python-poetry/install.python-poetry.org/d62875fc05fb20062175cd14d19a96dbefa48640/install-poetry.py
-          python install-poetry.py --version 1.8.3
-      - name: Install dependencies
-        run: |
-          $POETRY_HOME/bin/poetry install
-      - name: Configure poetry for Test PyPI repository
-        run: |
-          $POETRY_HOME/bin/poetry config repositories.test-pypi https://test.pypi.org/legacy/
-          $POETRY_HOME/bin/poetry config pypi-token.test-pypi ${{ secrets.TEST_PYPI_TOKEN }}
-      - name: Build and publish package
-        run: |
-          $POETRY_HOME/bin/poetry publish --build -r test-pypi
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a # v4
+        with:
+          enable-cache: true
+
+      - name: Install build & twine
+        run: uv pip install --system build twine
+
+      - name: Sync project dependencies
+        run: uv sync --all-groups
+
+      - name: Build distribution
+        run: uv run python -m build --sdist --wheel
+
+      - name: Publish package to Test PyPI
+        env:
+          TWINE_USERNAME: "__token__"
+          TWINE_PASSWORD: "${{ secrets.TEST_PYPI_TOKEN }}"
+        run: uv run twine upload --repository-url https://test.pypi.org/legacy/ dist/*

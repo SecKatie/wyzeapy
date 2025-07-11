@@ -13,8 +13,8 @@ dependencies = [
     "pycryptodome>=3.21.0,<4.0.0",
 ]
 
-[dependency-groups.dev]
-dependencies = [
+[project.optional-dependencies]
+dev = [
     "pdoc>=15.0.3,<16.0.0",
 ]
 

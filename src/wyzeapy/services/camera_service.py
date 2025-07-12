@@ -13,7 +13,6 @@ from aiohttp import ClientOSError, ContentTypeError
 
 from ..exceptions import UnknownApiError
 from .base_service import BaseService
-from .update_manager import DeviceUpdater
 from ..types import Device, DeviceTypes, Event, PropertyIDs, DeviceMgmtToggleProps
 from ..utils import return_event_for_device, create_pid_pair
 
@@ -123,32 +122,46 @@ class CameraService(BaseService):
         return [Camera(camera.raw_dict) for camera in cameras]
 
     async def turn_on(self, camera: Camera):
-        if (camera.product_model in DEVICEMGMT_API_MODELS): await self._run_action_devicemgmt(camera, "power", "wakeup") # Some camera models use a diffrent api
-        else: await self._run_action(camera, "power_on")
+        if (camera.product_model in DEVICEMGMT_API_MODELS):
+            await self._run_action_devicemgmt(camera, "power", "wakeup")  # Some camera models use a diffrent api
+        else:
+            await self._run_action(camera, "power_on")
 
     async def turn_off(self, camera: Camera):
-        if (camera.product_model in DEVICEMGMT_API_MODELS): await self._run_action_devicemgmt(camera, "power", "sleep") # Some camera models use a diffrent api
-        else: await self._run_action(camera, "power_off")
+        if (camera.product_model in DEVICEMGMT_API_MODELS):
+            await self._run_action_devicemgmt(camera, "power", "sleep")  # Some camera models use a diffrent api
+        else:
+            await self._run_action(camera, "power_off")
 
     async def siren_on(self, camera: Camera):
-        if (camera.product_model in DEVICEMGMT_API_MODELS): await self._run_action_devicemgmt(camera, "siren", "siren-on") # Some camera models use a diffrent api
-        else: await self._run_action(camera, "siren_on")
+        if (camera.product_model in DEVICEMGMT_API_MODELS):
+            await self._run_action_devicemgmt(camera, "siren", "siren-on")  # Some camera models use a diffrent api
+        else:
+            await self._run_action(camera, "siren_on")
 
     async def siren_off(self, camera: Camera):
-        if (camera.product_model in DEVICEMGMT_API_MODELS): await self._run_action_devicemgmt(camera, "siren", "siren-off") # Some camera models use a diffrent api
-        else: await self._run_action(camera, "siren_off")
+        if (camera.product_model in DEVICEMGMT_API_MODELS):
+            await self._run_action_devicemgmt(camera, "siren", "siren-off")  # Some camera models use a diffrent api
+        else:
+            await self._run_action(camera, "siren_off")
 
     # Also controls lamp socket and BCP spotlight
     async def floodlight_on(self, camera: Camera):
-        if (camera.product_model == "AN_RSCW"): await self._run_action_devicemgmt(camera, "spotlight", "1") # Battery cam pro integrated spotlight is controllable
-        elif (camera.product_model in DEVICEMGMT_API_MODELS): await self._run_action_devicemgmt(camera, "floodlight", "1") # Some camera models use a diffrent api
-        else: await self._set_property(camera, PropertyIDs.ACCESSORY.value, "1")
+        if (camera.product_model == "AN_RSCW"):
+            await self._run_action_devicemgmt(camera, "spotlight", "1")  # Battery cam pro integrated spotlight is controllable
+        elif (camera.product_model in DEVICEMGMT_API_MODELS):
+            await self._run_action_devicemgmt(camera, "floodlight", "1")  # Some camera models use a diffrent api
+        else:
+            await self._set_property(camera, PropertyIDs.ACCESSORY.value, "1")
 
     # Also controls lamp socket and BCP spotlight
     async def floodlight_off(self, camera: Camera):
-        if (camera.product_model == "AN_RSCW"): await self._run_action_devicemgmt(camera, "spotlight", "0") # Battery cam pro integrated spotlight is controllable
-        elif (camera.product_model in DEVICEMGMT_API_MODELS): await self._run_action_devicemgmt(camera, "floodlight", "0") # Some camera models use a diffrent api
-        else: await self._set_property(camera, PropertyIDs.ACCESSORY.value, "2")
+        if (camera.product_model == "AN_RSCW"):
+            await self._run_action_devicemgmt(camera, "spotlight", "0")  # Battery cam pro integrated spotlight is controllable
+        elif (camera.product_model in DEVICEMGMT_API_MODELS):
+            await self._run_action_devicemgmt(camera, "floodlight", "0")  # Some camera models use a diffrent api
+        else:
+            await self._set_property(camera, PropertyIDs.ACCESSORY.value, "2")
 
     # Garage door trigger uses run action on all models
     async def garage_door_open(self, camera: Camera):
@@ -158,25 +171,33 @@ class CameraService(BaseService):
         await self._run_action(camera, "garage_door_trigger")
 
     async def turn_on_notifications(self, camera: Camera):
-        if (camera.product_model in DEVICEMGMT_API_MODELS): await self._set_toggle(camera, DeviceMgmtToggleProps.NOTIFICATION_TOGGLE.value, "1")
-        else: await self._set_property(camera, PropertyIDs.NOTIFICATION.value, "1")
+        if (camera.product_model in DEVICEMGMT_API_MODELS):
+            await self._set_toggle(camera, DeviceMgmtToggleProps.NOTIFICATION_TOGGLE.value, "1")
+        else:
+            await self._set_property(camera, PropertyIDs.NOTIFICATION.value, "1")
 
     async def turn_off_notifications(self, camera: Camera):
-        if (camera.product_model in DEVICEMGMT_API_MODELS): await self._set_toggle(camera, DeviceMgmtToggleProps.NOTIFICATION_TOGGLE.value, "0")
-        else: await self._set_property(camera, PropertyIDs.NOTIFICATION.value, "0")
+        if (camera.product_model in DEVICEMGMT_API_MODELS):
+            await self._set_toggle(camera, DeviceMgmtToggleProps.NOTIFICATION_TOGGLE.value, "0")
+        else:
+            await self._set_property(camera, PropertyIDs.NOTIFICATION.value, "0")
 
     # Both properties need to be set on newer cams, older cameras seem to only react
     # to the first property but it doesnt hurt to set both
     async def turn_on_motion_detection(self, camera: Camera):
-        if (camera.product_model in DEVICEMGMT_API_MODELS): await self._set_toggle(camera, DeviceMgmtToggleProps.EVENT_RECORDING_TOGGLE.value, "1")
-        elif (camera.product_model in ["WVOD1", "HL_WCO2"]): await self._set_property_list(camera, [create_pid_pair(PropertyIDs.WCO_MOTION_DETECTION, "1")])
+        if (camera.product_model in DEVICEMGMT_API_MODELS):
+            await self._set_toggle(camera, DeviceMgmtToggleProps.EVENT_RECORDING_TOGGLE.value, "1")
+        elif (camera.product_model in ["WVOD1", "HL_WCO2"]):
+            await self._set_property_list(camera, [create_pid_pair(PropertyIDs.WCO_MOTION_DETECTION, "1")])
         else:
             await self._set_property(camera, PropertyIDs.MOTION_DETECTION.value, "1")
             await self._set_property(camera, PropertyIDs.MOTION_DETECTION_TOGGLE.value, "1")
 
     async def turn_off_motion_detection(self, camera: Camera):
-        if (camera.product_model in DEVICEMGMT_API_MODELS): await self._set_toggle(camera, DeviceMgmtToggleProps.EVENT_RECORDING_TOGGLE.value, "0")
-        elif (camera.product_model in ["WVOD1", "HL_WCO2"]): await self._set_property_list(camera, [create_pid_pair(PropertyIDs.WCO_MOTION_DETECTION, "0")])
+        if (camera.product_model in DEVICEMGMT_API_MODELS):
+            await self._set_toggle(camera, DeviceMgmtToggleProps.EVENT_RECORDING_TOGGLE.value, "0")
+        elif (camera.product_model in ["WVOD1", "HL_WCO2"]):
+            await self._set_property_list(camera, [create_pid_pair(PropertyIDs.WCO_MOTION_DETECTION, "0")])
         else:
             await self._set_property(camera, PropertyIDs.MOTION_DETECTION.value, "0")
             await self._set_property(camera, PropertyIDs.MOTION_DETECTION_TOGGLE.value, "0")

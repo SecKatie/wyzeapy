@@ -1,0 +1,84 @@
+# Coverage configuration for wyzeapy
+# This file configures coverage.py to measure code coverage during testing
+
+[run]
+# Source directory to measure coverage for
+source = src/wyzeapy
+
+# Files and directories to omit from coverage measurement
+omit =
+    tests/*
+    */test_*
+    */__pycache__/*
+    */venv/*
+    */.venv/*
+
+# Include branch coverage
+branch = True
+
+[report]
+# Regexes for lines to exclude from consideration
+exclude_lines =
+    # Have to re-enable the standard pragma
+    pragma: no cover
+    
+    # Don't complain about missing debug-only code:
+    def __repr__
+    if self\.debug
+    if settings\.DEBUG
+    
+    # Don't complain if tests don't hit defensive assertion code:
+    raise AssertionError
+    raise NotImplementedError
+    
+    # Don't complain if non-runnable code isn't run:
+    if 0:
+    if __name__ == .__main__.:
+    if TYPE_CHECKING:
+    
+    # Don't complain about abstract methods, they aren't run:
+    @(abc\.)?abstractmethod
+    @overload
+    
+    # Don't complain about type checking imports
+    from typing import
+    
+    # Don't complain about ellipsis in abstract methods
+    \.\.\.:
+    
+    # Don't complain about type ignore comments
+    # type: ignore
+    # pragma: type: ignore
+    
+    # Don't complain about pass statements
+    pass
+    
+    # Don't complain about docstrings
+    ^\s*""".*"""$
+    ^\s*'''.*'''$
+
+# Fail under this percentage
+fail_under = 75
+
+# Show missing line numbers
+show_missing = True
+
+# Skip covered files
+skip_covered = False
+
+# Precision for percentages
+precision = 2
+
+[html]
+# Directory for HTML coverage reports
+directory = htmlcov
+
+# Show contexts (requires --contexts when running)
+show_contexts = True
+
+# Skip files with 100% coverage in HTML report
+skip_covered = False
+
+[xml]
+# Output file for XML coverage reports
+output = coverage.xml

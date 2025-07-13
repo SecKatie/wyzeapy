@@ -19,10 +19,26 @@ from .exceptions import (
 from .utils import create_password, check_for_errors_standard
 
 _LOGGER = logging.getLogger(__name__)
+"""
+Authentication token data and timing management.
 
+This module handles Wyze API authentication tokens, including expiration
+tracking, automatic refresh timing, and secure request methods in WyzeAuthLib.
+"""
 
 class Token:
-    # Token is apparently good for 24 hours, so refresh after 23
+    """Represents Wyze API access/refresh token and expiration tracking.
+
+    Attributes:
+        _access_token: Current access token string.
+        _refresh_token: Current refresh token string.
+        expired: Flag indicating if the token is marked expired.
+        _refresh_time: Unix timestamp when token should be refreshed.
+
+    Class Attributes:
+        REFRESH_INTERVAL: Time in seconds before token auto-refresh (23h).
+    """
+    # Token is good for 24 hours; schedule refresh after 23 hours
     REFRESH_INTERVAL = 82800
 
     def __init__(self, access_token, refresh_token, refresh_time: float = None):
@@ -79,6 +95,16 @@ class WyzeAuthLib:
         token: Optional[Token] = None,
         token_callback=None,
     ):
+        """Initialize WyzeAuthLib for authentication and token management.
+
+        Args:
+            username: Wyze account email address.
+            password: Plaintext or hashed account password.
+            key_id: Third-party API key ID for Wyze credentials.
+            api_key: Third-party API key for Wyze credentials.
+            token: Existing Token instance for reuse (optional).
+            token_callback: Callback to invoke on token updates.
+        """
         self._username = username
         self._password = password
         self._key_id = key_id
@@ -100,6 +126,22 @@ class WyzeAuthLib:
         token: Optional[Token] = None,
         token_callback=None,
     ):
+        """Factory to instantiate WyzeAuthLib with credentials or existing token.
+
+        Args:
+            username: Wyze account email (optional if token provided).
+            password: Wyze account password (optional if token provided).
+            key_id: Third-party API key ID (required for login).
+            api_key: Third-party API key (required for login).
+            token: Existing Token instance (skip login flow).
+            token_callback: Callback for token refresh events.
+
+        Returns:
+            A configured WyzeAuthLib instance.
+
+        Raises:
+            AttributeError: When neither credentials nor token are provided.
+        """
         self = cls(
             username=username,
             password=password,
@@ -120,6 +162,22 @@ class WyzeAuthLib:
     async def get_token_with_username_password(
         self, username, password, key_id, api_key
     ) -> Token:
+        """Authenticate using email/password and retrieve new Token.
+
+        Args:
+            username: Wyze account email.
+            password: Plaintext Wyze account password.
+            key_id: Third-party API key ID.
+            api_key: Third-party API key.
+
+        Returns:
+            A new Token instance with access and refresh tokens.
+
+        Raises:
+            TwoFactorAuthenticationEnabled: When 2FA is required.
+            AccessTokenError: On invalid credentials.
+            UnknownApiError: For other authentication errors.
+        """
         self._username = username
         self._password = create_password(password)
         self._key_id = key_id
@@ -170,6 +228,14 @@ class WyzeAuthLib:
         return self.token
 
     async def get_token_with_2fa(self, verification_code) -> Token:
+        """Complete login flow using two-factor authentication code.
+
+        Args:
+            verification_code: 6-digit TOTP or SMS code for 2FA.
+
+        Returns:
+            A new Token instance after successful 2FA verification.
+        """
         headers = {
             'Phone-Id': PHONE_ID,
             'User-Agent': APP_INFO,
@@ -204,9 +270,11 @@ class WyzeAuthLib:
 
     @property
     def should_refresh(self) -> bool:
+        """Check whether the current token has reached its refresh time."""
         return time.time() >= self.token.refresh_time
 
     async def refresh_if_should(self):
+        """Refresh the token proactively if expired or past refresh_time."""
         if self.should_refresh or self.token.expired:
             async with self.refresh_lock:
                 if self.should_refresh or self.token.expired:
@@ -214,6 +282,12 @@ class WyzeAuthLib:
                     await self.refresh()
 
     async def refresh(self) -> None:
+        """Exchange the refresh token for a new access token and update internal Token.
+
+        Raises:
+            AccessTokenError: If refresh fails due to invalid refresh token.
+            UnknownApiError: For other errors during refresh.
+        """
         payload = {
             "phone_id": PHONE_ID,
             "app_name": APP_NAME,
@@ -242,6 +316,11 @@ class WyzeAuthLib:
         self.token.expired = False
 
     def sanitize(self, data):
+        """Recursively sanitize sensitive fields in dicts for safe logging.
+
+        Args:
+            data: The dict to sanitize; returned sanitized copy.
+        """
         if data and type(data) is dict:
             # value is unused, but it prevents us from having to split the tuple to check against SANITIZE_FIELDS
             for key, value in data.items():
@@ -252,6 +331,17 @@ class WyzeAuthLib:
         return data
 
     async def post(self, url, json=None, headers=None, data=None) -> Dict[Any, Any]:
+        """Send an HTTP POST request with sanitized logging.
+
+        Args:
+            url: Request URL.
+            json: Optional JSON payload.
+            headers: Optional headers.
+            data: Optional form data.
+
+        Returns:
+            Parsed JSON response.
+        """
         async with ClientSession(connector=TCPConnector(ttl_dns_cache=(30 * 60))) as _session:
             response = await _session.post(url, json=json, headers=headers, data=data)
             # Relocated these below as the sanitization seems to modify the data before it goes to the post.
@@ -269,6 +359,10 @@ class WyzeAuthLib:
             return await response.json()
     
     async def put(self, url, json=None, headers=None, data=None) -> Dict[Any, Any]:
+        """Send an HTTP PUT request with sanitized logging.
+
+        See `post` for parameter details.
+        """
         async with ClientSession(connector=TCPConnector(ttl_dns_cache=(30 * 60))) as _session:
             response = await _session.put(url, json=json, headers=headers, data=data)
             # Relocated these below as the sanitization seems to modify the data before it goes to the post.
@@ -286,6 +380,16 @@ class WyzeAuthLib:
             return await response.json()
 
     async def get(self, url, headers=None, params=None) -> Dict[Any, Any]:
+        """Send an HTTP GET request with sanitized logging.
+
+        Args:
+            url: Request URL.
+            headers: Optional headers.
+            params: Optional query parameters.
+
+        Returns:
+            Parsed JSON response.
+        """
         async with ClientSession(connector=TCPConnector(ttl_dns_cache=(30 * 60))) as _session:
             response = await _session.get(url, params=params, headers=headers)
             # Relocated these below as the sanitization seems to modify the data before it goes to the post.
@@ -302,6 +406,10 @@ class WyzeAuthLib:
             return await response.json()
 
     async def patch(self, url, headers=None, params=None, json=None) -> Dict[Any, Any]:
+        """Send an HTTP PATCH request with sanitized logging.
+
+        See `get`/`post` for parameter details.
+        """
         async with ClientSession(connector=TCPConnector(ttl_dns_cache=(30 * 60))) as _session:
             response = await _session.patch(url, headers=headers, params=params, json=json)
             # Relocated these below as the sanitization seems to modify the data before it goes to the post.
@@ -319,6 +427,16 @@ class WyzeAuthLib:
             return await response.json()
 
     async def delete(self, url, headers=None, json=None) -> Dict[Any, Any]:
+        """Send an HTTP DELETE request with sanitized logging.
+
+        Args:
+            url: Request URL.
+            headers: Optional headers.
+            json: Optional JSON payload.
+
+        Returns:
+            Parsed JSON response.
+        """
         async with ClientSession(connector=TCPConnector(ttl_dns_cache=(30 * 60))) as _session:
             response = await _session.delete(url, headers=headers, json=json)
             # Relocated these below as the sanitization seems to modify the data before it goes to the post.

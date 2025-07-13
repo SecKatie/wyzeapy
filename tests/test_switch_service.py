@@ -1,5 +1,5 @@
 import unittest
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from unittest.mock import AsyncMock, MagicMock
 from wyzeapy.services.switch_service import SwitchService, SwitchUsageService, Switch
 from wyzeapy.types import DeviceTypes, PropertyIDs
@@ -18,6 +18,7 @@ class TestSwitchService(unittest.IsolatedAsyncioTestCase):
         # Create test switch
         self.test_switch = Switch({
             "device_type": DeviceTypes.PLUG.value,
+            "product_type": DeviceTypes.PLUG.value,
             "product_model": "WLPP1",
             "mac": "SWITCH123",
             "nickname": "Test Switch",
@@ -102,6 +103,7 @@ class TestSwitchUsageService(unittest.IsolatedAsyncioTestCase):
         # Create test switch
         self.test_switch = Switch({
             "device_type": DeviceTypes.PLUG.value,
+            "product_type": DeviceTypes.PLUG.value,
             "product_model": "WLPP1",
             "mac": "SWITCH123",
             "nickname": "Test Switch",
@@ -121,17 +123,19 @@ class TestSwitchUsageService(unittest.IsolatedAsyncioTestCase):
 
         # Calculate expected timestamps
         now = datetime.now()
-        expected_end_time = int(datetime.timestamp(now) * 1000)
-        expected_start_time = int(datetime.timestamp(now - timedelta(hours=25)) * 1000)
+        expected_end_time = int(datetime.timestamp(now.astimezone(timezone.utc)) * 1000)
+        expected_start_time = int(datetime.timestamp((now - timedelta(hours=25)).astimezone(timezone.utc)) * 1000)
 
         updated_switch = await self.usage_service.update(self.test_switch)
 
         self.assertEqual(updated_switch.usage_history, mock_usage_data)
-        self.usage_service._get_plug_history.assert_awaited_with(
-            self.test_switch,
-            expected_start_time,
-            expected_end_time
-        )
+        # Allow for a small tolerance in timestamp comparison
+        actual_calls = self.usage_service._get_plug_history.call_args_list
+        self.assertEqual(len(actual_calls), 1)
+        args, kwargs = actual_calls[0]
+        self.assertEqual(args[0], self.test_switch)
+        self.assertAlmostEqual(args[1], expected_start_time, delta=2) # Allow 2ms difference
+        self.assertAlmostEqual(args[2], expected_end_time, delta=2) # Allow 2ms difference
 
 
 if __name__ == '__main__':

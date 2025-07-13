@@ -8,10 +8,26 @@ import hmac
 import urllib.parse
 from typing import Dict, Union, Any
 
+
+"""
+Cryptographic helper functions for creating API request signatures.
+"""
 from .const import FORD_APP_SECRET, OLIVE_SIGNING_SECRET
 
 
-def olive_create_signature(payload: Union[Dict[Any, Any], str], access_token: str) -> str:
+def olive_create_signature(
+    payload: Union[Dict[Any, Any], str], access_token: str
+) -> str:
+    """
+    Compute the olive (Wyze) API request signature using HMAC-MD5.
+
+    Args:
+        payload: The request payload as a dict or raw string.
+        access_token: The access token string for signing.
+
+    Returns:
+        The computed signature as a hex string.
+    """
     if isinstance(payload, dict):
         body = ""
         for item in sorted(payload):
@@ -28,7 +44,20 @@ def olive_create_signature(payload: Union[Dict[Any, Any], str], access_token: st
     return hmac.new(secret.encode(), body.encode(), hashlib.md5).hexdigest()
 
 
-def ford_create_signature(url_path: str, request_method: str, payload: Dict[Any, Any]) -> str:
+def ford_create_signature(
+    url_path: str, request_method: str, payload: Dict[Any, Any]
+) -> str:
+    """
+    Compute the ford (Lock) API request signature using MD5 of URL-encoded buffer.
+
+    Args:
+        url_path: The URL path of the request.
+        request_method: HTTP method (e.g., 'GET', 'POST').
+        payload: The request payload dict to include in the signature.
+
+    Returns:
+        The computed signature as a hex string.
+    """
     string_buf = request_method + url_path
     for entry in sorted(payload.keys()):
         string_buf += entry + "=" + payload[entry] + "&"

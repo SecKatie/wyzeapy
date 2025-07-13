@@ -16,6 +16,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pdoc>=15.0.3,<16.0.0",
+    "pytest>=7.0.0,<8.0.0",
 ]
 
 [build-system]
@@ -25,4 +26,10 @@ build-backend = "hatchling.build"
 [dependency-groups]
 dev = [
     "ruff>=0.12.3",
+    "pytest>=7.0.0,<8.0.0",
+    "coverage>=7.9.2",
 ]
+
+[tool.uv.scripts]
+test = "python -m pytest src/wyzeapy/tests/"
+test-verbose = "python -m pytest -v src/wyzeapy/tests/"

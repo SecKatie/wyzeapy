@@ -15,18 +15,26 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class Bulb(Device):
+    """Bulb class for interacting with Wyze bulbs."""
     _brightness: int = 0
     _color_temp: int = 1800
     _color: Optional[str]
-    enr: str
-
-    on: bool = False
-    cloud_fallback = False
 
     def __init__(self, dictionary: Dict[Any, Any]):
+        """Initialize the Bulb class.
+        
+        :param dictionary: Dictionary containing the device parameters.
+        """
+        self.enr: str = ""
+        """Encryption string"""
+        self.on: bool = False
+        """Variable that stores the on/off state of the bulb"""
+        self.cloud_fallback: bool = False
+        """Variable that stores the cloud fallback state of the bulb"""
         super().__init__(dictionary)
 
         self.ip = self.device_params["ip"]
+        """IP address of the bulb"""
 
         if (
             self.type is DeviceTypes.MESH_LIGHT
@@ -36,34 +44,58 @@ class Bulb(Device):
 
     @property
     def brightness(self) -> int:
+        """Property that stores the brightness of the bulb
+        :return: Brightness of the bulb
+        """
         return self._brightness
 
     @brightness.setter
     def brightness(self, value: int) -> None:
+        """Setter for the brightness property
+        :param value: Brightness of the bulb
+        """
         assert value <= 100
         assert value >= 0
         self._brightness = value
 
     @property
     def color_temp(self) -> int:
+        """Property that stores the color temperature of the bulb
+        :return: Color temperature of the bulb
+        """
         return self._color_temp
 
     @color_temp.setter
     def color_temp(self, value: int) -> None:
+        """Setter for the color temperature property
+        :param value: Color temperature of the bulb
+        """
         self._color_temp = value
 
     @property
     def color(self) -> Optional[str]:
+        """Property that stores the color of the bulb
+        :return: Color of the bulb
+        """
         return self._color
 
     @color.setter
     def color(self, value) -> None:
+        """Setter for the color property
+        :param value: Color of the bulb
+        """
         assert re.match(r"^([A-Fa-f\d]{6}|[A-Fa-f\d]{3})$", value) is not None
         self._color = value
 
 
 class BulbService(BaseService):
+    """Bulb service for interacting with Wyze bulbs."""
     async def update(self, bulb: Bulb) -> Bulb:
+        """Update the bulb object with the latest device parameters.
+        
+        :param bulb: Bulb object to update
+        :return: Updated bulb object
+        """
         # Get updated device_params
         async with BaseService._update_lock:
             bulb.device_params = await self.get_updated_params(bulb.mac)
@@ -98,6 +130,10 @@ class BulbService(BaseService):
         return bulb
 
     async def get_bulbs(self) -> List[Bulb]:
+        """Get a list of all bulbs.
+        
+        :return: List of Bulb objects
+        """
         if self._devices is None:
             self._devices = await self.get_object_list()
 

@@ -8,5 +8,36 @@
 .venv
 __pycache__
 dist/
-.DS_Store
 .dccache
+.env
+
+# Coverage reports
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Testing
+.tox/
+.nox/
+.cache
+nosetests.xml
+coverage/
+
+# Build artifacts
+build/
+*.egg-info/
+*.egg
+
+# IDE
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db

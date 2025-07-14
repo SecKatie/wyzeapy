@@ -6,13 +6,12 @@ SPDX-License-Identifier: GPL-3.0-only
 
 # Wyzeapy
 
-A python library for the (unofficial) Wyze Labs web APIs.
+A Python library for the (unofficial) Wyze Labs web APIs.
 
 ## Used By
 
-This project is used by the [ha-wyzeapi](https://github.com/JoshuaMulliken/ha-wyzeapi) project. Let me know if you are utilizing it so that I can feature your project here!
+This project is used by the [ha-wyzeapi](https://github.com/SecKatie/ha-wyzeapi) project.  Let me know if you are utilizing it so that I can feature your project here!
 
-  
 ## Usage/Examples
 
 Getting logged in:
@@ -42,10 +41,78 @@ if __name__ == "__main__":
 
 [GNU GPLv3](https://choosealicense.com/licenses/gpl-3.0/)
 
-  
+## Author
+
+Developed by Katie Mulliken ([SecKatie](https://github.com/SecKatie))
+
 ## Appendix
 
-[Full doc reference](https://joshuamulliken.github.io/wyzeapy/wyzeapy/) - Please note that I am still working on doc 
-strings so please be patient
+### Testing
 
-  
+This project uses Python's built-in `unittest` framework with `coverage` for code coverage reporting.
+
+#### Prerequisites
+
+First, install the development dependencies:
+
+```bash
+uv sync --group dev
+```
+
+#### Running Tests
+
+**Run all tests:**
+```bash
+.venv/bin/python -m unittest discover tests
+```
+
+**Run tests with verbose output:**
+```bash
+.venv/bin/python -m unittest discover tests -v
+```
+
+**Run a specific test file:**
+```bash
+.venv/bin/python -m unittest tests.test_camera_service
+```
+
+**Run a specific test method:**
+```bash
+.venv/bin/python -m unittest tests.test_camera_service.TestCameraService.test_get_cameras
+```
+
+#### Code Coverage
+
+**Run tests with coverage:**
+```bash
+.venv/bin/coverage run -m unittest discover tests
+```
+
+**View coverage report in terminal:**
+```bash
+.venv/bin/coverage report -m
+```
+
+**Generate HTML coverage report:**
+```bash
+.venv/bin/coverage html
+```
+
+Then open `htmlcov/index.html` in your web browser to view the detailed coverage report.
+
+**One-liner to run tests and view coverage:**
+```bash
+.venv/bin/coverage run -m unittest discover tests && .venv/bin/coverage report -m
+```
+
+### Documentation
+
+Docs are generated using [pdoc](https://pdoc.dev/). To generate docs for this project, run:
+
+```bash
+# Install development dependencies
+uv sync --group dev
+
+# Generate docs
+uv run pdoc --output-dir=docs src/wyzeapy
+```

@@ -6,12 +6,28 @@
 import time
 from typing import Any, Dict
 
+"""
+Factory functions for constructing payloads for various Wyze API endpoints.
+"""
 from .const import FORD_APP_KEY
 from .crypto import ford_create_signature
 
 
-def ford_create_payload(access_token: str, payload: Dict[str, Any],
-                        url_path: str, request_method: str) -> Dict[str, Any]:
+def ford_create_payload(
+    access_token: str, payload: Dict[str, Any], url_path: str, request_method: str
+) -> Dict[str, Any]:
+    """
+    Create a payload for ford (lock) API requests, including signing parameters.
+
+    Args:
+        access_token: User access token string.
+        payload: The base payload dictionary to augment.
+        url_path: The URL path for signature computation.
+        request_method: HTTP method (e.g., 'GET', 'POST').
+
+    Returns:
+        The augmented payload dict with authentication and signature.
+    """
     payload["access_token"] = access_token
     payload["key"] = FORD_APP_KEY
     payload["timestamp"] = str(int(time.time() * 1000))
@@ -20,13 +36,19 @@ def ford_create_payload(access_token: str, payload: Dict[str, Any],
 
 
 def olive_create_get_payload(device_mac: str, keys: str) -> Dict[str, Any]:
+    """
+    Build a GET payload for olive (Wyze) API property retrieval.
+
+    Args:
+        device_mac: The MAC address of the device.
+        keys: Comma-separated property keys to retrieve.
+
+    Returns:
+        Payload dict including keys, device ID, and timestamp nonce.
+    """
     nonce = int(time.time() * 1000)
 
-    return {
-        'keys': keys,
-        'did': device_mac,
-        'nonce': nonce
-    }
+    return {"keys": keys, "did": device_mac, "nonce": nonce}
 
 def olive_create_get_payload_irrigation(device_mac: str) -> Dict[str, Any]:
     nonce = int(time.time() * 1000)
@@ -59,105 +81,139 @@ def olive_create_post_payload_irrigation_quickrun(device_mac: str, zone_number: 
         ]
     }
 
-def olive_create_post_payload(device_mac: str, device_model: str, prop_key: str, value: Any) -> Dict[str, Any]:
+def olive_create_post_payload(
+    device_mac: str, device_model: str, prop_key: str, value: Any
+) -> Dict[str, Any]:
+    """
+    Build a POST payload for olive (Wyze) API property update.
+
+    Args:
+        device_mac: The MAC address of the device.
+        device_model: The model identifier of the device.
+        prop_key: The property key to set.
+        value: The property value to write.
+
+    Returns:
+        Payload dict for setting a single device property.
+    """
     nonce = int(time.time() * 1000)
 
     return {
         "did": device_mac,
         "model": device_model,
-        "props": {
-            prop_key: value
-        },
+        "props": {prop_key: value},
         "is_sub_device": 0,
-        "nonce": str(nonce)
+        "nonce": str(nonce),
     }
 
 
 def olive_create_hms_payload() -> Dict[str, str]:
+    """
+    Build a payload to retrieve the Home Monitoring System (HMS) group data.
+
+    Returns:
+        Payload dict with group_id 'hms' and timestamp nonce.
+    """
     nonce = int(time.time() * 1000)
 
-    return {
-        "group_id": "hms",
-        "nonce": str(nonce)
-    }
+    return {"group_id": "hms", "nonce": str(nonce)}
 
 
 def olive_create_user_info_payload() -> Dict[str, str]:
+    """
+    Build a payload to retrieve user information from the olive (Wyze) API.
+
+    Returns:
+        Payload dict with current timestamp nonce.
+    """
     nonce = int(time.time() * 1000)
 
-    return {
-        "nonce": str(nonce)
-    }
+    return {"nonce": str(nonce)}
 
 
 def olive_create_hms_get_payload(hms_id: str) -> Dict[str, str]:
+    """
+    Build a payload to get HMS data for a specific HMS group ID.
+
+    Args:
+        hms_id: The HMS group identifier.
+
+    Returns:
+        Payload dict including hms_id and timestamp nonce.
+    """
     nonce = int(time.time() * 1000)
-    return {
-        "hms_id": hms_id,
-        "nonce": str(nonce)
-    }
+    return {"hms_id": hms_id, "nonce": str(nonce)}
 
 
 def olive_create_hms_patch_payload(hms_id: str) -> Dict[str, Any]:
-    return {
-        "hms_id": hms_id
-    }
+    """
+    Build a payload for patching (updating) HMS group settings.
+
+    Args:
+        hms_id: The HMS group identifier.
+
+    Returns:
+        Payload dict for HMS patch operations.
+    """
+    return {"hms_id": hms_id}
 
 
 def devicemgmt_create_capabilities_payload(type: str, value: str):
+    """
+    Create a capabilities payload for device management API actions.
+
+    Args:
+        type: The capability type name (e.g., 'floodlight', 'siren').
+        value: The action or value associated with the capability.
+
+    Returns:
+        A dict describing the capability payload segment.
+
+    Raises:
+        NotImplementedError: If the type is not supported.
+    """
     match type:
         case "floodlight":
             return {
                 "iid": 4,
                 "name": "floodlight",
-                "properties": [
-                    {
-                        "prop": "on",
-                        "value": value
-                    }
-                ]
+                "properties": [{"prop": "on", "value": value}],
             }
         case "spotlight":
             return {
                 "iid": 5,
                 "name": "spotlight",
-                "properties": [
-                    {
-                        "prop": "on",
-                        "value": value
-                    }
-                ]
+                "properties": [{"prop": "on", "value": value}],
             }
         case "power":
             return {
-                "functions": [
-                    {
-                        "in": {
-                            "wakeup-live-view": "1"
-                        },
-                        "name": value
-                    }
-                ],
+                "functions": [{"in": {"wakeup-live-view": "1"}, "name": value}],
                 "iid": 1,
-                "name": "iot-device"
+                "name": "iot-device",
             }
         case "siren":
-            return {
-                "functions": [
-                    {
-                        "in": {},
-                        "name": value
-                    }
-                ],
-                "name": "siren"
-            }
+            return {"functions": [{"in": {}, "name": value}], "name": "siren"}
         case _:
-            raise NotImplementedError(f"No action of type ({type}) has been implemented.")
+            raise NotImplementedError(
+                f"No action of type ({type}) has been implemented."
+            )
 
 
 def devicemgmt_get_iot_props_list(model: str):
+    """
+    Get the list of IoT property definitions for a given device model.
+
+    Args:
+        model: The device model identifier (e.g., 'LD_CFP').
+
+    Returns:
+        A list of dicts defining property sets for the device.
+
+    Raises:
+        NotImplementedError: If the model is not recognized.
+    """
     match model:
-        case "LD_CFP": # Floodlight Pro
+        case "LD_CFP":  # Floodlight Pro
             return [
                 {
                     "iid": 2,
@@ -188,8 +244,8 @@ def devicemgmt_get_iot_props_list(model: str):
                         "live-stream-protocol",
                         "ai-push",
                         "voice-template",
-                        "motion-category"
-                    ]
+                        "motion-category",
+                    ],
                 },
                 {
                     "iid": 3,
@@ -204,25 +260,18 @@ def devicemgmt_get_iot_props_list(model: str):
                         "ip",
                         "lon",
                         "hardware-ver",
-                        "public-ip"
-                    ]
+                        "public-ip",
+                    ],
                 },
                 {
                     "iid": 1,
                     "name": "iot-device",
-                    "properties": [
-                        "iot-state",
-                        "iot-power",
-                        "push-switch"
-                    ]
+                    "properties": ["iot-state", "iot-power", "push-switch"],
                 },
                 {
                     "iid": 9,
                     "name": "camera-ai",
-                    "properties": [
-                        "smart-detection-type",
-                        "on"
-                    ]
+                    "properties": ["smart-detection-type", "on"],
                 },
                 {
                     "iid": 4,
@@ -244,8 +293,8 @@ def devicemgmt_get_iot_props_list(model: str):
                         "ambient-light-brightness",
                         "motion-tag",
                         "light-model",
-                        "flash-with-siren"
-                    ]
+                        "flash-with-siren",
+                    ],
                 },
                 {
                     "iid": 11,
@@ -255,8 +304,8 @@ def devicemgmt_get_iot_props_list(model: str):
                         "mode",
                         "brightness",
                         "color",
-                        "color-temperature"
-                    ]
+                        "color-temperature",
+                    ],
                 },
                 {
                     "iid": 8,
@@ -265,8 +314,8 @@ def devicemgmt_get_iot_props_list(model: str):
                         "storage-used-space",
                         "storage-total-space",
                         "storage-status",
-                        "sd-card-playback-enabled"
-                    ]
+                        "sd-card-playback-enabled",
+                    ],
                 },
                 {
                     "iid": 6,
@@ -284,16 +333,10 @@ def devicemgmt_get_iot_props_list(model: str):
                         "motion-warning-interval",
                         "motion-warning-schedule",
                         "motion-warning-sound",
-                        "motion-warning-trigger-setting"
-                    ]
+                        "motion-warning-trigger-setting",
+                    ],
                 },
-                {
-                    "iid": 7,
-                    "name": "siren",
-                    "properties": [
-                        "state"
-                    ]
-                },
+                {"iid": 7, "name": "siren", "properties": ["state"]},
                 {
                     "iid": 5,
                     "name": "wifi",
@@ -301,11 +344,11 @@ def devicemgmt_get_iot_props_list(model: str):
                         "on",
                         "signal-strength",
                         "wifi-ssid",
-                        "wifi-encrypted-password"
-                    ]
-                }
+                        "wifi-encrypted-password",
+                    ],
+                },
             ]
-        case "AN_RSCW": # Battery Cam pro
+        case "AN_RSCW":  # Battery Cam pro
             return [
                 {
                     "iid": 2,
@@ -337,8 +380,8 @@ def devicemgmt_get_iot_props_list(model: str):
                         "voice-template",
                         "rotate-angle",
                         "sound-collection-on",
-                        "ai-push"
-                    ]
+                        "ai-push",
+                    ],
                 },
                 {
                     "iid": 3,
@@ -356,8 +399,8 @@ def devicemgmt_get_iot_props_list(model: str):
                         "device-setting-channel",
                         "network-connection-mode",
                         "hardware-ver",
-                        "public-ip"
-                    ]
+                        "public-ip",
+                    ],
                 },
                 {
                     "iid": 1,
@@ -366,8 +409,8 @@ def devicemgmt_get_iot_props_list(model: str):
                         "iot-state",
                         "iot-power",
                         "push-switch",
-                        "mqtt-check"
-                    ]
+                        "mqtt-check",
+                    ],
                 },
                 {
                     "iid": 7,
@@ -377,25 +420,15 @@ def devicemgmt_get_iot_props_list(model: str):
                         "low-battery-push",
                         "power-source",
                         "charging-status",
-                        "power-saving"
-                    ]
+                        "power-saving",
+                    ],
                 },
                 {
                     "iid": 12,
                     "name": "camera-ai",
-                    "properties": [
-                        "smart-detection-type",
-                        "on"
-                    ]
+                    "properties": ["smart-detection-type", "on"],
                 },
-                {
-                    "iid": 8,
-                    "name": "indicator-light",
-                    "properties": [
-                        "on",
-                        "mode"
-                    ]
-                },
+                {"iid": 8, "name": "indicator-light", "properties": ["on", "mode"]},
                 {
                     "iid": 6,
                     "name": "memory-card-management",
@@ -403,8 +436,8 @@ def devicemgmt_get_iot_props_list(model: str):
                         "storage-used-space",
                         "storage-total-space",
                         "storage-status",
-                        "sd-card-playback-enabled"
-                    ]
+                        "sd-card-playback-enabled",
+                    ],
                 },
                 {
                     "iid": 11,
@@ -417,25 +450,11 @@ def devicemgmt_get_iot_props_list(model: str):
                         "motion-zone-block-size",
                         "motion-zone-selected-block",
                         "edge-detection-type",
-                        "motion-tag"
-                    ]
+                        "motion-tag",
+                    ],
                 },
-                {
-                    "iid": 4,
-                    "name": "siren",
-                    "properties": [
-                        "state",
-                        "siren-on-ts"
-                    ]
-                },
-                {
-                    "iid": 14,
-                    "name": "solar-panel",
-                    "properties": [
-                        "enabled",
-                        "on"
-                    ]
-                },
+                {"iid": 4, "name": "siren", "properties": ["state", "siren-on-ts"]},
+                {"iid": 14, "name": "solar-panel", "properties": ["enabled", "on"]},
                 {
                     "iid": 5,
                     "name": "spotlight",
@@ -446,8 +465,8 @@ def devicemgmt_get_iot_props_list(model: str):
                         "motion-activate-light-switch",
                         "sunset-to-sunrise",
                         "motion-activate-light-schedule",
-                        "trigger-source"
-                    ]
+                        "trigger-source",
+                    ],
                 },
                 {
                     "iid": 9,
@@ -456,11 +475,11 @@ def devicemgmt_get_iot_props_list(model: str):
                         "on",
                         "signal-strength",
                         "wifi-ssid",
-                        "wifi-encrypted-password"
-                    ]
-                }
+                        "wifi-encrypted-password",
+                    ],
+                },
             ]
-        case "GW_GC1": # OG
+        case "GW_GC1":  # OG
             return [
                 {
                     "iid": 2,
@@ -492,8 +511,8 @@ def devicemgmt_get_iot_props_list(model: str):
                         "voice-template",
                         "rotate-angle",
                         "sound-collection-on",
-                        "ai-push"
-                    ]
+                        "ai-push",
+                    ],
                 },
                 {
                     "iid": 3,
@@ -511,8 +530,8 @@ def devicemgmt_get_iot_props_list(model: str):
                         "device-setting-channel",
                         "network-connection-mode",
                         "hardware-ver",
-                        "public-ip"
-                    ]
+                        "public-ip",
+                    ],
                 },
                 {
                     "iid": 1,
@@ -521,25 +540,15 @@ def devicemgmt_get_iot_props_list(model: str):
                         "iot-state",
                         "iot-power",
                         "push-switch",
-                        "mqtt-check"
-                    ]
+                        "mqtt-check",
+                    ],
                 },
                 {
                     "iid": 12,
                     "name": "camera-ai",
-                    "properties": [
-                        "smart-detection-type",
-                        "on"
-                    ]
+                    "properties": ["smart-detection-type", "on"],
                 },
-                {
-                    "iid": 8,
-                    "name": "indicator-light",
-                    "properties": [
-                        "on",
-                        "mode"
-                    ]
-                },
+                {"iid": 8, "name": "indicator-light", "properties": ["on", "mode"]},
                 {
                     "iid": 6,
                     "name": "memory-card-management",
@@ -547,8 +556,8 @@ def devicemgmt_get_iot_props_list(model: str):
                         "storage-used-space",
                         "storage-total-space",
                         "storage-status",
-                        "sd-card-playback-enabled"
-                    ]
+                        "sd-card-playback-enabled",
+                    ],
                 },
                 {
                     "iid": 11,
@@ -561,17 +570,10 @@ def devicemgmt_get_iot_props_list(model: str):
                         "motion-zone-block-size",
                         "motion-zone-selected-block",
                         "edge-detection-type",
-                        "motion-tag"
-                    ]
+                        "motion-tag",
+                    ],
                 },
-                {
-                    "iid": 4,
-                    "name": "siren",
-                    "properties": [
-                        "state",
-                        "siren-on-ts"
-                    ]
-                },
+                {"iid": 4, "name": "siren", "properties": ["state", "siren-on-ts"]},
                 {
                     "iid": 5,
                     "name": "spotlight",
@@ -582,8 +584,8 @@ def devicemgmt_get_iot_props_list(model: str):
                         "motion-activate-light-switch",
                         "sunset-to-sunrise",
                         "motion-activate-light-schedule",
-                        "trigger-source"
-                    ]
+                        "trigger-source",
+                    ],
                 },
                 {
                     "iid": 9,
@@ -592,9 +594,11 @@ def devicemgmt_get_iot_props_list(model: str):
                         "on",
                         "signal-strength",
                         "wifi-ssid",
-                        "wifi-encrypted-password"
-                    ]
-                }
+                        "wifi-encrypted-password",
+                    ],
+                },
             ]
         case _:
-            raise NotImplementedError(f"No iot props for model ({model}) have been defined.")
+            raise NotImplementedError(
+                f"No iot props for model ({model}) have been defined."
+            )

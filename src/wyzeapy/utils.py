@@ -13,6 +13,10 @@ from Crypto.Cipher import AES
 from .exceptions import ParameterError, AccessTokenError, UnknownApiError
 from .types import ResponseCodes, PropertyIDs, Device, Event
 
+"""
+Utility functions for encryption, decryption, error handling, and common Wyze API tasks.
+"""
+
 PADDING = bytes.fromhex("05")
 
 
@@ -44,7 +48,7 @@ def wyze_encrypt(key, text):
     cipher = AES.new(key, AES.MODE_CBC, iv)
     enc = cipher.encrypt(raw)
     b64_enc = base64.b64encode(enc).decode("ascii")
-    b64_enc = b64_enc.replace("/", r'\/')
+    b64_enc = b64_enc.replace("/", r"\/")
     return b64_enc
 
 
@@ -57,7 +61,7 @@ def wyze_decrypt(key, enc):
     """
     enc = base64.b64decode(enc)
 
-    key = key.encode('ascii')
+    key = key.encode("ascii")
     iv = key
     cipher = AES.new(key, AES.MODE_CBC, iv)
     decrypt = cipher.decrypt(enc)
@@ -68,44 +72,79 @@ def wyze_decrypt(key, enc):
 
 
 def wyze_decrypt_cbc(key: str, enc_hex_str: str) -> str:
+    """
+    Decrypt a hex-encoded string using Wyze's CBC decryption with MD5 based key.
+
+    Args:
+        key: The secret key string.
+        enc_hex_str: The encrypted data as a hex string.
+
+    Returns:
+        The decrypted plaintext string.
+    """
     key_hash = hashlib.md5(key.encode("utf-8")).digest()
-    
+
     iv = b"0123456789ABCDEF"
     cipher = AES.new(key_hash, AES.MODE_CBC, iv)
-    
+
     encrypted_bytes = binascii.unhexlify(enc_hex_str)
     decrypted_bytes = cipher.decrypt(encrypted_bytes)
-    
+
     # PKCS5Padding
     padding_length = decrypted_bytes[-1]
     return decrypted_bytes[:-padding_length].decode()
 
 
 def create_password(password: str) -> str:
+    """
+    Derive the Wyze API password hash using a triple MD5 hashing scheme.
+
+    Args:
+        password: The plain user password string.
+
+    Returns:
+        The hashed password as a hex string.
+    """
     hex1 = hashlib.md5(password.encode()).hexdigest()
     hex2 = hashlib.md5(hex1.encode()).hexdigest()
     return hashlib.md5(hex2.encode()).hexdigest()
 
 
 def check_for_errors_standard(service, response_json: Dict[str, Any]) -> None:
-    response_code = response_json['code']
+    """
+    Check for standard Wyze API error codes and raise exceptions as needed.
+
+    Args:
+        service: The service instance triggering the call.
+        response_json: The JSON response from the API.
+    """
+    response_code = response_json["code"]
     if response_code != ResponseCodes.SUCCESS.value:
         if response_code == ResponseCodes.PARAMETER_ERROR.value:
-            raise ParameterError(response_code, response_json['msg'])
+            raise ParameterError(response_code, response_json["msg"])
         elif response_code == ResponseCodes.ACCESS_TOKEN_ERROR.value:
             service._auth_lib.token.expired = True
-            raise AccessTokenError(response_code, "Access Token expired, attempting to refresh")
+            raise AccessTokenError(
+                response_code, "Access Token expired, attempting to refresh"
+            )
         elif response_code == ResponseCodes.DEVICE_OFFLINE.value:
             return
         else:
-            raise UnknownApiError(response_code, response_json['msg'])
+            raise UnknownApiError(response_code, response_json["msg"])
 
 
 def check_for_errors_lock(service, response_json: Dict[str, Any]) -> None:
-    if response_json['ErrNo'] != 0:
-        if response_json.get('code') == ResponseCodes.PARAMETER_ERROR.value:
+    """
+    Check for lock-specific API errors and raise exceptions as needed.
+
+    Args:
+        service: The lock service instance.
+        response_json: The JSON response from the lock API.
+    """
+    if response_json["ErrNo"] != 0:
+        if response_json.get("code") == ResponseCodes.PARAMETER_ERROR.value:
             raise ParameterError(response_json)
-        elif response_json.get('code') == ResponseCodes.ACCESS_TOKEN_ERROR.value:
+        elif response_json.get("code") == ResponseCodes.ACCESS_TOKEN_ERROR.value:
             service._auth_lib.token.expired = True
             raise AccessTokenError("Access Token expired, attempting to refresh")
         else:
@@ -113,8 +152,15 @@ def check_for_errors_lock(service, response_json: Dict[str, Any]) -> None:
 
 
 def check_for_errors_devicemgmt(service, response_json: Dict[Any, Any]) -> None:
-    if response_json['status'] != 200:
-        if "InvalidTokenError>" in response_json['response']['errors'][0]['message']:
+    """
+    Check for device management API errors and raise exceptions as needed.
+
+    Args:
+        service: The device management service instance.
+        response_json: The JSON response from the device management API.
+    """
+    if response_json["status"] != 200:
+        if "InvalidTokenError>" in response_json["response"]["errors"][0]["message"]:
             service._auth_lib.token.expired = True
             raise AccessTokenError("Access Token expired, attempting to refresh")
         else:
@@ -122,20 +168,45 @@ def check_for_errors_devicemgmt(service, response_json: Dict[Any, Any]) -> None:
 
 
 def check_for_errors_iot(service, response_json: Dict[Any, Any]) -> None:
-    if response_json['code'] != 1:
-        if str(response_json['code']) == ResponseCodes.ACCESS_TOKEN_ERROR.value:
+    """
+    Check for IoT API errors and raise exceptions as needed.
+
+    Args:
+        service: The IoT service instance.
+        response_json: The JSON response from the IoT API.
+    """
+    if response_json["code"] != 1:
+        if str(response_json["code"]) == ResponseCodes.ACCESS_TOKEN_ERROR.value:
             service._auth_lib.token.expired = True
             raise AccessTokenError("Access Token expired, attempting to refresh")
         else:
             raise UnknownApiError(response_json)
 
+
 def check_for_errors_hms(service, response_json: Dict[Any, Any]) -> None:
-    if response_json['message'] is None:
+    """
+    Check for home monitoring system (HMS) API errors and raise exceptions as needed.
+
+    Args:
+        service: The HMS service instance.
+        response_json: The JSON response from the HMS API.
+    """
+    if response_json["message"] is None:
         service._auth_lib.token.expired = True
         raise AccessTokenError("Access Token expired, attempting to refresh")
 
 
 def return_event_for_device(device: Device, events: List[Event]) -> Optional[Event]:
+    """
+    Retrieve the most recent event matching a given device from a list of events.
+
+    Args:
+        device: The device to match against event.device_mac.
+        events: List of events to search.
+
+    Returns:
+        The first matching Event or None if no match is found.
+    """
     for event in events:
         if event.device_mac == device.mac:
             return event
@@ -144,4 +215,14 @@ def return_event_for_device(device: Device, events: List[Event]) -> Optional[Eve
 
 
 def create_pid_pair(pid_enum: PropertyIDs, value: str) -> Dict[str, str]:
+    """
+    Create a property ID/value pair dictionary for API payloads.
+
+    Args:
+        pid_enum: PropertyIDs enum member for the property.
+        value: The value to set for the property.
+
+    Returns:
+        A dict with 'pid' and 'pvalue' keys for the Wyze API.
+    """
     return {"pid": pid_enum.value, "pvalue": value}

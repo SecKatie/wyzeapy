@@ -31,7 +31,7 @@ jobs:
     
     - name: Run tests with coverage
       run: |
-        coverage run -m pytest src/wyzeapy/tests/ -v
+        coverage run -m pytest tests/ -v
         coverage report
     
     - name: Generate coverage report

@@ -36,8 +36,12 @@ class SwitchService(BaseService):
         if self._devices is None:
             self._devices = await self.get_object_list()
 
-        devices = [device for device in self._devices if device.type is DeviceTypes.PLUG or
-                   device.type is DeviceTypes.OUTDOOR_PLUG]
+        devices = [
+            device
+            for device in self._devices
+            if device.type is DeviceTypes.PLUG
+            or device.type is DeviceTypes.OUTDOOR_PLUG
+        ]
         return [Switch(switch.raw_dict) for switch in devices]
 
     async def turn_on(self, switch: Switch):

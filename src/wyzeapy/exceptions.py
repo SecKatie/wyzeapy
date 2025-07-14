@@ -7,13 +7,12 @@
 Custom exception classes for Wyzeapy API interactions.
 """
 
+
 class ActionNotSupported(Exception):
     """Raised when an unsupported action is requested for a device type."""
 
     def __init__(self, device_type: str):
-        message = (
-            f"The action specified is not supported by device type: {device_type}"
-        )
+        message = f"The action specified is not supported by device type: {device_type}"
         super().__init__(message)
 
 

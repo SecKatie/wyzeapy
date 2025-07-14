@@ -29,7 +29,3 @@ dev = [
     "pytest>=7.0.0,<9.0.0",
     "coverage>=7.9.2",
 ]
-
-[tool.uv.scripts]
-test = "python -m pytest src/wyzeapy/tests/"
-test-verbose = "python -m pytest -v src/wyzeapy/tests/"

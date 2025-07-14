@@ -30,6 +30,7 @@ class DeviceUpdater(object):
         update_in: Countdown ticks until the next update is due.
         updates_per_interval: Number of updates allowed per INTERVAL.
     """
+
     device: Device = field(compare=False)
     service: Any = field(compare=False)
     update_in: int  # Countdown ticks until this device should be updated
@@ -86,6 +87,7 @@ class UpdateManager:
     Maintains a priority queue of DeviceUpdater instances and enforces rate
     limits and fair distribution of update calls across devices.
     """
+
     updaters = []
     removed_updaters = []
     mutex = threading.Lock()

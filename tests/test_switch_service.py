@@ -16,35 +16,37 @@ class TestSwitchService(unittest.IsolatedAsyncioTestCase):
         self.switch_service._set_property = AsyncMock()
 
         # Create test switch
-        self.test_switch = Switch({
-            "device_type": DeviceTypes.PLUG.value,
-            "product_type": DeviceTypes.PLUG.value,
-            "product_model": "WLPP1",
-            "mac": "SWITCH123",
-            "nickname": "Test Switch",
-            "device_params": {"ip": "192.168.1.100"},
-            "raw_dict": {}
-        })
+        self.test_switch = Switch(
+            {
+                "device_type": DeviceTypes.PLUG.value,
+                "product_type": DeviceTypes.PLUG.value,
+                "product_model": "WLPP1",
+                "mac": "SWITCH123",
+                "nickname": "Test Switch",
+                "device_params": {"ip": "192.168.1.100"},
+                "raw_dict": {},
+            }
+        )
 
     async def test_update_switch_on(self):
         self.switch_service._get_property_list.return_value = [
             (PropertyIDs.ON, "1"),
-            (PropertyIDs.AVAILABLE, "1")
+            (PropertyIDs.AVAILABLE, "1"),
         ]
 
         updated_switch = await self.switch_service.update(self.test_switch)
-        
+
         self.assertTrue(updated_switch.on)
         self.assertTrue(updated_switch.available)
 
     async def test_update_switch_off(self):
         self.switch_service._get_property_list.return_value = [
             (PropertyIDs.ON, "0"),
-            (PropertyIDs.AVAILABLE, "1")
+            (PropertyIDs.AVAILABLE, "1"),
         ]
 
         updated_switch = await self.switch_service.update(self.test_switch)
-        
+
         self.assertFalse(updated_switch.on)
         self.assertTrue(updated_switch.available)
 
@@ -54,7 +56,7 @@ class TestSwitchService(unittest.IsolatedAsyncioTestCase):
         mock_plug.raw_dict = {
             "device_type": DeviceTypes.PLUG.value,
             "product_model": "WLPP1",
-            "mac": "PLUG123"
+            "mac": "PLUG123",
         }
 
         mock_outdoor_plug = MagicMock()
@@ -62,16 +64,16 @@ class TestSwitchService(unittest.IsolatedAsyncioTestCase):
         mock_outdoor_plug.raw_dict = {
             "device_type": DeviceTypes.OUTDOOR_PLUG.value,
             "product_model": "WLPPO",
-            "mac": "OUTPLUG456"
+            "mac": "OUTPLUG456",
         }
 
         self.switch_service.get_object_list.return_value = [
             mock_plug,
-            mock_outdoor_plug
+            mock_outdoor_plug,
         ]
 
         switches = await self.switch_service.get_switches()
-        
+
         self.assertEqual(len(switches), 2)
         self.assertIsInstance(switches[0], Switch)
         self.assertIsInstance(switches[1], Switch)
@@ -80,17 +82,13 @@ class TestSwitchService(unittest.IsolatedAsyncioTestCase):
     async def test_turn_on(self):
         await self.switch_service.turn_on(self.test_switch)
         self.switch_service._set_property.assert_awaited_with(
-            self.test_switch,
-            PropertyIDs.ON.value,
-            "1"
+            self.test_switch, PropertyIDs.ON.value, "1"
         )
 
     async def test_turn_off(self):
         await self.switch_service.turn_off(self.test_switch)
         self.switch_service._set_property.assert_awaited_with(
-            self.test_switch,
-            PropertyIDs.ON.value,
-            "0"
+            self.test_switch, PropertyIDs.ON.value, "0"
         )
 
 
@@ -101,30 +99,35 @@ class TestSwitchUsageService(unittest.IsolatedAsyncioTestCase):
         self.usage_service._get_plug_history = AsyncMock()
 
         # Create test switch
-        self.test_switch = Switch({
-            "device_type": DeviceTypes.PLUG.value,
-            "product_type": DeviceTypes.PLUG.value,
-            "product_model": "WLPP1",
-            "mac": "SWITCH123",
-            "nickname": "Test Switch",
-            "device_params": {"ip": "192.168.1.100"},
-            "raw_dict": {}
-        })
+        self.test_switch = Switch(
+            {
+                "device_type": DeviceTypes.PLUG.value,
+                "product_type": DeviceTypes.PLUG.value,
+                "product_model": "WLPP1",
+                "mac": "SWITCH123",
+                "nickname": "Test Switch",
+                "device_params": {"ip": "192.168.1.100"},
+                "raw_dict": {},
+            }
+        )
 
     async def test_update_usage_history(self):
         mock_usage_data = {
             "total_power": 100,
             "time_series": [
                 {"power": 10, "timestamp": 1234567890},
-                {"power": 20, "timestamp": 1234567891}
-            ]
+                {"power": 20, "timestamp": 1234567891},
+            ],
         }
         self.usage_service._get_plug_history.return_value = mock_usage_data
 
         # Calculate expected timestamps
         now = datetime.now()
         expected_end_time = int(datetime.timestamp(now.astimezone(timezone.utc)) * 1000)
-        expected_start_time = int(datetime.timestamp((now - timedelta(hours=25)).astimezone(timezone.utc)) * 1000)
+        expected_start_time = int(
+            datetime.timestamp((now - timedelta(hours=25)).astimezone(timezone.utc))
+            * 1000
+        )
 
         updated_switch = await self.usage_service.update(self.test_switch)
 
@@ -134,9 +137,13 @@ class TestSwitchUsageService(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(actual_calls), 1)
         args, kwargs = actual_calls[0]
         self.assertEqual(args[0], self.test_switch)
-        self.assertAlmostEqual(args[1], expected_start_time, delta=2) # Allow 2ms difference
-        self.assertAlmostEqual(args[2], expected_end_time, delta=2) # Allow 2ms difference
+        self.assertAlmostEqual(
+            args[1], expected_start_time, delta=2
+        )  # Allow 2ms difference
+        self.assertAlmostEqual(
+            args[2], expected_end_time, delta=2
+        )  # Allow 2ms difference
 
 
-if __name__ == '__main__':
-    unittest.main() 
+if __name__ == "__main__":
+    unittest.main()

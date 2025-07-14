@@ -1,4 +1,3 @@
-
 import unittest
 from unittest.mock import MagicMock
 from wyzeapy.utils import (
@@ -13,13 +12,13 @@ from wyzeapy.utils import (
     check_for_errors_iot,
     check_for_errors_hms,
     return_event_for_device,
-    create_pid_pair
+    create_pid_pair,
 )
 from wyzeapy.exceptions import ParameterError, AccessTokenError, UnknownApiError
 from wyzeapy.types import ResponseCodes, PropertyIDs, Device, Event
 
-class TestUtils(unittest.TestCase):
 
+class TestUtils(unittest.TestCase):
     def test_pad(self):
         self.assertEqual(len(pad("short")), 16)
         self.assertEqual(len(pad("eightchr")), 16)
@@ -30,7 +29,7 @@ class TestUtils(unittest.TestCase):
         text = "Hello, Wyze!"
         encrypted_text = wyze_encrypt(key, text)
         decrypted_text = wyze_decrypt(key, encrypted_text)
-        self.assertEqual(decrypted_text.strip(b'\x05'.decode('ascii')), text)
+        self.assertEqual(decrypted_text.strip(b"\x05".decode("ascii")), text)
 
     def test_wyze_decrypt_cbc(self):
         key = "testkey"
@@ -54,16 +53,16 @@ class TestUtils(unittest.TestCase):
         # This will likely fail decryption unless it's a real encrypted string
         # but it will cover the unhexlify and subsequent lines.
         try:
-            decrypted = wyze_decrypt_cbc(key, encrypted_hex)
+            wyze_decrypt_cbc(key, encrypted_hex)
             # Assert something about decrypted if it's a known value
-        except Exception as e:
+        except Exception:
             # Expecting decryption to fail with this dummy data, but the lines should be covered
             pass
 
     def test_create_password(self):
         password = "mysecretpassword"
         hashed_password = create_password(password)
-        self.assertEqual(len(hashed_password), 32) # MD5 hash is 32 hex characters
+        self.assertEqual(len(hashed_password), 32)  # MD5 hash is 32 hex characters
 
     def test_check_for_errors_standard_success(self):
         mock_service = MagicMock()
@@ -73,21 +72,30 @@ class TestUtils(unittest.TestCase):
 
     def test_check_for_errors_standard_parameter_error(self):
         mock_service = MagicMock()
-        response_json = {"code": ResponseCodes.PARAMETER_ERROR.value, "msg": "Invalid param"}
+        response_json = {
+            "code": ResponseCodes.PARAMETER_ERROR.value,
+            "msg": "Invalid param",
+        }
         with self.assertRaises(ParameterError):
             check_for_errors_standard(mock_service, response_json)
 
     def test_check_for_errors_standard_access_token_error(self):
         mock_service = MagicMock()
         mock_service._auth_lib.token = MagicMock()
-        response_json = {"code": ResponseCodes.ACCESS_TOKEN_ERROR.value, "msg": "Token expired"}
+        response_json = {
+            "code": ResponseCodes.ACCESS_TOKEN_ERROR.value,
+            "msg": "Token expired",
+        }
         with self.assertRaises(AccessTokenError):
             check_for_errors_standard(mock_service, response_json)
         self.assertTrue(mock_service._auth_lib.token.expired)
 
     def test_check_for_errors_standard_device_offline(self):
         mock_service = MagicMock()
-        response_json = {"code": ResponseCodes.DEVICE_OFFLINE.value, "msg": "Device offline"}
+        response_json = {
+            "code": ResponseCodes.DEVICE_OFFLINE.value,
+            "msg": "Device offline",
+        }
         check_for_errors_standard(mock_service, response_json)
         # No exception should be raised
 
@@ -132,14 +140,20 @@ class TestUtils(unittest.TestCase):
     def test_check_for_errors_devicemgmt_access_token_error(self):
         mock_service = MagicMock()
         mock_service._auth_lib.token = MagicMock()
-        response_json = {"status": 401, "response": {"errors": [{"message": "InvalidTokenError>"}]}}
+        response_json = {
+            "status": 401,
+            "response": {"errors": [{"message": "InvalidTokenError>"}]},
+        }
         with self.assertRaises(AccessTokenError):
             check_for_errors_devicemgmt(mock_service, response_json)
         self.assertTrue(mock_service._auth_lib.token.expired)
 
     def test_check_for_errors_devicemgmt_unknown_api_error(self):
         mock_service = MagicMock()
-        response_json = {"status": 500, "response": {"errors": [{"message": "Some other error"}]}}
+        response_json = {
+            "status": 500,
+            "response": {"errors": [{"message": "Some other error"}]},
+        }
         with self.assertRaises(UnknownApiError):
             check_for_errors_devicemgmt(mock_service, response_json)
 
@@ -201,4 +215,3 @@ class TestUtils(unittest.TestCase):
         expected = {"pid": "P3", "pvalue": "1"}
         result = create_pid_pair(pid_enum, value)
         self.assertEqual(result, expected)
-

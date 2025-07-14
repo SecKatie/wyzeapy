@@ -8,11 +8,11 @@ import hmac
 import urllib.parse
 from typing import Dict, Union, Any
 
+from .const import FORD_APP_SECRET, OLIVE_SIGNING_SECRET
 
 """
 Cryptographic helper functions for creating API request signatures.
 """
-from .const import FORD_APP_SECRET, OLIVE_SIGNING_SECRET
 
 
 def olive_create_signature(

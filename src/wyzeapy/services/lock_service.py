@@ -27,7 +27,9 @@ class LockService(BaseService):
             ble_token_info = await self._get_lock_ble_token(lock)
             lock.raw_dict["token"] = ble_token_info["token"]
             lock.ble_id = ble_token_info["token"]["id"]
-            lock.ble_token = wyze_decrypt_cbc(FORD_APP_SECRET[:16], ble_token_info["token"]["token"])
+            lock.ble_token = wyze_decrypt_cbc(
+                FORD_APP_SECRET[:16], ble_token_info["token"]["token"]
+            )
 
         lock.available = lock.raw_dict.get("onoff_line") == 1
         lock.door_open = lock.raw_dict.get("door_open_status") == 1
@@ -37,13 +39,13 @@ class LockService(BaseService):
         locker_status = lock.raw_dict.get("locker_status")
         # Check if the door is locked
         lock.unlocked = locker_status.get("hardlock") == 2
-        
+
         # Reset unlocking and locking if needed
         if lock.unlocked and lock.unlocking:
             lock.unlocking = False
         if not lock.unlocked and lock.locking:
             lock.locking = False
-        
+
         return lock
 
     async def get_locks(self):

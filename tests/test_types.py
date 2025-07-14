@@ -1,9 +1,23 @@
-
 import unittest
-from wyzeapy.types import Group, DeviceTypes, Device, Sensor, PropertyIDs, WallSwitchProps, ThermostatProps, ResponseCodes, ResponseCodesLock, File, Event, HMSStatus, DeviceMgmtToggleType, DeviceMgmtToggleProps
+from wyzeapy.types import (
+    Group,
+    DeviceTypes,
+    Device,
+    Sensor,
+    PropertyIDs,
+    WallSwitchProps,
+    ThermostatProps,
+    ResponseCodes,
+    ResponseCodesLock,
+    File,
+    Event,
+    HMSStatus,
+    DeviceMgmtToggleType,
+    DeviceMgmtToggleProps,
+)
+
 
 class TestTypes(unittest.TestCase):
-
     def test_group_init_and_repr(self):
         data = {"group_id": "123", "group_name": "MyGroup"}
         group = Group(data)
@@ -12,7 +26,13 @@ class TestTypes(unittest.TestCase):
         self.assertEqual(str(group), "<Group: 123, MyGroup>")
 
     def test_device_init_and_repr(self):
-        data = {"product_type": "Light", "product_model": "WL1", "mac": "ABC", "nickname": "MyLight", "device_params": {}}
+        data = {
+            "product_type": "Light",
+            "product_model": "WL1",
+            "mac": "ABC",
+            "nickname": "MyLight",
+            "device_params": {},
+        }
         device = Device(data)
         self.assertFalse(device.available)
         self.assertEqual(device.product_type, "Light")
@@ -23,17 +43,32 @@ class TestTypes(unittest.TestCase):
         self.assertEqual(str(device), "<Device: DeviceTypes.LIGHT, ABC>")
 
     def test_device_type_unknown(self):
-        data = {"product_type": "UnknownType", "product_model": "UM1", "mac": "DEF", "nickname": "Unknown", "device_params": {}}
+        data = {
+            "product_type": "UnknownType",
+            "product_model": "UM1",
+            "mac": "DEF",
+            "nickname": "Unknown",
+            "device_params": {},
+        }
         device = Device(data)
         self.assertEqual(device.type, DeviceTypes.UNKNOWN)
 
     def test_sensor_init(self):
-        data = {"product_type": "ContactSensor", "product_model": "CS1", "mac": "GHI", "nickname": "MySensor", "device_params": {"open_close_state": 0}}
+        data = {
+            "product_type": "ContactSensor",
+            "product_model": "CS1",
+            "mac": "GHI",
+            "nickname": "MySensor",
+            "device_params": {"open_close_state": 0},
+        }
         sensor = Sensor(data)
         self.assertEqual(sensor.type, DeviceTypes.CONTACT_SENSOR)
 
     def test_sensor_activity_detected_contact_sensor(self):
-        data = {"product_type": "ContactSensor", "device_params": {"open_close_state": 1}}
+        data = {
+            "product_type": "ContactSensor",
+            "device_params": {"open_close_state": 1},
+        }
         sensor = Sensor(data)
         self.assertEqual(sensor.activity_detected, 1)
 
@@ -70,7 +105,18 @@ class TestTypes(unittest.TestCase):
         self.assertEqual(ResponseCodesLock.SUCCESS.value, 0)
 
     def test_file_init(self):
-        data = {"file_id": "f1", "type": 1, "url": "http://example.com/img.jpg", "status": 0, "en_algorithm": 0, "en_password": "", "is_ai": 0, "ai_tag_list": [], "ai_url": "", "file_params": {}}
+        data = {
+            "file_id": "f1",
+            "type": 1,
+            "url": "http://example.com/img.jpg",
+            "status": 0,
+            "en_algorithm": 0,
+            "en_password": "",
+            "is_ai": 0,
+            "ai_tag_list": [],
+            "ai_url": "",
+            "file_params": {},
+        }
         file_obj = File(data)
         self.assertEqual(file_obj.type, "Image")
 
@@ -79,7 +125,23 @@ class TestTypes(unittest.TestCase):
         self.assertEqual(file_obj.type, "Video")
 
     def test_event_init(self):
-        data = {"event_id": "e1", "device_mac": "mac1", "device_model": "model1", "event_category": 1, "event_value": "val1", "event_ts": 123, "event_ack_result": 0, "is_feedback_correct": 0, "is_feedback_face": 0, "is_feedback_person": 0, "file_list": [], "event_params": {}, "recognized_instance_list": [], "tag_list": [], "read_state": 0}
+        data = {
+            "event_id": "e1",
+            "device_mac": "mac1",
+            "device_model": "model1",
+            "event_category": 1,
+            "event_value": "val1",
+            "event_ts": 123,
+            "event_ack_result": 0,
+            "is_feedback_correct": 0,
+            "is_feedback_face": 0,
+            "is_feedback_person": 0,
+            "file_list": [],
+            "event_params": {},
+            "recognized_instance_list": [],
+            "tag_list": [],
+            "read_state": 0,
+        }
         event = Event(data)
         self.assertEqual(event.event_id, "e1")
         self.assertEqual(event.device_mac, "mac1")
@@ -93,4 +155,6 @@ class TestTypes(unittest.TestCase):
         self.assertEqual(toggle_type.toggleId, "toggle")
 
     def test_device_mgmt_toggle_props_enum(self):
-        self.assertEqual(DeviceMgmtToggleProps.NOTIFICATION_TOGGLE.value.pageId, "cam_device_notify")
+        self.assertEqual(
+            DeviceMgmtToggleProps.NOTIFICATION_TOGGLE.value.pageId, "cam_device_notify"
+        )

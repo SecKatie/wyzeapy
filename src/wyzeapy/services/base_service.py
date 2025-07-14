@@ -58,11 +58,11 @@ _LOGGER = logging.getLogger(__name__)
 
 class BaseService:
     """Base service class providing common functionality for all Wyze device services.
-    
+
     This abstract base class provides shared infrastructure for interacting with Wyze devices
     including authentication, API communication, device discovery, and automatic updates.
     All device-specific service classes (BulbService, SwitchService, etc.) inherit from this class.
-    
+
     **Key Features:**
     * Device discovery and caching via `get_object_list()`
     * Automatic device updates with configurable intervals
@@ -70,19 +70,19 @@ class BaseService:
     * Common API endpoint wrappers for device properties and actions
     * Error handling and validation for API responses
     * Support for both cloud and local device communication
-    
+
     **Common Usage Patterns:**
     ```python
     # Device services inherit from BaseService
     bulb_service = await wyze.bulb_service
-    
+
     # Get all devices (cached after first call)
     devices = await bulb_service.get_object_list()
-    
+
     # Register for automatic updates
     bulb_service.register_updater(device, interval=30)
     ```
-    
+
     **Note:** This class is not meant to be instantiated directly - use device-specific services instead.
     """
 
@@ -99,7 +99,7 @@ class BaseService:
 
     def __init__(self, auth_lib: WyzeAuthLib):
         """Initialize the base service with authentication.
-        
+
         **Args:**
         * `auth_lib` (WyzeAuthLib): The authentication library for API access
         """
@@ -108,10 +108,10 @@ class BaseService:
     @staticmethod
     async def start_update_manager():
         """Start the global update manager for automatic device state updates.
-        
-        This initializes the background update system that handles periodic 
+
+        This initializes the background update system that handles periodic
         device state refreshes for all registered devices.
-        
+
         **Example:**
         ```python
         await BaseService.start_update_manager()
@@ -125,14 +125,14 @@ class BaseService:
 
     def register_updater(self, device: Device, interval):
         """Register a device for automatic status updates at a specified interval.
-        
+
         This enables automatic background updates for a device, periodically refreshing
         its state from the Wyze servers. Useful for keeping device status current.
-        
+
         **Args:**
         * `device` (Device): The device to register for automatic updates
         * `interval` (int): Update interval in seconds
-        
+
         **Example:**
         ```python
         # Update device state every 30 seconds
@@ -145,13 +145,13 @@ class BaseService:
 
     def unregister_updater(self, device: Device):
         """Stop automatic updates for a device.
-        
+
         This removes a device from the automatic update system to stop
         background status refreshes.
-        
+
         **Args:**
         * `device` (Device): The device to stop updating automatically
-        
+
         **Example:**
         ```python
         service.unregister_updater(device)
@@ -215,20 +215,20 @@ class BaseService:
 
     async def get_object_list(self) -> List[Device]:
         """Discover and retrieve all devices associated with the Wyze account.
-        
-        This method fetches all devices from the Wyze API and caches them for 
+
+        This method fetches all devices from the Wyze API and caches them for
         efficient subsequent access. Results are shared across all service instances.
-        
+
         **Returns:**
         * `List[Device]`: List of all discovered Wyze devices
-        
+
         **Example:**
         ```python
         devices = await service.get_object_list()
         for device in devices:
             print(f"Device: {device.nickname} ({device.product_model})")
         ```
-        
+
         **Note:** Results are cached and shared across all BaseService instances
         """
         await self._auth_lib.refresh_if_should()

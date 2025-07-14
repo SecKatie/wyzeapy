@@ -744,14 +744,14 @@ requires-dist = [
     { name = "aiohttp", specifier = ">=3.11.12,<4.0.0" },
     { name = "pdoc", marker = "extra == 'dev'", specifier = ">=15.0.3,<16.0.0" },
     { name = "pycryptodome", specifier = ">=3.21.0,<4.0.0" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.0.0,<8.0.0" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.0.0,<9.0.0" },
 ]
 provides-extras = ["dev"]
 
 [package.metadata.requires-dev]
 dev = [
     { name = "coverage", specifier = ">=7.9.2" },
-    { name = "pytest", specifier = ">=7.0.0,<8.0.0" },
+    { name = "pytest", specifier = ">=7.0.0,<9.0.0" },
     { name = "ruff", specifier = ">=0.12.3" },
 ]
 

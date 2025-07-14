@@ -12,22 +12,24 @@ class TestBulbService(unittest.IsolatedAsyncioTestCase):
         self.bulb_service.get_updated_params = AsyncMock()
 
     async def test_update_bulb_basic_properties(self):
-        mock_bulb = Bulb({
-            "device_type": "Light",
-            "product_model": "WLPA19",
-            "mac": "TEST123",
-            "raw_dict": {},
-            "device_params": {"ip": "192.168.1.100"},
-            "prop_map": {},
-            'product_type': DeviceTypes.MESH_LIGHT.value
-        })
+        mock_bulb = Bulb(
+            {
+                "device_type": "Light",
+                "product_model": "WLPA19",
+                "mac": "TEST123",
+                "raw_dict": {},
+                "device_params": {"ip": "192.168.1.100"},
+                "prop_map": {},
+                "product_type": DeviceTypes.MESH_LIGHT.value,
+            }
+        )
 
         # Mock the property list response
         self.bulb_service._get_property_list.return_value = [
             (PropertyIDs.BRIGHTNESS, "75"),
             (PropertyIDs.COLOR_TEMP, "4000"),
             (PropertyIDs.ON, "1"),
-            (PropertyIDs.AVAILABLE, "1")
+            (PropertyIDs.AVAILABLE, "1"),
         ]
 
         updated_bulb = await self.bulb_service.update(mock_bulb)
@@ -38,15 +40,17 @@ class TestBulbService(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(updated_bulb.available)
 
     async def test_update_bulb_lightstrip_properties(self):
-        mock_bulb = Bulb({
-            "device_type": "Light",
-            "product_model": "WLST19",
-            "mac": "TEST456",
-            "raw_dict": {},
-            "device_params": {"ip": "192.168.1.101"},
-            "prop_map": {},
-            'product_type': DeviceTypes.LIGHTSTRIP.value
-        })
+        mock_bulb = Bulb(
+            {
+                "device_type": "Light",
+                "product_model": "WLST19",
+                "mac": "TEST456",
+                "raw_dict": {},
+                "device_params": {"ip": "192.168.1.101"},
+                "prop_map": {},
+                "product_type": DeviceTypes.LIGHTSTRIP.value,
+            }
+        )
         mock_bulb.product_type = DeviceTypes.LIGHTSTRIP
 
         # Mock the property list response with the corrected color format (no # symbol)
@@ -56,7 +60,7 @@ class TestBulbService(unittest.IsolatedAsyncioTestCase):
             (PropertyIDs.LIGHTSTRIP_EFFECTS, "rainbow"),
             (PropertyIDs.LIGHTSTRIP_MUSIC_MODE, "1"),
             (PropertyIDs.ON, "1"),
-            (PropertyIDs.AVAILABLE, "1")
+            (PropertyIDs.AVAILABLE, "1"),
         ]
 
         updated_bulb = await self.bulb_service.update(mock_bulb)
@@ -69,21 +73,23 @@ class TestBulbService(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(updated_bulb.available)
 
     async def test_update_bulb_sun_match(self):
-        mock_bulb = Bulb({
-            "device_type": "Light",
-            "product_model": "WLPA19",
-            "mac": "TEST789",
-            "raw_dict": {},
-            "device_params": {"ip": "192.168.1.102"},
-            "prop_map": {},
-            'product_type': DeviceTypes.MESH_LIGHT.value
-        })
+        mock_bulb = Bulb(
+            {
+                "device_type": "Light",
+                "product_model": "WLPA19",
+                "mac": "TEST789",
+                "raw_dict": {},
+                "device_params": {"ip": "192.168.1.102"},
+                "prop_map": {},
+                "product_type": DeviceTypes.MESH_LIGHT.value,
+            }
+        )
 
         # Mock the property list response
         self.bulb_service._get_property_list.return_value = [
             (PropertyIDs.SUN_MATCH, "1"),
             (PropertyIDs.ON, "1"),
-            (PropertyIDs.AVAILABLE, "1")
+            (PropertyIDs.AVAILABLE, "1"),
         ]
 
         updated_bulb = await self.bulb_service.update(mock_bulb)
@@ -93,20 +99,22 @@ class TestBulbService(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(updated_bulb.available)
 
     async def test_update_bulb_invalid_color_temp(self):
-        mock_bulb = Bulb({
-            "device_type": "Light",
-            "product_model": "WLPA19",
-            "mac": "TEST101",
-            "raw_dict": {},
-            "device_params": {"ip": "192.168.1.103"},
-            "prop_map": {},
-            'product_type': DeviceTypes.MESH_LIGHT.value
-        })
+        mock_bulb = Bulb(
+            {
+                "device_type": "Light",
+                "product_model": "WLPA19",
+                "mac": "TEST101",
+                "raw_dict": {},
+                "device_params": {"ip": "192.168.1.103"},
+                "prop_map": {},
+                "product_type": DeviceTypes.MESH_LIGHT.value,
+            }
+        )
 
         # Mock the property list response with invalid color temp
         self.bulb_service._get_property_list.return_value = [
             (PropertyIDs.COLOR_TEMP, "invalid"),
-            (PropertyIDs.ON, "1")
+            (PropertyIDs.ON, "1"),
         ]
 
         updated_bulb = await self.bulb_service.update(mock_bulb)
@@ -123,7 +131,7 @@ class TestBulbService(unittest.IsolatedAsyncioTestCase):
             "product_model": "WLPA19",
             "device_params": {"ip": "192.168.1.104"},
             "prop_map": {},
-            'product_type': DeviceTypes.MESH_LIGHT.value
+            "product_type": DeviceTypes.MESH_LIGHT.value,
         }
 
         self.bulb_service.get_object_list = AsyncMock(return_value=[mock_device])

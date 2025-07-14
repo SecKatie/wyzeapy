@@ -7,6 +7,7 @@
 Type definitions and data models for Wyzeapy library, including devices, events,
 and API response code enums.
 """
+
 from enum import Enum
 from typing import Union, List, Dict, Any
 

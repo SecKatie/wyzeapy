@@ -54,9 +54,9 @@ class TestUtils(unittest.TestCase):
         # This will likely fail decryption unless it's a real encrypted string
         # but it will cover the unhexlify and subsequent lines.
         try:
-            decrypted = wyze_decrypt_cbc(key, encrypted_hex)
+            wyze_decrypt_cbc(key, encrypted_hex)
             # Assert something about decrypted if it's a known value
-        except Exception as e:
+        except Exception:
             # Expecting decryption to fail with this dummy data, but the lines should be covered
             pass
 

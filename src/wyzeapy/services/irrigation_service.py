@@ -168,7 +168,7 @@ class IrrigationService(BaseService):
         if self._devices is None:
             self._devices = await self.get_object_list()
 
-        irrigations = [device for device in self._devices if device.type is DeviceTypes.IRRIGATION and "BS_WK1" in device.product_model]
+        irrigations = [device for device in self._devices if device.type == DeviceTypes.IRRIGATION and "BS_WK1" in device.product_model]
 
         return [Irrigation(irrigation.raw_dict) for irrigation in irrigations]
 

@@ -162,17 +162,6 @@ class IrrigationProps(Enum):
     IP = "IP"
     SN = "sn"
     SSID = "ssid"
-    #APP_VERSION = "app_version"
-    #SETUP_STATE = "setup_state"
-    #WIFI_MAC = "wifi_mac"
-    #ENABLE_SCHEDULES = "enable_schedules"
-    #SKIP_LOW_TEMP = "skip_low_temp"
-    #SKIP_WIND = "skip_wind"
-    #SKIP_RAIN = "skip_rain"
-    #SKIP_SATURATION = "skip_saturation"
-    #EXIT_SETUP_ZONETEST = "exit_setup_zonetest"
-    #EXIT_SETUP_SCHEDULE = "exit_setup_schedule"
-    #SETUP_STEP = "setup_step"
 
 
 class ResponseCodes(Enum):

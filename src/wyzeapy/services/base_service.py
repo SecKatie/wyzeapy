@@ -900,7 +900,6 @@ class BaseService:
 
         return response_json["data"]["usage_record_list"]
 
-# todo
     async def _get_zone_by_device(self, url: str, device: Device) -> Dict[Any, Any]:
         await self._auth_lib.refresh_if_should()
 
@@ -947,7 +946,6 @@ class BaseService:
 
         return response_json
 
-# todo
     async def _start_zone(self, url: str, device: Device, zone_number: int, duration: int) -> Dict[Any, Any]:
         await self._auth_lib.refresh_if_should()
 

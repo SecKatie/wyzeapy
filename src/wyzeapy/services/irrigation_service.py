@@ -65,49 +65,11 @@ class Zone:
         # the default value grabs the wyze smart_duration but all further updates
         # are managed through the home assistant state
         self.quickrun_duration: int = dictionary.get('smart_duration', 600)
-        #self.device_id: str = "device_id"
-        #self.did_uid: str = "did_uid"
-        #self.latest_events = latest_events[]
-        #self.schedules = schedules[]
-        #self.zone_disable_reason: null
-        #self.camera_device_id: null
-        #self.garden_subtypes: null
-        #self.manual_crop_coefficient: null
-        #self.manual_root_depth: null
-        #self.number_of_sprinkler_heads: null
-        #self.photo_url: null
-        #self.smart_schedule_id: null
-        #self.tree_subtypes: null
-        #self.area: float = 500.0
-        #self.available_water_capacity: float = 0.2
-        #self.crop_coefficient: float = 0.8
-        #self.crop_type: CropType = CropType.COOL_SEASON_GRASS
-        #self.efficiency: float = 80.0
-        #self.exposure_type: ExposureType = ExposureType.LOTS_OF_SUN
-        #self.flow_rate: float = 1.5
-        #self.manage_allow_depletion: float = 50.0
-        #self.nozzle_type: NozzleType = NozzleType.FIXED_SPRAY_HEAD
-        #self.root_depth: float = 6.0
-        #self.slope_type: SlopeType = SlopeType.FLAT
-        #self.soil_moisture_level_at_end_of_day_pct: float = 0.5
-        #self.soil_type: SoilType = SoilType.CLAY_LOAM
-        #self.updated: int = 1715919469326
-        #self.user_id: str = "user_id"
-        #self.wired: bool = True
-
 
 class Irrigation(Device):
     def __init__(self, dictionary: Dict[Any, Any]):
         super().__init__(dictionary)
 
-        #self.wiring
-        #self.sensor
-        #self.notification_enable
-        #self.notification_watering_begins
-        #self.notification_watering_ends
-        #self.notification_watering_is_skipped
-        #self.offline_schedule
-        #self.quickrun_durations
         # the below comes from the get_iot_prop call
         self.RSSI: int = 0
         self.IP: str = "192.168.1.100"
@@ -115,15 +77,6 @@ class Irrigation(Device):
         self.available: bool = False
         self.ssid: str = "ssid"
         # the below comes from the device_info call
-        #self.enable_schedules: bool = False
-        #self.skip_low_temp: int = 32
-        #self.skip_wind: int = 20
-        #self.skip_rain: float = 0.125
-        #self.skip_saturation: int = 100
-        #self.exit_setup_zonetest: int = 0
-        #self.exit_setup_schedule: int = 0
-        #self.setup_step: int = 2
-        # the zones for the device go here
         self.zones: List[Zone] = []
 
 

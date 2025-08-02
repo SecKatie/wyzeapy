@@ -7,6 +7,9 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      id-token: write  # Required for trusted publishing
 
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -20,17 +23,8 @@ jobs:
         with:
           enable-cache: true
 
-      - name: Install build & twine
-        run: uv pip install --system build twine
-
-      - name: Sync project dependencies
-        run: uv sync --all-groups
-
       - name: Build distribution
-        run: uv run python -m build --sdist --wheel
+        run: uv build
 
       - name: Publish package to PyPI
-        env:
-          TWINE_USERNAME: "__token__"
-          TWINE_PASSWORD: "${{ secrets.PYPI_TOKEN }}"
-        run: uv run twine upload dist/*
+        run: uv publish

@@ -717,7 +717,7 @@ wheels = [
 
 [[package]]
 name = "wyzeapy"
-version = "0.5.28"
+version = "0.5.30"
 source = { editable = "." }
 dependencies = [
     { name = "aiodns" },

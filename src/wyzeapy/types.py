@@ -48,6 +48,7 @@ class DeviceTypes(Enum):
     SENSE_V2_GATEWAY = "S1Gateway"
     KEYPAD = "Keypad"
     LIGHTSTRIP = "LightStrip"
+    IRRIGATION = "Common"
 
 
 class Device:
@@ -154,6 +155,14 @@ class ThermostatProps(Enum):
     DEV_HOLD = "dev_hold"
     TEMP_UNIT = "temp_unit"
     ASW_HOLD = "asw_hold"
+
+
+class IrrigationProps(Enum):
+    IOT_STATE = "iot_state"  # Connection state: connected, disconnected
+    RSSI = "RSSI"
+    IP = "IP"
+    SN = "sn"
+    SSID = "ssid"
 
 
 class ResponseCodes(Enum):

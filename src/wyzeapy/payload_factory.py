@@ -82,6 +82,14 @@ def olive_create_post_payload_irrigation_quickrun(device_mac: str, zone_number: 
         ]
     }
 
+def olive_create_get_payload_irrigation_schedule_runs(device_mac: str) -> Dict[str, Any]:
+    nonce = int(time.time() * 1000)
+
+    return {
+        'device_id': device_mac,
+        'nonce': str(nonce)
+    }
+
 def olive_create_post_payload(
     device_mac: str, device_model: str, prop_key: str, value: Any
 ) -> Dict[str, Any]:

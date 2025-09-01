@@ -532,5 +532,202 @@ class TestIrrigationServiceEdgeCases(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(self.test_irrigation.zones), 0)
         self.assertEqual(result, self.test_irrigation)
 
+    async def test_get_schedule_runs_running_schedule(self):
+        # Mock the _get_schedule_runs method
+        self.irrigation_service._get_schedule_runs = AsyncMock()
+        mock_response = {
+            'data': {
+                'schedules': [
+                    {
+                        'schedule_state': 'running',
+                        'schedule_name': 'Morning Watering',
+                        'zone_runs': [
+                            {
+                                'zone_number': 3,
+                                'zone_name': 'Backyard S',
+                                'start_ts': 1746376809,
+                                'end_ts': 1746376869
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+        self.irrigation_service._get_schedule_runs.return_value = mock_response
+
+        # Test get_schedule_runs with running schedule
+        result = await self.irrigation_service.get_schedule_runs(self.test_irrigation)
+
+        # Verify the call was made with correct parameters
+        self.irrigation_service._get_schedule_runs.assert_awaited_once_with(
+            "https://wyze-lockwood-service.wyzecam.com/plugin/irrigation/schedule_runs",
+            self.test_irrigation,
+            limit=2
+        )
+
+        # Verify the result
+        expected_result = {
+            'running': True,
+            'zone_number': 3,
+            'zone_name': 'Backyard S'
+        }
+        self.assertEqual(result, expected_result)
+
+    async def test_get_schedule_runs_past_schedule(self):
+        # Mock the _get_schedule_runs method
+        self.irrigation_service._get_schedule_runs = AsyncMock()
+        mock_response = {
+            'data': {
+                'schedules': [
+                    {
+                        'schedule_state': 'past',
+                        'schedule_name': 'Evening Watering',
+                        'zone_runs': [
+                            {
+                                'zone_number': 1,
+                                'zone_name': 'Front Yard',
+                                'start_ts': 1746376809,
+                                'end_ts': 1746376869
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+        self.irrigation_service._get_schedule_runs.return_value = mock_response
+
+        # Test get_schedule_runs with past schedule
+        result = await self.irrigation_service.get_schedule_runs(self.test_irrigation)
+
+        # Verify the result
+        expected_result = {'running': False}
+        self.assertEqual(result, expected_result)
+
+    async def test_get_schedule_runs_no_schedules(self):
+        # Mock the _get_schedule_runs method
+        self.irrigation_service._get_schedule_runs = AsyncMock()
+        mock_response = {
+            'data': {
+                'schedules': []
+            }
+        }
+        self.irrigation_service._get_schedule_runs.return_value = mock_response
+
+        # Test get_schedule_runs with no schedules
+        result = await self.irrigation_service.get_schedule_runs(self.test_irrigation)
+
+        # Verify the result
+        expected_result = {'running': False}
+        self.assertEqual(result, expected_result)
+
+    async def test_get_schedule_runs_no_data(self):
+        # Mock the _get_schedule_runs method
+        self.irrigation_service._get_schedule_runs = AsyncMock()
+        mock_response = {}  # No data field
+        self.irrigation_service._get_schedule_runs.return_value = mock_response
+
+        # Test get_schedule_runs with no data
+        with self.assertLogs('wyzeapy.services.irrigation_service', level='WARNING') as log:
+            result = await self.irrigation_service.get_schedule_runs(self.test_irrigation)
+
+        # Verify the result
+        expected_result = {'running': False}
+        self.assertEqual(result, expected_result)
+
+        # Verify warning was logged
+        self.assertIn("No schedule data found in response for device IRRIG123", log.output[0])
+
+    async def test_get_schedule_runs_multiple_schedules_running_first(self):
+        # Mock the _get_schedule_runs method
+        self.irrigation_service._get_schedule_runs = AsyncMock()
+        mock_response = {
+            'data': {
+                'schedules': [
+                    {
+                        'schedule_state': 'running',
+                        'schedule_name': 'Morning Watering',
+                        'zone_runs': [
+                            {
+                                'zone_number': 2,
+                                'zone_name': 'Side Yard',
+                                'start_ts': 1746376809,
+                                'end_ts': 1746376869
+                            }
+                        ]
+                    },
+                    {
+                        'schedule_state': 'past',
+                        'schedule_name': 'Evening Watering',
+                        'zone_runs': [
+                            {
+                                'zone_number': 1,
+                                'zone_name': 'Front Yard',
+                                'start_ts': 1746376809,
+                                'end_ts': 1746376869
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+        self.irrigation_service._get_schedule_runs.return_value = mock_response
+
+        # Test get_schedule_runs with multiple schedules, first one running
+        result = await self.irrigation_service.get_schedule_runs(self.test_irrigation)
+
+        # Verify the result uses the first running schedule
+        expected_result = {
+            'running': True,
+            'zone_number': 2,
+            'zone_name': 'Side Yard'
+        }
+        self.assertEqual(result, expected_result)
+
+    async def test_get_schedule_runs_multiple_schedules_running_second(self):
+        # Mock the _get_schedule_runs method
+        self.irrigation_service._get_schedule_runs = AsyncMock()
+        mock_response = {
+            'data': {
+                'schedules': [
+                    {
+                        'schedule_state': 'past',
+                        'schedule_name': 'Evening Watering',
+                        'zone_runs': [
+                            {
+                                'zone_number': 1,
+                                'zone_name': 'Front Yard',
+                                'start_ts': 1746376809,
+                                'end_ts': 1746376869
+                            }
+                        ]
+                    },
+                    {
+                        'schedule_state': 'running',
+                        'schedule_name': 'Morning Watering',
+                        'zone_runs': [
+                            {
+                                'zone_number': 4,
+                                'zone_name': 'Garden Area',
+                                'start_ts': 1746376809,
+                                'end_ts': 1746376869
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+        self.irrigation_service._get_schedule_runs.return_value = mock_response
+
+        # Test get_schedule_runs with multiple schedules, second one running
+        result = await self.irrigation_service.get_schedule_runs(self.test_irrigation)
+
+        # Verify the result uses the first running schedule found
+        expected_result = {
+            'running': True,
+            'zone_number': 4,
+            'zone_name': 'Garden Area'
+        }
+        self.assertEqual(result, expected_result)
+
 if __name__ == '__main__':
     unittest.main() 

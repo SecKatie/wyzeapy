@@ -187,3 +187,38 @@ class IrrigationService(BaseService):
         """Get zones for a device."""
         url = "https://wyze-lockwood-service.wyzecam.com/plugin/irrigation/zone"
         return await self._get_zone_by_device(url, device)
+
+    async def get_schedule_runs(self, device: Device) -> Dict[Any, Any]:
+        """Get schedule runs for an irrigation device.
+        
+        Args:
+            device: The irrigation device
+            
+        Returns:
+            Dict containing running status and zone information if running
+        """
+        url = "https://wyze-lockwood-service.wyzecam.com/plugin/irrigation/schedule_runs"
+        response = await self._get_schedule_runs(url, device, limit=2)
+        
+        # Process the response and return simplified payload
+        result = {"running": False}
+        
+        if 'data' in response and 'schedules' in response['data']:
+            schedules = response['data']['schedules']
+            for schedule in schedules:
+                schedule_state = schedule.get('schedule_state')
+                
+                if schedule_state == 'running':
+                    result["running"] = True
+                    # Get zone information from zone_runs
+                    zone_runs = schedule.get('zone_runs')
+                    # Use the first zone run for zone info
+                    zone_run = zone_runs[0]
+                    result["zone_number"] = zone_run.get('zone_number')
+                    result["zone_name"] = zone_run.get('zone_name')
+                    break  # Found a running schedule, no need to check others
+        else:
+            _LOGGER.warning("No schedule data found in response for device %s", device.mac)
+                        
+        return result
+    

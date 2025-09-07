@@ -39,6 +39,7 @@ from ..payload_factory import (
     olive_create_get_payload_irrigation,
     olive_create_post_payload_irrigation_stop,
     olive_create_post_payload_irrigation_quickrun,
+    olive_create_get_payload_irrigation_schedule_runs,
 )
 from ..types import PropertyIDs, Device, DeviceMgmtToggleType
 from ..utils import (
@@ -906,13 +907,13 @@ class BaseService:
         payload = olive_create_get_payload_irrigation(device.mac)
         signature = olive_create_signature(payload, self._auth_lib.token.access_token)
         headers = {
-            'Accept-Encoding': 'gzip',
-            'User-Agent': 'myapp',
-            'appid': OLIVE_APP_ID,
-            'appinfo': APP_INFO,
-            'phoneid': PHONE_ID,
-            'access_token': self._auth_lib.token.access_token,
-            'signature2': signature
+            "Accept-Encoding": "gzip",
+            "User-Agent": "myapp",
+            "appid": OLIVE_APP_ID,
+            "appinfo": APP_INFO,
+            "phoneid": PHONE_ID,
+            "access_token": self._auth_lib.token.access_token,
+            "signature2": signature,
         }
 
         response_json = await self._auth_lib.get(url, headers=headers, params=payload)
@@ -921,50 +922,87 @@ class BaseService:
 
         return response_json
 
-
-    async def _stop_running_schedule(self, url: str, device: Device, action: str) -> Dict[Any, Any]:
+    async def _stop_running_schedule(
+        self, url: str, device: Device, action: str
+    ) -> Dict[Any, Any]:
         await self._auth_lib.refresh_if_should()
 
         payload = olive_create_post_payload_irrigation_stop(device.mac, action)
-        signature = olive_create_signature(json.dumps(payload, separators=(',', ':')),
-                                           self._auth_lib.token.access_token)
+        signature = olive_create_signature(
+            json.dumps(payload, separators=(",", ":")),
+            self._auth_lib.token.access_token,
+        )
         headers = {
-            'Accept-Encoding': 'gzip',
-            'Content-Type': 'application/json',
-            'User-Agent': 'myapp',
-            'appid': OLIVE_APP_ID,
-            'appinfo': APP_INFO,
-            'phoneid': PHONE_ID,
-            'access_token': self._auth_lib.token.access_token,
-            'signature2': signature
+            "Accept-Encoding": "gzip",
+            "Content-Type": "application/json",
+            "User-Agent": "myapp",
+            "appid": OLIVE_APP_ID,
+            "appinfo": APP_INFO,
+            "phoneid": PHONE_ID,
+            "access_token": self._auth_lib.token.access_token,
+            "signature2": signature,
         }
 
-        payload_str = json.dumps(payload, separators=(',', ':'))
-        response_json = await self._auth_lib.post(url, headers=headers, data=payload_str)
+        payload_str = json.dumps(payload, separators=(",", ":"))
+        response_json = await self._auth_lib.post(
+            url, headers=headers, data=payload_str
+        )
 
         check_for_errors_iot(self, response_json)
 
         return response_json
 
-    async def _start_zone(self, url: str, device: Device, zone_number: int, duration: int) -> Dict[Any, Any]:
+    async def _start_zone(
+        self, url: str, device: Device, zone_number: int, duration: int
+    ) -> Dict[Any, Any]:
         await self._auth_lib.refresh_if_should()
 
-        payload = olive_create_post_payload_irrigation_quickrun(device.mac, zone_number, duration)
-        signature = olive_create_signature(json.dumps(payload, separators=(',', ':')),
-                                           self._auth_lib.token.access_token)
+        payload = olive_create_post_payload_irrigation_quickrun(
+            device.mac, zone_number, duration
+        )
+        signature = olive_create_signature(
+            json.dumps(payload, separators=(",", ":")),
+            self._auth_lib.token.access_token,
+        )
         headers = {
-            'Accept-Encoding': 'gzip',
-            'Content-Type': 'application/json',
-            'User-Agent': 'myapp',
-            'appid': OLIVE_APP_ID,
-            'appinfo': APP_INFO,
-            'phoneid': PHONE_ID,
-            'access_token': self._auth_lib.token.access_token,
-            'signature2': signature
+            "Accept-Encoding": "gzip",
+            "Content-Type": "application/json",
+            "User-Agent": "myapp",
+            "appid": OLIVE_APP_ID,
+            "appinfo": APP_INFO,
+            "phoneid": PHONE_ID,
+            "access_token": self._auth_lib.token.access_token,
+            "signature2": signature,
         }
 
-        payload_str = json.dumps(payload, separators=(',', ':'))
-        response_json = await self._auth_lib.post(url, headers=headers, data=payload_str)
+        payload_str = json.dumps(payload, separators=(",", ":"))
+        response_json = await self._auth_lib.post(
+            url, headers=headers, data=payload_str
+        )
+
+        check_for_errors_iot(self, response_json)
+
+        return response_json
+
+    async def _get_schedule_runs(
+        self, url: str, device: Device, limit: int = 2
+    ) -> Dict[Any, Any]:
+        await self._auth_lib.refresh_if_should()
+
+        payload = olive_create_get_payload_irrigation_schedule_runs(device.mac)
+        payload["limit"] = limit
+        signature = olive_create_signature(payload, self._auth_lib.token.access_token)
+        headers = {
+            "Accept-Encoding": "gzip",
+            "User-Agent": "myapp",
+            "appid": OLIVE_APP_ID,
+            "appinfo": APP_INFO,
+            "phoneid": PHONE_ID,
+            "access_token": self._auth_lib.token.access_token,
+            "signature2": signature,
+        }
+
+        response_json = await self._auth_lib.get(url, headers=headers, params=payload)
 
         check_for_errors_iot(self, response_json)
 

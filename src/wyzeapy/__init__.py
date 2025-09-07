@@ -443,7 +443,7 @@ class Wyzeapy:
         if self._sensor_service is None:
             self._sensor_service = SensorService(self._auth_lib)
         return self._sensor_service
-    
+
     @property
     async def irrigation_service(self) -> IrrigationService:
         """Returns an instance of the irrigation service"""

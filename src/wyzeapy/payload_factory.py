@@ -51,36 +51,40 @@ def olive_create_get_payload(device_mac: str, keys: str) -> Dict[str, Any]:
 
     return {"keys": keys, "did": device_mac, "nonce": nonce}
 
+
 def olive_create_get_payload_irrigation(device_mac: str) -> Dict[str, Any]:
     nonce = int(time.time() * 1000)
 
-    return {
-        'device_id': device_mac,
-        'nonce': str(nonce)
-    }
+    return {"device_id": device_mac, "nonce": str(nonce)}
 
-def olive_create_post_payload_irrigation_stop(device_mac: str, action: str) -> Dict[str, Any]:
+
+def olive_create_post_payload_irrigation_stop(
+    device_mac: str, action: str
+) -> Dict[str, Any]:
+    nonce = int(time.time() * 1000)
+
+    return {"device_id": device_mac, "nonce": str(nonce), "action": action}
+
+
+def olive_create_post_payload_irrigation_quickrun(
+    device_mac: str, zone_number: int, duration: int
+) -> Dict[str, Any]:
     nonce = int(time.time() * 1000)
 
     return {
-        'device_id': device_mac,
-        'nonce': str(nonce),
-        "action": action
+        "device_id": device_mac,
+        "nonce": str(nonce),
+        "zone_runs": [{"zone_number": zone_number, "duration": duration}],
     }
 
-def olive_create_post_payload_irrigation_quickrun(device_mac: str, zone_number: int, duration: int) -> Dict[str, Any]:
+
+def olive_create_get_payload_irrigation_schedule_runs(
+    device_mac: str,
+) -> Dict[str, Any]:
     nonce = int(time.time() * 1000)
 
-    return {
-        'device_id': device_mac,
-        'nonce': str(nonce),
-        "zone_runs": [
-            {
-                "zone_number": zone_number,
-                "duration": duration
-            }
-        ]
-    }
+    return {"device_id": device_mac, "nonce": str(nonce)}
+
 
 def olive_create_post_payload(
     device_mac: str, device_model: str, prop_key: str, value: Any

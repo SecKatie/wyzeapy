@@ -96,7 +96,7 @@ class IrrigationService(BaseService):
         irrigation.IP = properties.get('IP', '192.168.1.100')
         irrigation.sn = properties.get('sn', 'SN123456789')
         irrigation.ssid = properties.get('ssid', 'ssid')
-        irrigation.available = (properties.get(IrrigationProps.IOT_STATE.value) == "connected")
+        irrigation.available = (properties.get(IrrigationProps.IOT_STATE.value) == 'connected')
 
         # Get zones
         zones = (await self.get_zone_by_device(irrigation))['data']['zones']

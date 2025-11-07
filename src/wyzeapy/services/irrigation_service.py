@@ -173,7 +173,6 @@ class IrrigationService(BaseService):
             if zone.zone_number == zone_number:
                 zone.quickrun_duration = duration
                 break
-        
         return irrigation
 
     # Private implementation methods

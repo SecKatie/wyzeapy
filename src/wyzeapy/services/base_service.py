@@ -932,10 +932,8 @@ class BaseService:
             'nonce': nonce
         }
 
-        # Create signature from the payload parameters (same as _get_zone_by_device)
-        payload_for_signature = olive_create_get_payload_irrigation(device.mac)
-        payload_for_signature['limit'] = str(limit)
-        signature = olive_create_signature(payload_for_signature, self._auth_lib.token.access_token)
+        # Create signature from the actual payload being sent
+        signature = olive_create_signature(payload, self._auth_lib.token.access_token)
 
         headers = {
             'Accept-Encoding': 'gzip',

@@ -238,7 +238,6 @@ class IrrigationService(BaseService):
                     if end_utc_str:
                         # Remove 'Z' suffix and parse
                         end_time = datetime.fromisoformat(end_utc_str.replace('Z', '+00:00'))
-                        total_remaining = int((end_time - now).total_seconds())
 
                         # Check zone_runs to find which zones are running
                         zone_runs = schedule.get('zone_runs', [])

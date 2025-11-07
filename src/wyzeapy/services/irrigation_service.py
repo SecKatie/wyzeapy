@@ -118,7 +118,6 @@ class IrrigationService(BaseService):
         """Update the irrigation device with latest data from Wyze API."""
         # Get IoT properties
         properties = (await self.get_iot_prop(irrigation))['data']['props']
-        
         # Update device properties
         irrigation.RSSI = properties.get('RSSI')
         irrigation.IP = properties.get('IP')

@@ -113,7 +113,6 @@ class IrrigationService(BaseService):
             _LOGGER.warning(f"Failed to update running status: {e}")
 
         return irrigation
-    
     async def update_device_props(self, irrigation: Irrigation) -> Irrigation:
         """Update the irrigation device with latest data from Wyze API."""
         # Get IoT properties

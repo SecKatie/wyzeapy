@@ -158,7 +158,7 @@ class IrrigationService(BaseService):
             Dict containing the API response
         """
         url = "https://wyze-lockwood-service.wyzecam.com/plugin/irrigation/runningschedule"
-        action = "STOP"    
+        action = "STOP"
         return await self._stop_running_schedule(url, device, action)
 
     async def set_zone_quickrun_duration(self, irrigation: Irrigation, zone_number: int, duration: int) -> Irrigation:

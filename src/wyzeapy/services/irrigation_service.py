@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from .base_service import BaseService
 from ..types import Device, IrrigationProps, DeviceTypes

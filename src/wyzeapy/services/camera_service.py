@@ -88,8 +88,10 @@ class CameraService(BaseService):
                 if property is PropertyIDs.CAMERA_SIREN:
                     camera.siren = value == "1"
                 if property is PropertyIDs.ACCESSORY:
+                    # Bulb Cam (HL_BC): '1' = ON, '2' = OFF
+                    # Other cameras with accessories: same logic
                     camera.floodlight = value == "1"
-                    if camera.device_params["dongle_product_model"] == "HL_CGDC":
+                    if camera.device_params.get("dongle_product_model") == "HL_CGDC":
                         camera.garage = (
                             value == "1"
                         )  # 1 = open, 2 = closed by automation or smart platform (Alexa, Google Home, Rules), 0 = closed by app
@@ -186,7 +188,7 @@ class CameraService(BaseService):
         else:
             await self._run_action(camera, "siren_off")
 
-    # Also controls lamp socket and BCP spotlight
+    # Also controls lamp socket, BCP spotlight, and Bulb Cam light
     async def floodlight_on(self, camera: Camera):
         if camera.product_model == "AN_RSCW":
             await self._run_action_devicemgmt(
@@ -196,10 +198,13 @@ class CameraService(BaseService):
             await self._run_action_devicemgmt(
                 camera, "floodlight", "1"
             )  # Some camera models use a diffrent api
+        elif camera.product_model == "HL_BC":
+            # Bulb Cam uses run_action with floodlight_on action
+            await self._run_action(camera, "floodlight_on")
         else:
             await self._set_property(camera, PropertyIDs.ACCESSORY.value, "1")
 
-    # Also controls lamp socket and BCP spotlight
+    # Also controls lamp socket, BCP spotlight, and Bulb Cam light
     async def floodlight_off(self, camera: Camera):
         if camera.product_model == "AN_RSCW":
             await self._run_action_devicemgmt(
@@ -209,6 +214,9 @@ class CameraService(BaseService):
             await self._run_action_devicemgmt(
                 camera, "floodlight", "0"
             )  # Some camera models use a diffrent api
+        elif camera.product_model == "HL_BC":
+            # Bulb Cam uses run_action with floodlight_off action
+            await self._run_action(camera, "floodlight_off")
         else:
             await self._set_property(camera, PropertyIDs.ACCESSORY.value, "2")
 

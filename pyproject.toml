@@ -29,3 +29,7 @@ dev = [
     "pytest>=7.0.0,<10.0.0",
     "coverage>=7.9.2",
 ]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"

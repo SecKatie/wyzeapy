@@ -14,6 +14,6 @@ jobs:
     if: github.event.pull_request.user.login == github.repository_owner
     steps:
       - name: Auto Approve
-        uses: hmarr/auto-approve-action@v4
+        uses: hmarr/auto-approve-action@8f929096a962e83ccdfa8afcf855f39f12d4dac7 # v4
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,19 @@
+name: Auto Approve Owner PRs
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  auto-approve:
+    runs-on: ubuntu-latest
+    # Only auto-approve PRs from the repository owner
+    if: github.event.pull_request.user.login == github.repository_owner
+    steps:
+      - name: Auto Approve
+        uses: hmarr/auto-approve-action@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}

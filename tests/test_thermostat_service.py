@@ -8,6 +8,7 @@ from wyzeapy.services.thermostat_service import (
     TemperatureUnit,
     Preset,
     HVACState,
+    FanState,
     ThermostatProps,
 )
 from wyzeapy.types import DeviceTypes
@@ -123,6 +124,89 @@ class TestThermostatService(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(updated_thermostat.temp_unit, TemperatureUnit.FAHRENHEIT)
         self.assertEqual(updated_thermostat.cool_set_point, 74)
         self.assertEqual(updated_thermostat.heat_set_point, 64)
+
+    # Tests for fan_state property
+    def test_fan_state_off_when_idle_and_auto(self):
+        """Fan should be OFF when HVAC is idle and fan_mode is AUTO."""
+        self.test_thermostat.hvac_state = HVACState.IDLE
+        self.test_thermostat.fan_mode = FanMode.AUTO
+        self.assertEqual(self.test_thermostat.fan_state, FanState.OFF)
+
+    def test_fan_state_on_when_heating(self):
+        """Fan should be ON when HVAC is heating."""
+        self.test_thermostat.hvac_state = HVACState.HEATING
+        self.test_thermostat.fan_mode = FanMode.AUTO
+        self.assertEqual(self.test_thermostat.fan_state, FanState.ON)
+
+    def test_fan_state_on_when_cooling(self):
+        """Fan should be ON when HVAC is cooling."""
+        self.test_thermostat.hvac_state = HVACState.COOLING
+        self.test_thermostat.fan_mode = FanMode.AUTO
+        self.assertEqual(self.test_thermostat.fan_state, FanState.ON)
+
+    def test_fan_state_on_when_circulating(self):
+        """Fan should be ON when HVAC state is circulating (fan-only mode)."""
+        self.test_thermostat.hvac_state = HVACState.CIRCULATING
+        self.test_thermostat.fan_mode = FanMode.AUTO
+        self.assertEqual(self.test_thermostat.fan_state, FanState.ON)
+
+    def test_fan_state_on_when_fan_mode_on(self):
+        """Fan should be ON when fan_mode is ON, regardless of HVAC state."""
+        self.test_thermostat.hvac_state = HVACState.IDLE
+        self.test_thermostat.fan_mode = FanMode.ON
+        self.assertEqual(self.test_thermostat.fan_state, FanState.ON)
+
+    def test_fan_state_off_when_idle_and_cycle(self):
+        """Fan should be OFF when HVAC is idle and fan_mode is CYCLE (between cycles)."""
+        self.test_thermostat.hvac_state = HVACState.IDLE
+        self.test_thermostat.fan_mode = FanMode.CYCLE
+        self.assertEqual(self.test_thermostat.fan_state, FanState.OFF)
+
+    # Tests for FanMode enum
+    def test_fan_mode_cycle_value(self):
+        """CYCLE fan mode should have value 'circ'."""
+        self.assertEqual(FanMode.CYCLE.value, "circ")
+
+    async def test_set_fan_mode_cycle(self):
+        """Should be able to set fan mode to CYCLE."""
+        await self.thermostat_service.set_fan_mode(self.test_thermostat, FanMode.CYCLE)
+        self.thermostat_service._thermostat_set_iot_prop.assert_awaited_with(
+            self.test_thermostat, ThermostatProps.FAN_MODE, "circ"
+        )
+
+    async def test_update_with_cycle_fan_mode(self):
+        """Should correctly parse 'circ' fan mode from API."""
+        self.thermostat_service._thermostat_get_iot_prop.return_value = {
+            "data": {
+                "props": {
+                    "fan_mode": "circ",
+                    "working_state": "idle",
+                }
+            }
+        }
+
+        updated_thermostat = await self.thermostat_service.update(self.test_thermostat)
+        self.assertEqual(updated_thermostat.fan_mode, FanMode.CYCLE)
+
+    async def test_update_with_circulating_state(self):
+        """Should correctly parse 'circulating' working_state from API."""
+        self.thermostat_service._thermostat_get_iot_prop.return_value = {
+            "data": {
+                "props": {
+                    "fan_mode": "auto",
+                    "working_state": "circulating",
+                }
+            }
+        }
+
+        updated_thermostat = await self.thermostat_service.update(self.test_thermostat)
+        self.assertEqual(updated_thermostat.hvac_state, HVACState.CIRCULATING)
+        self.assertEqual(updated_thermostat.fan_state, FanState.ON)
+
+    # Test for HVACState enum
+    def test_hvac_state_circulating_value(self):
+        """CIRCULATING hvac state should have value 'circulating'."""
+        self.assertEqual(HVACState.CIRCULATING.value, "circulating")
 
 
 if __name__ == "__main__":

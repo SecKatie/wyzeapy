@@ -20,8 +20,9 @@ class HVACMode(Enum):
     OFF = "off"
 
 
-class FanMode(Enum):  # auto, on
+class FanMode(Enum):  # auto, circ, on
     AUTO = "auto"
+    CYCLE = "circ"
     ON = "on"
 
 
@@ -40,6 +41,13 @@ class HVACState(Enum):
     COOLING = "cooling"
     HEATING = "heating"
     IDLE = "idle"
+    CIRCULATING = "circulating"  # Fan running independently (fan-only mode)
+
+
+class FanState(Enum):
+    """Represents the actual operational state of the fan (running or not)."""
+    ON = "on"
+    OFF = "off"
 
 
 class Thermostat(Device):
@@ -56,6 +64,29 @@ class Thermostat(Device):
         self.available: bool = True
         self.humidity: int = 50
         self.hvac_state: HVACState = HVACState.IDLE
+
+    @property
+    def fan_state(self) -> FanState:
+        """
+        Determines the actual operational state of the fan.
+
+        The fan is considered ON when:
+        - The HVAC system is actively heating or cooling (fan runs with HVAC)
+        - The HVAC state is circulating (fan-only operation)
+        - The fan mode is set to ON (continuous fan operation)
+
+        Returns:
+            FanState.ON if the fan is running, FanState.OFF otherwise.
+        """
+        # Fan runs when HVAC is actively heating, cooling, or circulating
+        if self.hvac_state in (HVACState.HEATING, HVACState.COOLING, HVACState.CIRCULATING):
+            return FanState.ON
+
+        # Fan runs continuously when fan_mode is ON
+        if self.fan_mode == FanMode.ON:
+            return FanState.ON
+
+        return FanState.OFF
 
 
 class ThermostatService(BaseService):
@@ -79,7 +110,10 @@ class ThermostatService(BaseService):
             elif prop == ThermostatProps.HEAT_SP:
                 thermostat.heat_set_point = int(value)
             elif prop == ThermostatProps.FAN_MODE:
-                thermostat.fan_mode = FanMode(value)
+                try:
+                    thermostat.fan_mode = FanMode(value)
+                except ValueError:
+                    _LOGGER.warning(f"Unknown fan_mode value: {value}")
             elif prop == ThermostatProps.MODE_SYS:
                 thermostat.hvac_mode = HVACMode(value)
             elif prop == ThermostatProps.CURRENT_SCENARIO:
@@ -91,7 +125,11 @@ class ThermostatService(BaseService):
             elif prop == ThermostatProps.HUMIDITY:
                 thermostat.humidity = int(value)
             elif prop == ThermostatProps.WORKING_STATE:
-                thermostat.hvac_state = HVACState(value)
+                try:
+                    thermostat.hvac_state = HVACState(value)
+                except ValueError:
+                    # Log unknown working_state values - this helps discover new states
+                    _LOGGER.warning(f"Unknown working_state value: {value}")
 
         return thermostat
 

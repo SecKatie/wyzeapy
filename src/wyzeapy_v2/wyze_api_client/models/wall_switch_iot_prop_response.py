@@ -9,7 +9,9 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.wall_switch_iot_prop_response_data import WallSwitchIotPropResponseData
+    from ..models.wall_switch_iot_prop_response_data import (
+        WallSwitchIotPropResponseData,
+    )
 
 
 T = TypeVar("T", bound="WallSwitchIotPropResponse")
@@ -40,7 +42,9 @@ class WallSwitchIotPropResponse:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.wall_switch_iot_prop_response_data import WallSwitchIotPropResponseData
+        from ..models.wall_switch_iot_prop_response_data import (
+            WallSwitchIotPropResponseData,
+        )
 
         d = dict(src_dict)
         _data = d.pop("data", UNSET)

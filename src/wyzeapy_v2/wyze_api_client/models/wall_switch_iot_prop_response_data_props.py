@@ -6,7 +6,9 @@ from typing import Any, TypeVar
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-from ..models.wall_switch_iot_prop_response_data_props_iot_state import WallSwitchIotPropResponseDataPropsIotState
+from ..models.wall_switch_iot_prop_response_data_props_iot_state import (
+    WallSwitchIotPropResponseDataPropsIotState,
+)
 from ..models.wall_switch_iot_prop_response_data_props_single_press_type import (
     WallSwitchIotPropResponseDataPropsSinglePressType,
 )
@@ -77,7 +79,9 @@ class WallSwitchIotPropResponseDataProps:
         if isinstance(_single_press_type, Unset):
             single_press_type = UNSET
         else:
-            single_press_type = WallSwitchIotPropResponseDataPropsSinglePressType(_single_press_type)
+            single_press_type = WallSwitchIotPropResponseDataPropsSinglePressType(
+                _single_press_type
+            )
 
         wall_switch_iot_prop_response_data_props = cls(
             iot_state=iot_state,

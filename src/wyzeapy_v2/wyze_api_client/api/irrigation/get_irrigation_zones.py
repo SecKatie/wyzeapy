@@ -45,7 +45,9 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> IrrigationZoneResponse | None:
+def _parse_response(
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> IrrigationZoneResponse | None:
     if response.status_code == 200:
         response_200 = IrrigationZoneResponse.from_dict(response.json())
 

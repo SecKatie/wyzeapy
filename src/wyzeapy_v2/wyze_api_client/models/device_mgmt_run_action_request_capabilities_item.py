@@ -35,8 +35,12 @@ class DeviceMgmtRunActionRequestCapabilitiesItem:
 
     iid: int | Unset = UNSET
     name: DeviceMgmtRunActionRequestCapabilitiesItemName | Unset = UNSET
-    properties: list[DeviceMgmtRunActionRequestCapabilitiesItemPropertiesItem] | Unset = UNSET
-    functions: list[DeviceMgmtRunActionRequestCapabilitiesItemFunctionsItem] | Unset = UNSET
+    properties: (
+        list[DeviceMgmtRunActionRequestCapabilitiesItemPropertiesItem] | Unset
+    ) = UNSET
+    functions: list[DeviceMgmtRunActionRequestCapabilitiesItemFunctionsItem] | Unset = (
+        UNSET
+    )
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -94,22 +98,32 @@ class DeviceMgmtRunActionRequestCapabilitiesItem:
             name = DeviceMgmtRunActionRequestCapabilitiesItemName(_name)
 
         _properties = d.pop("properties", UNSET)
-        properties: list[DeviceMgmtRunActionRequestCapabilitiesItemPropertiesItem] | Unset = UNSET
+        properties: (
+            list[DeviceMgmtRunActionRequestCapabilitiesItemPropertiesItem] | Unset
+        ) = UNSET
         if _properties is not UNSET:
             properties = []
             for properties_item_data in _properties:
-                properties_item = DeviceMgmtRunActionRequestCapabilitiesItemPropertiesItem.from_dict(
-                    properties_item_data
+                properties_item = (
+                    DeviceMgmtRunActionRequestCapabilitiesItemPropertiesItem.from_dict(
+                        properties_item_data
+                    )
                 )
 
                 properties.append(properties_item)
 
         _functions = d.pop("functions", UNSET)
-        functions: list[DeviceMgmtRunActionRequestCapabilitiesItemFunctionsItem] | Unset = UNSET
+        functions: (
+            list[DeviceMgmtRunActionRequestCapabilitiesItemFunctionsItem] | Unset
+        ) = UNSET
         if _functions is not UNSET:
             functions = []
             for functions_item_data in _functions:
-                functions_item = DeviceMgmtRunActionRequestCapabilitiesItemFunctionsItem.from_dict(functions_item_data)
+                functions_item = (
+                    DeviceMgmtRunActionRequestCapabilitiesItemFunctionsItem.from_dict(
+                        functions_item_data
+                    )
+                )
 
                 functions.append(functions_item)
 

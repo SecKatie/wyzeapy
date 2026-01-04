@@ -34,7 +34,9 @@ async def test_get_user():
     def get_2fa_code(auth_type: str) -> str:
         return input(f"Enter {auth_type} code: ")
 
-    async with Wyzeapy(email, password, key_id, api_key, tfa_callback=get_2fa_code) as wyze:
+    async with Wyzeapy(
+        email, password, key_id, api_key, tfa_callback=get_2fa_code
+    ) as wyze:
         print("Logged in successfully!")
         print()
 
@@ -60,10 +62,23 @@ async def test_get_user():
 
         # Show any additional properties not in our model
         known_fields = {
-            "notification", "user_id", "nickname", "logo_url", "gender",
-            "birthdate", "occupation", "height", "height_unit", "weight",
-            "weight_unit", "body_type", "create_time", "update_time",
-            "subscription", "metadata", "is_voip_on"
+            "notification",
+            "user_id",
+            "nickname",
+            "logo_url",
+            "gender",
+            "birthdate",
+            "occupation",
+            "height",
+            "height_unit",
+            "weight",
+            "weight_unit",
+            "body_type",
+            "create_time",
+            "update_time",
+            "subscription",
+            "metadata",
+            "is_voip_on",
         }
         additional = {k: v for k, v in user.raw_data.items() if k not in known_fields}
         if additional:

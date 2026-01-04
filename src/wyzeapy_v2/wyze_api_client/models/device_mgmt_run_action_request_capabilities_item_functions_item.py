@@ -60,7 +60,9 @@ class DeviceMgmtRunActionRequestCapabilitiesItemFunctionsItem:
         if isinstance(_in_, Unset):
             in_ = UNSET
         else:
-            in_ = DeviceMgmtRunActionRequestCapabilitiesItemFunctionsItemIn.from_dict(_in_)
+            in_ = DeviceMgmtRunActionRequestCapabilitiesItemFunctionsItemIn.from_dict(
+                _in_
+            )
 
         device_mgmt_run_action_request_capabilities_item_functions_item = cls(
             name=name,

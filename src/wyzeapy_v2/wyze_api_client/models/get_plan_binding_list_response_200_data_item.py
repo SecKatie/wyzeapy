@@ -24,7 +24,9 @@ class GetPlanBindingListResponse200DataItem:
         device_list (list[GetPlanBindingListResponse200DataItemDeviceListItem] | Unset):
     """
 
-    device_list: list[GetPlanBindingListResponse200DataItemDeviceListItem] | Unset = UNSET
+    device_list: list[GetPlanBindingListResponse200DataItemDeviceListItem] | Unset = (
+        UNSET
+    )
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -51,11 +53,17 @@ class GetPlanBindingListResponse200DataItem:
 
         d = dict(src_dict)
         _device_list = d.pop("deviceList", UNSET)
-        device_list: list[GetPlanBindingListResponse200DataItemDeviceListItem] | Unset = UNSET
+        device_list: (
+            list[GetPlanBindingListResponse200DataItemDeviceListItem] | Unset
+        ) = UNSET
         if _device_list is not UNSET:
             device_list = []
             for device_list_item_data in _device_list:
-                device_list_item = GetPlanBindingListResponse200DataItemDeviceListItem.from_dict(device_list_item_data)
+                device_list_item = (
+                    GetPlanBindingListResponse200DataItemDeviceListItem.from_dict(
+                        device_list_item_data
+                    )
+                )
 
                 device_list.append(device_list_item)
 

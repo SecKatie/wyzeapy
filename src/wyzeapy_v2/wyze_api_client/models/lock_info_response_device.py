@@ -9,7 +9,9 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.lock_info_response_device_locker_status import LockInfoResponseDeviceLockerStatus
+    from ..models.lock_info_response_device_locker_status import (
+        LockInfoResponseDeviceLockerStatus,
+    )
 
 
 T = TypeVar("T", bound="LockInfoResponseDevice")
@@ -64,7 +66,9 @@ class LockInfoResponseDevice:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.lock_info_response_device_locker_status import LockInfoResponseDeviceLockerStatus
+        from ..models.lock_info_response_device_locker_status import (
+            LockInfoResponseDeviceLockerStatus,
+        )
 
         d = dict(src_dict)
         uuid = d.pop("uuid", UNSET)

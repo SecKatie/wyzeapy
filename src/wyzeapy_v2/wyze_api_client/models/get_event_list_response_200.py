@@ -46,7 +46,9 @@ class GetEventListResponse200:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.get_event_list_response_200_data import GetEventListResponse200Data
+        from ..models.get_event_list_response_200_data import (
+            GetEventListResponse200Data,
+        )
 
         d = dict(src_dict)
         code = d.pop("code", UNSET)

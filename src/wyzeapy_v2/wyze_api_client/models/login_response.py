@@ -36,7 +36,9 @@ class LoginResponse:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-        from ..models.login_response_mfa_details_type_0 import LoginResponseMfaDetailsType0
+        from ..models.login_response_mfa_details_type_0 import (
+            LoginResponseMfaDetailsType0,
+        )
 
         access_token = self.access_token
 
@@ -78,7 +80,9 @@ class LoginResponse:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.login_response_mfa_details_type_0 import LoginResponseMfaDetailsType0
+        from ..models.login_response_mfa_details_type_0 import (
+            LoginResponseMfaDetailsType0,
+        )
 
         d = dict(src_dict)
         access_token = d.pop("access_token", UNSET)
@@ -89,7 +93,9 @@ class LoginResponse:
 
         mfa_options = cast(list[str], d.pop("mfa_options", UNSET))
 
-        def _parse_mfa_details(data: object) -> LoginResponseMfaDetailsType0 | None | Unset:
+        def _parse_mfa_details(
+            data: object,
+        ) -> LoginResponseMfaDetailsType0 | None | Unset:
             if data is None:
                 return data
             if isinstance(data, Unset):

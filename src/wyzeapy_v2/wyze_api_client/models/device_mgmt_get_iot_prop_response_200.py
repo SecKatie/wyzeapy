@@ -9,7 +9,9 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.device_mgmt_get_iot_prop_response_200_data import DeviceMgmtGetIotPropResponse200Data
+    from ..models.device_mgmt_get_iot_prop_response_200_data import (
+        DeviceMgmtGetIotPropResponse200Data,
+    )
 
 
 T = TypeVar("T", bound="DeviceMgmtGetIotPropResponse200")
@@ -40,7 +42,9 @@ class DeviceMgmtGetIotPropResponse200:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.device_mgmt_get_iot_prop_response_200_data import DeviceMgmtGetIotPropResponse200Data
+        from ..models.device_mgmt_get_iot_prop_response_200_data import (
+            DeviceMgmtGetIotPropResponse200Data,
+        )
 
         d = dict(src_dict)
         _data = d.pop("data", UNSET)

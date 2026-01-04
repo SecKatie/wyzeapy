@@ -24,7 +24,9 @@ class DeviceMgmtGetIotPropResponse200Data:
         capabilities (list[DeviceMgmtGetIotPropResponse200DataCapabilitiesItem] | Unset):
     """
 
-    capabilities: list[DeviceMgmtGetIotPropResponse200DataCapabilitiesItem] | Unset = UNSET
+    capabilities: list[DeviceMgmtGetIotPropResponse200DataCapabilitiesItem] | Unset = (
+        UNSET
+    )
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -51,12 +53,16 @@ class DeviceMgmtGetIotPropResponse200Data:
 
         d = dict(src_dict)
         _capabilities = d.pop("capabilities", UNSET)
-        capabilities: list[DeviceMgmtGetIotPropResponse200DataCapabilitiesItem] | Unset = UNSET
+        capabilities: (
+            list[DeviceMgmtGetIotPropResponse200DataCapabilitiesItem] | Unset
+        ) = UNSET
         if _capabilities is not UNSET:
             capabilities = []
             for capabilities_item_data in _capabilities:
-                capabilities_item = DeviceMgmtGetIotPropResponse200DataCapabilitiesItem.from_dict(
-                    capabilities_item_data
+                capabilities_item = (
+                    DeviceMgmtGetIotPropResponse200DataCapabilitiesItem.from_dict(
+                        capabilities_item_data
+                    )
                 )
 
                 capabilities.append(capabilities_item)

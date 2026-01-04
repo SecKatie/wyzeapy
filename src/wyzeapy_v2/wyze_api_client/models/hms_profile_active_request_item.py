@@ -6,8 +6,12 @@ from typing import Any, TypeVar
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-from ..models.hms_profile_active_request_item_active import HMSProfileActiveRequestItemActive
-from ..models.hms_profile_active_request_item_state import HMSProfileActiveRequestItemState
+from ..models.hms_profile_active_request_item_active import (
+    HMSProfileActiveRequestItemActive,
+)
+from ..models.hms_profile_active_request_item_state import (
+    HMSProfileActiveRequestItemState,
+)
 from ..types import UNSET, Unset
 
 T = TypeVar("T", bound="HMSProfileActiveRequestItem")

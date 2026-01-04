@@ -5,7 +5,9 @@ import httpx
 
 from ... import errors
 from ...client import AuthenticatedClient, Client
-from ...models.get_irrigation_schedule_runs_response_200 import GetIrrigationScheduleRunsResponse200
+from ...models.get_irrigation_schedule_runs_response_200 import (
+    GetIrrigationScheduleRunsResponse200,
+)
 from ...types import UNSET, Response, Unset
 
 

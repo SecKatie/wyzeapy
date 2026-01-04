@@ -7,7 +7,9 @@ from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
 if TYPE_CHECKING:
-    from ..models.irrigation_quick_run_request_zone_runs_item import IrrigationQuickRunRequestZoneRunsItem
+    from ..models.irrigation_quick_run_request_zone_runs_item import (
+        IrrigationQuickRunRequestZoneRunsItem,
+    )
 
 
 T = TypeVar("T", bound="IrrigationQuickRunRequest")
@@ -51,7 +53,9 @@ class IrrigationQuickRunRequest:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.irrigation_quick_run_request_zone_runs_item import IrrigationQuickRunRequestZoneRunsItem
+        from ..models.irrigation_quick_run_request_zone_runs_item import (
+            IrrigationQuickRunRequestZoneRunsItem,
+        )
 
         d = dict(src_dict)
         device_id = d.pop("device_id")
@@ -61,7 +65,9 @@ class IrrigationQuickRunRequest:
         zone_runs = []
         _zone_runs = d.pop("zone_runs")
         for zone_runs_item_data in _zone_runs:
-            zone_runs_item = IrrigationQuickRunRequestZoneRunsItem.from_dict(zone_runs_item_data)
+            zone_runs_item = IrrigationQuickRunRequestZoneRunsItem.from_dict(
+                zone_runs_item_data
+            )
 
             zone_runs.append(zone_runs_item)
 

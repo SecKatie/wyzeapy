@@ -1,8 +1,5 @@
 #!/usr/bin/env uv run --script
 """Example script demonstrating Wyzeapy usage and dumping raw API data."""
-from typing import cast
-from src.wyzeapy_v2 import DeviceType, WyzeCamera
-
 import asyncio
 import os
 
@@ -27,17 +24,29 @@ async def main():
         print(f"Found {len(devices)} devices")
         print(f"{'='*60}\n")
 
-        # Let's get the cameras and print out their details
-        cameras = [cast(WyzeCamera, device) for device in devices if device.type == DeviceType.CAMERA]
-        for camera in cameras:
-            print(f"Camera: {camera.nickname} ({camera.mac})")
-            print(f"  Type: {camera.type}")
-            print(f"  Is Available: {camera.available}")
-            print(f"  Is On: {camera.is_on}")
-            print(f"  Product Model: {camera.product_model}")
-            print(f"  Product Type: {camera.product_type}")
+        for device in devices:
+            print(f"\n{'-'*60}")
+            print(f"Device: {device.nickname}")
+            print(f"{'-'*60}")
+            print(f"  MAC: {device.mac}")
+            print(f"  Type: {device.type.value}")
+            print(f"  Product Model: {device.product_model}")
+            print(f"  Available: {device.available}")
 
-            await camera.turn_on()
+            # Get detailed device info
+            info = await device.get_info()
+            if info:
+                print("\n  Device Info:")
+                for key, value in info.items():
+                    print(f"    {key}: {value}")
+
+            # Get device properties
+            properties = await device.get_properties()
+            if properties:
+                print("\n  Properties:")
+                for pid, value in properties.items():
+                    print(f"    {pid}: {value}")
+
 
 if __name__ == "__main__":
     asyncio.run(main())

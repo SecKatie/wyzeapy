@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Dict, Optional, Protocol
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Protocol
 
 from ..wyze_api_client.models import Device
 from ..wyze_api_client.types import UNSET, Unset
@@ -95,12 +95,12 @@ class SwitchableDeviceMixin:
     async def turn_on(self: WyzeDevice) -> bool:
         """Turn on the device."""
         client = self._ensure_client()
-        return await client._run_action(self, client._action_power_on)
+        return await client.run_action(self, client._action_power_on)
 
     async def turn_off(self: WyzeDevice) -> bool:
         """Turn off the device."""
         client = self._ensure_client()
-        return await client._run_action(self, client._action_power_off)
+        return await client.run_action(self, client._action_power_off)
 
 
 class WyzeDevice:
@@ -109,17 +109,31 @@ class WyzeDevice:
     def __init__(self, device: Device, client: Optional[Wyzeapy] = None):
         self._device = device
         self._client: Optional[Wyzeapy] = client
-        self.nickname: Optional[str] = device.nickname if device.nickname is not UNSET else None
+        self.nickname: Optional[str] = (
+            device.nickname if device.nickname is not UNSET else None
+        )
         self.mac: Optional[str] = device.mac if device.mac is not UNSET else None
-        self.product_model: Optional[str] = device.product_model if device.product_model is not UNSET else None
-        self.product_type: Optional[str] = device.product_type if device.product_type is not UNSET else None
-        self.firmware_ver: Optional[str] = device.firmware_ver if device.firmware_ver is not UNSET else None
-        self.hardware_ver: Optional[str] = device.hardware_ver if device.hardware_ver is not UNSET else None
+        self.product_model: Optional[str] = (
+            device.product_model if device.product_model is not UNSET else None
+        )
+        self.product_type: Optional[str] = (
+            device.product_type if device.product_type is not UNSET else None
+        )
+        self.firmware_ver: Optional[str] = (
+            device.firmware_ver if device.firmware_ver is not UNSET else None
+        )
+        self.hardware_ver: Optional[str] = (
+            device.hardware_ver if device.hardware_ver is not UNSET else None
+        )
         self.parent_device_mac: Optional[str] = (
             device.parent_device_mac if device.parent_device_mac is not UNSET else None
         )
-        self.available: bool = device.conn_state == 1 if device.conn_state is not UNSET else False
-        self.push_notifications_enabled: bool = device.push_switch != 2 if device.push_switch is not UNSET else True
+        self.available: bool = (
+            device.conn_state == 1 if device.conn_state is not UNSET else False
+        )
+        self.push_notifications_enabled: bool = (
+            device.push_switch != 2 if device.push_switch is not UNSET else True
+        )
 
     def _ensure_client(self) -> Wyzeapy:
         """Ensure we have a client for API calls."""
@@ -155,3 +169,42 @@ class WyzeDevice:
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(nickname={self.nickname!r}, mac={self.mac!r}, type={self.type.value})"
+
+    async def get_info(self) -> Dict[str, Any]:
+        """
+        Get detailed device information from the API.
+
+        Fetches the latest device info and returns the raw data dictionary.
+        This can be used to get updated device state that may not be captured
+        in the initial device list.
+
+        Returns:
+            Dictionary containing detailed device information.
+
+        Raises:
+            RuntimeError: If the device is not connected to an API client.
+        """
+        client = self._ensure_client()
+        return await client.get_device_info(self)
+
+    async def get_properties(
+        self, property_ids: Optional[List[str]] = None
+    ) -> Dict[str, str]:
+        """
+        Get property values for this device.
+
+        Fetches the current property values from the API. Properties represent
+        device state like power status, brightness, color, etc.
+
+        Args:
+            property_ids: Optional list of specific property IDs to fetch.
+                         If None, fetches all properties for the device.
+
+        Returns:
+            Dictionary mapping property ID to property value.
+
+        Raises:
+            RuntimeError: If the device is not connected to an API client.
+        """
+        client = self._ensure_client()
+        return await client.get_device_properties(self, property_ids)

@@ -57,4 +57,6 @@ class ApiError(WyzeapyError):
     def __init__(self, code: str, message: str = ""):
         self.code = code
         self.message = message
-        super().__init__(f"API error {code}: {message}" if message else f"API error {code}")
+        super().__init__(
+            f"API error {code}: {message}" if message else f"API error {code}"
+        )

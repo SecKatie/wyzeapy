@@ -9,7 +9,9 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.set_wall_switch_iot_prop_body_props import SetWallSwitchIotPropBodyProps
+    from ..models.set_wall_switch_iot_prop_body_props import (
+        SetWallSwitchIotPropBodyProps,
+    )
 
 
 T = TypeVar("T", bound="SetWallSwitchIotPropBody")
@@ -64,7 +66,9 @@ class SetWallSwitchIotPropBody:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.set_wall_switch_iot_prop_body_props import SetWallSwitchIotPropBodyProps
+        from ..models.set_wall_switch_iot_prop_body_props import (
+            SetWallSwitchIotPropBodyProps,
+        )
 
         d = dict(src_dict)
         did = d.pop("did", UNSET)

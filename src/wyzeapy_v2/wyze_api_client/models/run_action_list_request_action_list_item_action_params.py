@@ -51,11 +51,17 @@ class RunActionListRequestActionListItemActionParams:
 
         d = dict(src_dict)
         _list_ = d.pop("list", UNSET)
-        list_: list[RunActionListRequestActionListItemActionParamsListItem] | Unset = UNSET
+        list_: list[RunActionListRequestActionListItemActionParamsListItem] | Unset = (
+            UNSET
+        )
         if _list_ is not UNSET:
             list_ = []
             for list_item_data in _list_:
-                list_item = RunActionListRequestActionListItemActionParamsListItem.from_dict(list_item_data)
+                list_item = (
+                    RunActionListRequestActionListItemActionParamsListItem.from_dict(
+                        list_item_data
+                    )
+                )
 
                 list_.append(list_item)
 

@@ -9,7 +9,9 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.get_irrigation_iot_prop_response_200_data_props import GetIrrigationIotPropResponse200DataProps
+    from ..models.get_irrigation_iot_prop_response_200_data_props import (
+        GetIrrigationIotPropResponse200DataProps,
+    )
 
 
 T = TypeVar("T", bound="GetIrrigationIotPropResponse200Data")
@@ -40,7 +42,9 @@ class GetIrrigationIotPropResponse200Data:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.get_irrigation_iot_prop_response_200_data_props import GetIrrigationIotPropResponse200DataProps
+        from ..models.get_irrigation_iot_prop_response_200_data_props import (
+            GetIrrigationIotPropResponse200DataProps,
+        )
 
         d = dict(src_dict)
         _props = d.pop("props", UNSET)

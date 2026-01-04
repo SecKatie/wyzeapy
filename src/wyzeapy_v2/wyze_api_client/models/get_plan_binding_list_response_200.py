@@ -9,7 +9,9 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.get_plan_binding_list_response_200_data_item import GetPlanBindingListResponse200DataItem
+    from ..models.get_plan_binding_list_response_200_data_item import (
+        GetPlanBindingListResponse200DataItem,
+    )
 
 
 T = TypeVar("T", bound="GetPlanBindingListResponse200")
@@ -43,7 +45,9 @@ class GetPlanBindingListResponse200:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.get_plan_binding_list_response_200_data_item import GetPlanBindingListResponse200DataItem
+        from ..models.get_plan_binding_list_response_200_data_item import (
+            GetPlanBindingListResponse200DataItem,
+        )
 
         d = dict(src_dict)
         _data = d.pop("data", UNSET)
@@ -51,7 +55,9 @@ class GetPlanBindingListResponse200:
         if _data is not UNSET:
             data = []
             for data_item_data in _data:
-                data_item = GetPlanBindingListResponse200DataItem.from_dict(data_item_data)
+                data_item = GetPlanBindingListResponse200DataItem.from_dict(
+                    data_item_data
+                )
 
                 data.append(data_item)
 

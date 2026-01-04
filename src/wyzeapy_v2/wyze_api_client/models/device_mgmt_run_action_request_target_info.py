@@ -6,7 +6,9 @@ from typing import Any, TypeVar
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-from ..models.device_mgmt_run_action_request_target_info_type import DeviceMgmtRunActionRequestTargetInfoType
+from ..models.device_mgmt_run_action_request_target_info_type import (
+    DeviceMgmtRunActionRequestTargetInfoType,
+)
 from ..types import UNSET, Unset
 
 T = TypeVar("T", bound="DeviceMgmtRunActionRequestTargetInfo")

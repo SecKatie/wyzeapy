@@ -7,7 +7,9 @@ from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
 if TYPE_CHECKING:
-    from ..models.toggle_management_request_data_item import ToggleManagementRequestDataItem
+    from ..models.toggle_management_request_data_item import (
+        ToggleManagementRequestDataItem,
+    )
 
 
 T = TypeVar("T", bound="ToggleManagementRequest")
@@ -46,7 +48,9 @@ class ToggleManagementRequest:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.toggle_management_request_data_item import ToggleManagementRequestDataItem
+        from ..models.toggle_management_request_data_item import (
+            ToggleManagementRequestDataItem,
+        )
 
         d = dict(src_dict)
         data = []

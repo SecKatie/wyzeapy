@@ -5,7 +5,9 @@ import httpx
 
 from ... import errors
 from ...client import AuthenticatedClient, Client
-from ...models.get_irrigation_iot_prop_response_200 import GetIrrigationIotPropResponse200
+from ...models.get_irrigation_iot_prop_response_200 import (
+    GetIrrigationIotPropResponse200,
+)
 from ...types import UNSET, Response
 
 

@@ -34,7 +34,9 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, client: AuthenticatedClient | Client, response: httpx.Response) -> SendSmsCodeResponse200 | None:
+def _parse_response(
+    *, client: AuthenticatedClient | Client, response: httpx.Response
+) -> SendSmsCodeResponse200 | None:
     if response.status_code == 200:
         response_200 = SendSmsCodeResponse200.from_dict(response.json())
 

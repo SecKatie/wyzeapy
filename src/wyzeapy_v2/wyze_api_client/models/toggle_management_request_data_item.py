@@ -85,11 +85,17 @@ class ToggleManagementRequestDataItem:
         page_id = cast(list[str], d.pop("page_id", UNSET))
 
         _toggle_update = d.pop("toggle_update", UNSET)
-        toggle_update: list[ToggleManagementRequestDataItemToggleUpdateItem] | Unset = UNSET
+        toggle_update: list[ToggleManagementRequestDataItemToggleUpdateItem] | Unset = (
+            UNSET
+        )
         if _toggle_update is not UNSET:
             toggle_update = []
             for toggle_update_item_data in _toggle_update:
-                toggle_update_item = ToggleManagementRequestDataItemToggleUpdateItem.from_dict(toggle_update_item_data)
+                toggle_update_item = (
+                    ToggleManagementRequestDataItemToggleUpdateItem.from_dict(
+                        toggle_update_item_data
+                    )
+                )
 
                 toggle_update.append(toggle_update_item)
 

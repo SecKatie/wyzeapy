@@ -9,7 +9,9 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.set_thermostat_iot_prop_body_props import SetThermostatIotPropBodyProps
+    from ..models.set_thermostat_iot_prop_body_props import (
+        SetThermostatIotPropBodyProps,
+    )
 
 
 T = TypeVar("T", bound="SetThermostatIotPropBody")
@@ -64,7 +66,9 @@ class SetThermostatIotPropBody:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.set_thermostat_iot_prop_body_props import SetThermostatIotPropBodyProps
+        from ..models.set_thermostat_iot_prop_body_props import (
+            SetThermostatIotPropBodyProps,
+        )
 
         d = dict(src_dict)
         did = d.pop("did", UNSET)

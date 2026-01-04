@@ -9,7 +9,9 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.get_lock_ble_token_response_200_token import GetLockBleTokenResponse200Token
+    from ..models.get_lock_ble_token_response_200_token import (
+        GetLockBleTokenResponse200Token,
+    )
 
 
 T = TypeVar("T", bound="GetLockBleTokenResponse200")
@@ -40,7 +42,9 @@ class GetLockBleTokenResponse200:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.get_lock_ble_token_response_200_token import GetLockBleTokenResponse200Token
+        from ..models.get_lock_ble_token_response_200_token import (
+            GetLockBleTokenResponse200Token,
+        )
 
         d = dict(src_dict)
         _token = d.pop("token", UNSET)

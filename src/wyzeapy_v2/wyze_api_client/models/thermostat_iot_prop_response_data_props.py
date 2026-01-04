@@ -9,10 +9,18 @@ from attrs import field as _attrs_field
 from ..models.thermostat_iot_prop_response_data_props_current_scenario import (
     ThermostatIotPropResponseDataPropsCurrentScenario,
 )
-from ..models.thermostat_iot_prop_response_data_props_fan_mode import ThermostatIotPropResponseDataPropsFanMode
-from ..models.thermostat_iot_prop_response_data_props_iot_state import ThermostatIotPropResponseDataPropsIotState
-from ..models.thermostat_iot_prop_response_data_props_mode_sys import ThermostatIotPropResponseDataPropsModeSys
-from ..models.thermostat_iot_prop_response_data_props_temp_unit import ThermostatIotPropResponseDataPropsTempUnit
+from ..models.thermostat_iot_prop_response_data_props_fan_mode import (
+    ThermostatIotPropResponseDataPropsFanMode,
+)
+from ..models.thermostat_iot_prop_response_data_props_iot_state import (
+    ThermostatIotPropResponseDataPropsIotState,
+)
+from ..models.thermostat_iot_prop_response_data_props_mode_sys import (
+    ThermostatIotPropResponseDataPropsModeSys,
+)
+from ..models.thermostat_iot_prop_response_data_props_temp_unit import (
+    ThermostatIotPropResponseDataPropsTempUnit,
+)
 from ..models.thermostat_iot_prop_response_data_props_working_state import (
     ThermostatIotPropResponseDataPropsWorkingState,
 )
@@ -138,7 +146,9 @@ class ThermostatIotPropResponseDataProps:
         if isinstance(_current_scenario, Unset):
             current_scenario = UNSET
         else:
-            current_scenario = ThermostatIotPropResponseDataPropsCurrentScenario(_current_scenario)
+            current_scenario = ThermostatIotPropResponseDataPropsCurrentScenario(
+                _current_scenario
+            )
 
         _temp_unit = d.pop("temp_unit", UNSET)
         temp_unit: ThermostatIotPropResponseDataPropsTempUnit | Unset
@@ -159,7 +169,9 @@ class ThermostatIotPropResponseDataProps:
         if isinstance(_working_state, Unset):
             working_state = UNSET
         else:
-            working_state = ThermostatIotPropResponseDataPropsWorkingState(_working_state)
+            working_state = ThermostatIotPropResponseDataPropsWorkingState(
+                _working_state
+            )
 
         thermostat_iot_prop_response_data_props = cls(
             temperature=temperature,

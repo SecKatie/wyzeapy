@@ -9,7 +9,9 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.plug_usage_response_data_usage_record_list_item import PlugUsageResponseDataUsageRecordListItem
+    from ..models.plug_usage_response_data_usage_record_list_item import (
+        PlugUsageResponseDataUsageRecordListItem,
+    )
 
 
 T = TypeVar("T", bound="PlugUsageResponseData")
@@ -43,15 +45,23 @@ class PlugUsageResponseData:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.plug_usage_response_data_usage_record_list_item import PlugUsageResponseDataUsageRecordListItem
+        from ..models.plug_usage_response_data_usage_record_list_item import (
+            PlugUsageResponseDataUsageRecordListItem,
+        )
 
         d = dict(src_dict)
         _usage_record_list = d.pop("usage_record_list", UNSET)
-        usage_record_list: list[PlugUsageResponseDataUsageRecordListItem] | Unset = UNSET
+        usage_record_list: list[PlugUsageResponseDataUsageRecordListItem] | Unset = (
+            UNSET
+        )
         if _usage_record_list is not UNSET:
             usage_record_list = []
             for usage_record_list_item_data in _usage_record_list:
-                usage_record_list_item = PlugUsageResponseDataUsageRecordListItem.from_dict(usage_record_list_item_data)
+                usage_record_list_item = (
+                    PlugUsageResponseDataUsageRecordListItem.from_dict(
+                        usage_record_list_item_data
+                    )
+                )
 
                 usage_record_list.append(usage_record_list_item)
 

@@ -6,7 +6,9 @@ import httpx
 from ... import errors
 from ...client import AuthenticatedClient, Client
 from ...models.device_mgmt_get_iot_prop_request import DeviceMgmtGetIotPropRequest
-from ...models.device_mgmt_get_iot_prop_response_200 import DeviceMgmtGetIotPropResponse200
+from ...models.device_mgmt_get_iot_prop_response_200 import (
+    DeviceMgmtGetIotPropResponse200,
+)
 from ...types import Response
 
 

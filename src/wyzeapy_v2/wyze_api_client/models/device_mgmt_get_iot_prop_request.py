@@ -7,8 +7,12 @@ from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
 if TYPE_CHECKING:
-    from ..models.device_mgmt_get_iot_prop_request_capabilities_item import DeviceMgmtGetIotPropRequestCapabilitiesItem
-    from ..models.device_mgmt_get_iot_prop_request_target_info import DeviceMgmtGetIotPropRequestTargetInfo
+    from ..models.device_mgmt_get_iot_prop_request_capabilities_item import (
+        DeviceMgmtGetIotPropRequestCapabilitiesItem,
+    )
+    from ..models.device_mgmt_get_iot_prop_request_target_info import (
+        DeviceMgmtGetIotPropRequestTargetInfo,
+    )
 
 
 T = TypeVar("T", bound="DeviceMgmtGetIotPropRequest")
@@ -55,19 +59,25 @@ class DeviceMgmtGetIotPropRequest:
         from ..models.device_mgmt_get_iot_prop_request_capabilities_item import (
             DeviceMgmtGetIotPropRequestCapabilitiesItem,
         )
-        from ..models.device_mgmt_get_iot_prop_request_target_info import DeviceMgmtGetIotPropRequestTargetInfo
+        from ..models.device_mgmt_get_iot_prop_request_target_info import (
+            DeviceMgmtGetIotPropRequestTargetInfo,
+        )
 
         d = dict(src_dict)
         capabilities = []
         _capabilities = d.pop("capabilities")
         for capabilities_item_data in _capabilities:
-            capabilities_item = DeviceMgmtGetIotPropRequestCapabilitiesItem.from_dict(capabilities_item_data)
+            capabilities_item = DeviceMgmtGetIotPropRequestCapabilitiesItem.from_dict(
+                capabilities_item_data
+            )
 
             capabilities.append(capabilities_item)
 
         nonce = d.pop("nonce")
 
-        target_info = DeviceMgmtGetIotPropRequestTargetInfo.from_dict(d.pop("targetInfo"))
+        target_info = DeviceMgmtGetIotPropRequestTargetInfo.from_dict(
+            d.pop("targetInfo")
+        )
 
         device_mgmt_get_iot_prop_request = cls(
             capabilities=capabilities,

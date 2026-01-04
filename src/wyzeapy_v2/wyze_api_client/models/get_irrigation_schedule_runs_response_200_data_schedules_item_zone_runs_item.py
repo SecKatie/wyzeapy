@@ -8,7 +8,9 @@ from attrs import field as _attrs_field
 
 from ..types import UNSET, Unset
 
-T = TypeVar("T", bound="GetIrrigationScheduleRunsResponse200DataSchedulesItemZoneRunsItem")
+T = TypeVar(
+    "T", bound="GetIrrigationScheduleRunsResponse200DataSchedulesItemZoneRunsItem"
+)
 
 
 @_attrs_define
@@ -45,13 +47,17 @@ class GetIrrigationScheduleRunsResponse200DataSchedulesItemZoneRunsItem:
 
         zone_name = d.pop("zone_name", UNSET)
 
-        get_irrigation_schedule_runs_response_200_data_schedules_item_zone_runs_item = cls(
-            zone_number=zone_number,
-            zone_name=zone_name,
+        get_irrigation_schedule_runs_response_200_data_schedules_item_zone_runs_item = (
+            cls(
+                zone_number=zone_number,
+                zone_name=zone_name,
+            )
         )
 
         get_irrigation_schedule_runs_response_200_data_schedules_item_zone_runs_item.additional_properties = d
-        return get_irrigation_schedule_runs_response_200_data_schedules_item_zone_runs_item
+        return (
+            get_irrigation_schedule_runs_response_200_data_schedules_item_zone_runs_item
+        )
 
     @property
     def additional_keys(self) -> list[str]:

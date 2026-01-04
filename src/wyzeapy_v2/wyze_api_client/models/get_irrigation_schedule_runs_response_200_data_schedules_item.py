@@ -28,8 +28,12 @@ class GetIrrigationScheduleRunsResponse200DataSchedulesItem:
         zone_runs (list[GetIrrigationScheduleRunsResponse200DataSchedulesItemZoneRunsItem] | Unset):
     """
 
-    schedule_state: GetIrrigationScheduleRunsResponse200DataSchedulesItemScheduleState | Unset = UNSET
-    zone_runs: list[GetIrrigationScheduleRunsResponse200DataSchedulesItemZoneRunsItem] | Unset = UNSET
+    schedule_state: (
+        GetIrrigationScheduleRunsResponse200DataSchedulesItemScheduleState | Unset
+    ) = UNSET
+    zone_runs: (
+        list[GetIrrigationScheduleRunsResponse200DataSchedulesItemZoneRunsItem] | Unset
+    ) = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -62,14 +66,23 @@ class GetIrrigationScheduleRunsResponse200DataSchedulesItem:
 
         d = dict(src_dict)
         _schedule_state = d.pop("schedule_state", UNSET)
-        schedule_state: GetIrrigationScheduleRunsResponse200DataSchedulesItemScheduleState | Unset
+        schedule_state: (
+            GetIrrigationScheduleRunsResponse200DataSchedulesItemScheduleState | Unset
+        )
         if isinstance(_schedule_state, Unset):
             schedule_state = UNSET
         else:
-            schedule_state = GetIrrigationScheduleRunsResponse200DataSchedulesItemScheduleState(_schedule_state)
+            schedule_state = (
+                GetIrrigationScheduleRunsResponse200DataSchedulesItemScheduleState(
+                    _schedule_state
+                )
+            )
 
         _zone_runs = d.pop("zone_runs", UNSET)
-        zone_runs: list[GetIrrigationScheduleRunsResponse200DataSchedulesItemZoneRunsItem] | Unset = UNSET
+        zone_runs: (
+            list[GetIrrigationScheduleRunsResponse200DataSchedulesItemZoneRunsItem]
+            | Unset
+        ) = UNSET
         if _zone_runs is not UNSET:
             zone_runs = []
             for zone_runs_item_data in _zone_runs:

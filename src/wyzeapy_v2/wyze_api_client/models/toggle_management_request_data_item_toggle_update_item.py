@@ -23,7 +23,9 @@ class ToggleManagementRequestDataItemToggleUpdateItem:
     """
 
     toggle_id: str | Unset = UNSET
-    toggle_status: ToggleManagementRequestDataItemToggleUpdateItemToggleStatus | Unset = UNSET
+    toggle_status: (
+        ToggleManagementRequestDataItemToggleUpdateItemToggleStatus | Unset
+    ) = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -49,11 +51,15 @@ class ToggleManagementRequestDataItemToggleUpdateItem:
         toggle_id = d.pop("toggle_id", UNSET)
 
         _toggle_status = d.pop("toggle_status", UNSET)
-        toggle_status: ToggleManagementRequestDataItemToggleUpdateItemToggleStatus | Unset
+        toggle_status: (
+            ToggleManagementRequestDataItemToggleUpdateItemToggleStatus | Unset
+        )
         if isinstance(_toggle_status, Unset):
             toggle_status = UNSET
         else:
-            toggle_status = ToggleManagementRequestDataItemToggleUpdateItemToggleStatus(_toggle_status)
+            toggle_status = ToggleManagementRequestDataItemToggleUpdateItemToggleStatus(
+                _toggle_status
+            )
 
         toggle_management_request_data_item_toggle_update_item = cls(
             toggle_id=toggle_id,

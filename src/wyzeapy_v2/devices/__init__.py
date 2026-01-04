@@ -7,7 +7,13 @@ from typing import TYPE_CHECKING, Dict, Optional, Type
 from ..wyze_api_client.models import Device
 from ..wyze_api_client.types import UNSET
 
-from .base import DeviceType, WyzeDevice, WiFiDeviceMixin, BatteryDeviceMixin, SwitchableDeviceMixin
+from .base import (
+    DeviceType,
+    WyzeDevice,
+    WiFiDeviceMixin,
+    BatteryDeviceMixin,
+    SwitchableDeviceMixin,
+)
 from .camera import WyzeCamera
 from .lock import WyzeLock
 from .gateway import WyzeGateway

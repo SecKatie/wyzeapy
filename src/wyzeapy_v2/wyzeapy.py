@@ -11,7 +11,7 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Awaitable, Callable, Optional, Union
 
-from wyzeapy_v2.wyze_api_client.api.user import get_user_profile
+from .wyze_api_client.api.user import get_user_profile
 
 from .devices import create_device, WyzeDevice
 from .exceptions import (
@@ -31,8 +31,18 @@ from .utils import (
 )
 
 from .wyze_api_client import Client, AuthenticatedClient
-from .wyze_api_client.api.authentication import login_with_credentials, login_with_2fa, refresh_token
-from .wyze_api_client.api.devices import get_object_list, run_action, set_property
+from .wyze_api_client.api.authentication import (
+    login_with_credentials,
+    login_with_2fa,
+    refresh_token,
+)
+from .wyze_api_client.api.devices import (
+    get_object_list,
+    run_action,
+    set_property,
+    get_device_info,
+    get_property_list,
+)
 from .wyze_api_client.api.lock import lock_control
 from .wyze_api_client.models import (
     LoginRequest,
@@ -46,6 +56,8 @@ from .wyze_api_client.models import (
     LockControlRequest,
     LockControlRequestAction,
     RefreshTokenRequest,
+    GetDeviceInfoBody,
+    GetPropertyListRequest,
 )
 from .wyze_api_client.types import Unset
 
@@ -192,6 +204,7 @@ class Wyzeapy:
         self._token: Optional[Token] = None
         self._auth_client: Optional[Client] = None
         self._main_client: Optional[Client] = None
+        self._devices: Optional[list[WyzeDevice]] = None
 
         # Action keys for device control (accessed by device classes)
         self._action_power_on = RunActionRequestActionKey.POWER_ON
@@ -241,32 +254,50 @@ class Wyzeapy:
         )
 
         if result.status_code != 200:
-            raise AuthenticationError(f"Login failed: {result.status_code} - {result.content.decode()}")
+            raise AuthenticationError(
+                f"Login failed: {result.status_code} - {result.content.decode()}"
+            )
 
         response = result.parsed
         if response is None:
-            raise AuthenticationError(f"Login failed: could not parse response - {result.content.decode()}")
+            raise AuthenticationError(
+                f"Login failed: could not parse response - {result.content.decode()}"
+            )
 
         # Check for 2FA requirement
-        if not isinstance(response.mfa_options, Unset) and response.mfa_options is not None:
+        if (
+            not isinstance(response.mfa_options, Unset)
+            and response.mfa_options is not None
+        ):
             if "TotpVerificationCode" in response.mfa_options:
                 if (
                     not isinstance(response.mfa_details, Unset)
                     and response.mfa_details is not None
                     and hasattr(response.mfa_details, "totp_apps")
                 ):
-                    totp_apps = response.mfa_details.additional_properties.get("totp_apps", [])
+                    totp_apps = response.mfa_details.additional_properties.get(
+                        "totp_apps", []
+                    )
                     if totp_apps:
-                        return await self._handle_2fa("TOTP", totp_apps[0].get("app_id", ""))
-                raise AuthenticationError("TOTP 2FA required but no TOTP app configured")
+                        return await self._handle_2fa(
+                            "TOTP", totp_apps[0].get("app_id", "")
+                        )
+                raise AuthenticationError(
+                    "TOTP 2FA required but no TOTP app configured"
+                )
 
             if "PrimaryPhone" in response.mfa_options:
-                if not isinstance(response.sms_session_id, Unset) and response.sms_session_id is not None:
+                if (
+                    not isinstance(response.sms_session_id, Unset)
+                    and response.sms_session_id is not None
+                ):
                     return await self._handle_2fa("SMS", response.sms_session_id)
                 raise AuthenticationError("SMS 2FA required but no session ID provided")
 
         if isinstance(response.access_token, Unset) or response.access_token is None:
-            raise AuthenticationError(f"Login failed: {getattr(response, 'error_code', 'unknown error')}")
+            raise AuthenticationError(
+                f"Login failed: {getattr(response, 'error_code', 'unknown error')}"
+            )
 
         if isinstance(response.refresh_token, Unset) or response.refresh_token is None:
             raise AuthenticationError("Login failed: no refresh token received")
@@ -351,10 +382,16 @@ class Wyzeapy:
         if isinstance(response.data, Unset) or response.data is None:
             raise TokenRefreshError("Token refresh failed: no data in response")
 
-        if isinstance(response.data.access_token, Unset) or response.data.access_token is None:
+        if (
+            isinstance(response.data.access_token, Unset)
+            or response.data.access_token is None
+        ):
             raise TokenRefreshError("Token refresh failed: no access token")
 
-        if isinstance(response.data.refresh_token, Unset) or response.data.refresh_token is None:
+        if (
+            isinstance(response.data.refresh_token, Unset)
+            or response.data.refresh_token is None
+        ):
             raise TokenRefreshError("Token refresh failed: no refresh token")
 
         self._token = Token(
@@ -385,13 +422,32 @@ class Wyzeapy:
             "access_token": self._get_token().access_token,
         }
 
-    async def list_devices(self) -> list[WyzeDevice]:
+    @property
+    def devices(self) -> list[WyzeDevice]:
+        """
+        Get cached devices. Returns empty list if not yet fetched.
+
+        Use `list_devices()` to fetch devices from the API.
+        """
+        return self._devices or []
+
+    async def list_devices(self, *, refresh: bool = False) -> list[WyzeDevice]:
         """
         Get all devices associated with the account.
+
+        Devices are cached after the first fetch. Subsequent calls return
+        the cached list unless `refresh=True` is specified.
+
+        Args:
+            refresh: If True, fetch fresh data from the API instead of
+                    returning cached devices.
 
         Returns:
             List of Device objects with control methods available
         """
+        if self._devices is not None and not refresh:
+            return self._devices
+
         await self._ensure_token_valid()
 
         client = self._get_main_client()
@@ -401,12 +457,19 @@ class Wyzeapy:
             body=CommonRequestParams(**self._common_params()),
         )
 
-        if response is None or response.data is None or isinstance(response.data, Unset):
-            return []
+        if (
+            response is None
+            or response.data is None
+            or isinstance(response.data, Unset)
+        ):
+            self._devices = []
+            return self._devices
 
-        return [create_device(device, self) for device in response.data.device_list or []]
+        self._devices = [
+            create_device(device, self) for device in response.data.device_list or []
+        ]
+        return self._devices
 
-    
     async def get_user(self) -> WyzeUser:
         """
         Get the current user's profile.
@@ -452,7 +515,7 @@ class Wyzeapy:
     # Internal API Methods (used by device classes)
     # -------------------------------------------------------------------------
 
-    async def _run_action(
+    async def run_action(
         self, device: WyzeDevice, action: RunActionRequestActionKey
     ) -> bool:
         """Execute an action on a device."""
@@ -474,7 +537,7 @@ class Wyzeapy:
 
         return response is not None and getattr(response, "code", None) == "1"
 
-    async def _set_property(
+    async def set_property(
         self, device: WyzeDevice, property_id: str, value: str
     ) -> bool:
         """Set a property on a device."""
@@ -537,3 +600,91 @@ class Wyzeapy:
             return response is not None and getattr(response, "code", 1) == 0
         finally:
             await lock_client.get_async_httpx_client().aclose()
+
+    async def get_device_info(self, device: WyzeDevice) -> dict:
+        """
+        Get detailed information about a device.
+
+        Fetches the latest device info from the API. This can be used to get
+        updated device state that may not be captured in the initial device list.
+
+        Args:
+            device: The device to get information for.
+
+        Returns:
+            Dictionary containing detailed device information.
+        """
+        await self._ensure_token_valid()
+
+        client = self._get_main_client()
+
+        response = await get_device_info.asyncio(
+            client=client,
+            body=GetDeviceInfoBody(
+                device_mac=device.mac or "",
+                device_model=device.product_model or "",
+                **self._common_params(),
+            ),
+        )
+
+        if (
+            response is None
+            or isinstance(response.data, Unset)
+            or response.data is None
+        ):
+            return {}
+
+        return response.data.additional_properties
+
+    async def get_device_properties(
+        self, device: WyzeDevice, property_ids: Optional[list[str]] = None
+    ) -> dict[str, str]:
+        """
+        Get property values for a device.
+
+        Fetches the current property values from the API. Properties represent
+        device state like power status, brightness, color, etc.
+
+        Args:
+            device: The device to get properties for.
+            property_ids: Optional list of specific property IDs to fetch.
+                         If None, fetches all properties for the device.
+
+        Returns:
+            Dictionary mapping property ID to property value.
+        """
+        await self._ensure_token_valid()
+
+        client = self._get_main_client()
+
+        request_kwargs: dict = {
+            "device_mac": device.mac or "",
+            "device_model": device.product_model or "",
+            **self._common_params(),
+        }
+        if property_ids:
+            request_kwargs["target_pid_list"] = property_ids
+
+        response = await get_property_list.asyncio(
+            client=client,
+            body=GetPropertyListRequest(**request_kwargs),
+        )
+
+        if (
+            response is None
+            or isinstance(response.data, Unset)
+            or response.data is None
+        ):
+            return {}
+
+        if (
+            isinstance(response.data.property_list, Unset)
+            or response.data.property_list is None
+        ):
+            return {}
+
+        result = {}
+        for prop in response.data.property_list:
+            if not isinstance(prop.pid, Unset) and not isinstance(prop.value, Unset):
+                result[prop.pid] = prop.value
+        return result

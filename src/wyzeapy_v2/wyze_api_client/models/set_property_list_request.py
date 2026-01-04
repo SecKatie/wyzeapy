@@ -10,7 +10,9 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.set_property_list_request_property_list_item import SetPropertyListRequestPropertyListItem
+    from ..models.set_property_list_request_property_list_item import (
+        SetPropertyListRequestPropertyListItem,
+    )
 
 
 T = TypeVar("T", bound="SetPropertyListRequest")
@@ -110,7 +112,9 @@ class SetPropertyListRequest:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.set_property_list_request_property_list_item import SetPropertyListRequestPropertyListItem
+        from ..models.set_property_list_request_property_list_item import (
+            SetPropertyListRequestPropertyListItem,
+        )
 
         d = dict(src_dict)
         device_mac = d.pop("device_mac")
@@ -120,7 +124,9 @@ class SetPropertyListRequest:
         property_list = []
         _property_list = d.pop("property_list")
         for property_list_item_data in _property_list:
-            property_list_item = SetPropertyListRequestPropertyListItem.from_dict(property_list_item_data)
+            property_list_item = SetPropertyListRequestPropertyListItem.from_dict(
+                property_list_item_data
+            )
 
             property_list.append(property_list_item)
 

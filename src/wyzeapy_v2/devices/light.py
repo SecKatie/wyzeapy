@@ -42,7 +42,9 @@ class WyzeLight(WyzeDevice, WiFiDeviceMixin, SwitchableDeviceMixin):
         """
         client = self._ensure_client()
         brightness = max(0, min(100, brightness))
-        return await client._set_property(self, client._prop_brightness, str(brightness))
+        return await client.set_property(
+            self, client._prop_brightness, str(brightness)
+        )
 
     async def set_color_temp(self, color_temp: int) -> bool:
         """
@@ -55,7 +57,9 @@ class WyzeLight(WyzeDevice, WiFiDeviceMixin, SwitchableDeviceMixin):
             True if successful
         """
         client = self._ensure_client()
-        return await client._set_property(self, client._prop_color_temp, str(color_temp))
+        return await client.set_property(
+            self, client._prop_color_temp, str(color_temp)
+        )
 
     async def set_color(self, color: str) -> bool:
         """
@@ -69,5 +73,5 @@ class WyzeLight(WyzeDevice, WiFiDeviceMixin, SwitchableDeviceMixin):
         """
         client = self._ensure_client()
         # Set color mode to color (1) first, then set color
-        await client._set_property(self, client._prop_color_mode, "1")
-        return await client._set_property(self, client._prop_color, color)
+        await client.set_property(self, client._prop_color_mode, "1")
+        return await client.set_property(self, client._prop_color, color)

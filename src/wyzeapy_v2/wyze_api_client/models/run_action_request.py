@@ -118,7 +118,9 @@ class RunActionRequest:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.run_action_request_action_params import RunActionRequestActionParams
+        from ..models.run_action_request_action_params import (
+            RunActionRequestActionParams,
+        )
 
         d = dict(src_dict)
         provider_key = d.pop("provider_key")

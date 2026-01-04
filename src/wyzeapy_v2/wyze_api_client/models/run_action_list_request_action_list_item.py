@@ -6,7 +6,9 @@ from typing import TYPE_CHECKING, Any, TypeVar
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-from ..models.run_action_list_request_action_list_item_action_key import RunActionListRequestActionListItemActionKey
+from ..models.run_action_list_request_action_list_item_action_key import (
+    RunActionListRequestActionListItemActionKey,
+)
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
@@ -84,7 +86,9 @@ class RunActionListRequestActionListItem:
         if isinstance(_action_params, Unset):
             action_params = UNSET
         else:
-            action_params = RunActionListRequestActionListItemActionParams.from_dict(_action_params)
+            action_params = RunActionListRequestActionListItemActionParams.from_dict(
+                _action_params
+            )
 
         run_action_list_request_action_list_item = cls(
             instance_id=instance_id,

@@ -9,8 +9,12 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.device_mgmt_run_action_request_capabilities_item import DeviceMgmtRunActionRequestCapabilitiesItem
-    from ..models.device_mgmt_run_action_request_target_info import DeviceMgmtRunActionRequestTargetInfo
+    from ..models.device_mgmt_run_action_request_capabilities_item import (
+        DeviceMgmtRunActionRequestCapabilitiesItem,
+    )
+    from ..models.device_mgmt_run_action_request_target_info import (
+        DeviceMgmtRunActionRequestTargetInfo,
+    )
 
 
 T = TypeVar("T", bound="DeviceMgmtRunActionRequest")
@@ -60,20 +64,28 @@ class DeviceMgmtRunActionRequest:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.device_mgmt_run_action_request_capabilities_item import DeviceMgmtRunActionRequestCapabilitiesItem
-        from ..models.device_mgmt_run_action_request_target_info import DeviceMgmtRunActionRequestTargetInfo
+        from ..models.device_mgmt_run_action_request_capabilities_item import (
+            DeviceMgmtRunActionRequestCapabilitiesItem,
+        )
+        from ..models.device_mgmt_run_action_request_target_info import (
+            DeviceMgmtRunActionRequestTargetInfo,
+        )
 
         d = dict(src_dict)
         capabilities = []
         _capabilities = d.pop("capabilities")
         for capabilities_item_data in _capabilities:
-            capabilities_item = DeviceMgmtRunActionRequestCapabilitiesItem.from_dict(capabilities_item_data)
+            capabilities_item = DeviceMgmtRunActionRequestCapabilitiesItem.from_dict(
+                capabilities_item_data
+            )
 
             capabilities.append(capabilities_item)
 
         nonce = d.pop("nonce")
 
-        target_info = DeviceMgmtRunActionRequestTargetInfo.from_dict(d.pop("targetInfo"))
+        target_info = DeviceMgmtRunActionRequestTargetInfo.from_dict(
+            d.pop("targetInfo")
+        )
 
         transaction_id = d.pop("transactionId", UNSET)
 

@@ -10,7 +10,9 @@ from attrs import field as _attrs_field
 from ..types import UNSET, Unset
 
 if TYPE_CHECKING:
-    from ..models.run_action_list_request_action_list_item import RunActionListRequestActionListItem
+    from ..models.run_action_list_request_action_list_item import (
+        RunActionListRequestActionListItem,
+    )
 
 
 T = TypeVar("T", bound="RunActionListRequest")
@@ -100,13 +102,17 @@ class RunActionListRequest:
 
     @classmethod
     def from_dict(cls: type[T], src_dict: Mapping[str, Any]) -> T:
-        from ..models.run_action_list_request_action_list_item import RunActionListRequestActionListItem
+        from ..models.run_action_list_request_action_list_item import (
+            RunActionListRequestActionListItem,
+        )
 
         d = dict(src_dict)
         action_list = []
         _action_list = d.pop("action_list")
         for action_list_item_data in _action_list:
-            action_list_item = RunActionListRequestActionListItem.from_dict(action_list_item_data)
+            action_list_item = RunActionListRequestActionListItem.from_dict(
+                action_list_item_data
+            )
 
             action_list.append(action_list_item)
 

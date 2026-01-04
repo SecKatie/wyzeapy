@@ -24,7 +24,9 @@ class GetIrrigationScheduleRunsResponse200Data:
         schedules (list[GetIrrigationScheduleRunsResponse200DataSchedulesItem] | Unset):
     """
 
-    schedules: list[GetIrrigationScheduleRunsResponse200DataSchedulesItem] | Unset = UNSET
+    schedules: list[GetIrrigationScheduleRunsResponse200DataSchedulesItem] | Unset = (
+        UNSET
+    )
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -51,11 +53,17 @@ class GetIrrigationScheduleRunsResponse200Data:
 
         d = dict(src_dict)
         _schedules = d.pop("schedules", UNSET)
-        schedules: list[GetIrrigationScheduleRunsResponse200DataSchedulesItem] | Unset = UNSET
+        schedules: (
+            list[GetIrrigationScheduleRunsResponse200DataSchedulesItem] | Unset
+        ) = UNSET
         if _schedules is not UNSET:
             schedules = []
             for schedules_item_data in _schedules:
-                schedules_item = GetIrrigationScheduleRunsResponse200DataSchedulesItem.from_dict(schedules_item_data)
+                schedules_item = (
+                    GetIrrigationScheduleRunsResponse200DataSchedulesItem.from_dict(
+                        schedules_item_data
+                    )
+                )
 
                 schedules.append(schedules_item)
 

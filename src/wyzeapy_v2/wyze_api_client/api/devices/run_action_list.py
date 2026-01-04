@@ -52,12 +52,12 @@ def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Res
 
 def sync_detailed(
     *,
-    client: AuthenticatedClient,
+    client: AuthenticatedClient | Client,
     body: RunActionListRequest,
 ) -> Response[StandardResponse]:
     """Run action list
 
-     Execute multiple actions on devices (used for mesh bulbs)
+     Execute multiple actions on devices (used for mesh bulbs). Access token is passed in request body.
 
     Args:
         body (RunActionListRequest):
@@ -83,12 +83,12 @@ def sync_detailed(
 
 def sync(
     *,
-    client: AuthenticatedClient,
+    client: AuthenticatedClient | Client,
     body: RunActionListRequest,
 ) -> StandardResponse | None:
     """Run action list
 
-     Execute multiple actions on devices (used for mesh bulbs)
+     Execute multiple actions on devices (used for mesh bulbs). Access token is passed in request body.
 
     Args:
         body (RunActionListRequest):
@@ -109,12 +109,12 @@ def sync(
 
 async def asyncio_detailed(
     *,
-    client: AuthenticatedClient,
+    client: AuthenticatedClient | Client,
     body: RunActionListRequest,
 ) -> Response[StandardResponse]:
     """Run action list
 
-     Execute multiple actions on devices (used for mesh bulbs)
+     Execute multiple actions on devices (used for mesh bulbs). Access token is passed in request body.
 
     Args:
         body (RunActionListRequest):
@@ -138,12 +138,12 @@ async def asyncio_detailed(
 
 async def asyncio(
     *,
-    client: AuthenticatedClient,
+    client: AuthenticatedClient | Client,
     body: RunActionListRequest,
 ) -> StandardResponse | None:
     """Run action list
 
-     Execute multiple actions on devices (used for mesh bulbs)
+     Execute multiple actions on devices (used for mesh bulbs). Access token is passed in request body.
 
     Args:
         body (RunActionListRequest):

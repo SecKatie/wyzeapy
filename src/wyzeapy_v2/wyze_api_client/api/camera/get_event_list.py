@@ -56,12 +56,12 @@ def _build_response(
 
 def sync_detailed(
     *,
-    client: AuthenticatedClient,
+    client: AuthenticatedClient | Client,
     body: GetEventListBody,
 ) -> Response[GetEventListResponse200]:
     """Get device events
 
-     Get recent events for devices
+     Get recent events for devices. Access token is passed in request body.
 
     Args:
         body (GetEventListBody):
@@ -87,12 +87,12 @@ def sync_detailed(
 
 def sync(
     *,
-    client: AuthenticatedClient,
+    client: AuthenticatedClient | Client,
     body: GetEventListBody,
 ) -> GetEventListResponse200 | None:
     """Get device events
 
-     Get recent events for devices
+     Get recent events for devices. Access token is passed in request body.
 
     Args:
         body (GetEventListBody):
@@ -113,12 +113,12 @@ def sync(
 
 async def asyncio_detailed(
     *,
-    client: AuthenticatedClient,
+    client: AuthenticatedClient | Client,
     body: GetEventListBody,
 ) -> Response[GetEventListResponse200]:
     """Get device events
 
-     Get recent events for devices
+     Get recent events for devices. Access token is passed in request body.
 
     Args:
         body (GetEventListBody):
@@ -142,12 +142,12 @@ async def asyncio_detailed(
 
 async def asyncio(
     *,
-    client: AuthenticatedClient,
+    client: AuthenticatedClient | Client,
     body: GetEventListBody,
 ) -> GetEventListResponse200 | None:
     """Get device events
 
-     Get recent events for devices
+     Get recent events for devices. Access token is passed in request body.
 
     Args:
         body (GetEventListBody):

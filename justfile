@@ -1,10 +1,19 @@
 # Wyzeapy justfile
+default:
+    @just --list
 
 # Generate the API client from the OpenAPI spec
 generate:
     rm -rf src/wyzeapy/wyze_api_client
     uv run openapi-python-client generate --path wyze-api-openapi.yaml --output-path /tmp/wyze_client --overwrite
     mv /tmp/wyze_client/wyze_api_client src/wyzeapy/wyze_api_client
+    rm -rf /tmp/wyze_client
+
+# Generate the API client for v2 from the OpenAPI spec
+generate-v2:
+    rm -rf src/wyzeapy_v2/wyze_api_client
+    uv run openapi-python-client generate --path wyze-api-openapi.yaml --output-path /tmp/wyze_client --overwrite
+    mv /tmp/wyze_client/wyze_api_client src/wyzeapy_v2/wyze_api_client
     rm -rf /tmp/wyze_client
 
 # Validate the OpenAPI spec

@@ -24,6 +24,8 @@ class RunActionRequest:
         provider_key (str): Device product model
         instance_id (str): Device MAC address
         action_key (RunActionRequestActionKey): Action to perform
+        action_params (RunActionRequestActionParams):
+        custom_string (str):
         phone_system_type (str | Unset): Phone system type (1 for Android) Example: 1.
         app_version (str | Unset): Application version Example: 2.18.43.
         app_ver (str | Unset): Full application version string Example: com.hualai.WyzeCam___2.18.43.
@@ -33,13 +35,13 @@ class RunActionRequest:
         sv (str | Unset): Security version
         ts (int | Unset): Unix timestamp in seconds
         access_token (str | Unset): User access token
-        action_params (RunActionRequestActionParams | Unset):
-        custom_string (str | Unset):
     """
 
     provider_key: str
     instance_id: str
     action_key: RunActionRequestActionKey
+    action_params: RunActionRequestActionParams
+    custom_string: str
     phone_system_type: str | Unset = UNSET
     app_version: str | Unset = UNSET
     app_ver: str | Unset = UNSET
@@ -49,8 +51,6 @@ class RunActionRequest:
     sv: str | Unset = UNSET
     ts: int | Unset = UNSET
     access_token: str | Unset = UNSET
-    action_params: RunActionRequestActionParams | Unset = UNSET
-    custom_string: str | Unset = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -59,6 +59,10 @@ class RunActionRequest:
         instance_id = self.instance_id
 
         action_key = self.action_key.value
+
+        action_params = self.action_params.to_dict()
+
+        custom_string = self.custom_string
 
         phone_system_type = self.phone_system_type
 
@@ -80,12 +84,6 @@ class RunActionRequest:
 
         access_token = self.access_token
 
-        action_params: dict[str, Any] | Unset = UNSET
-        if not isinstance(self.action_params, Unset):
-            action_params = self.action_params.to_dict()
-
-        custom_string = self.custom_string
-
         field_dict: dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
@@ -93,6 +91,8 @@ class RunActionRequest:
                 "provider_key": provider_key,
                 "instance_id": instance_id,
                 "action_key": action_key,
+                "action_params": action_params,
+                "custom_string": custom_string,
             }
         )
         if phone_system_type is not UNSET:
@@ -113,10 +113,6 @@ class RunActionRequest:
             field_dict["ts"] = ts
         if access_token is not UNSET:
             field_dict["access_token"] = access_token
-        if action_params is not UNSET:
-            field_dict["action_params"] = action_params
-        if custom_string is not UNSET:
-            field_dict["custom_string"] = custom_string
 
         return field_dict
 
@@ -130,6 +126,10 @@ class RunActionRequest:
         instance_id = d.pop("instance_id")
 
         action_key = RunActionRequestActionKey(d.pop("action_key"))
+
+        action_params = RunActionRequestActionParams.from_dict(d.pop("action_params"))
+
+        custom_string = d.pop("custom_string")
 
         phone_system_type = d.pop("phone_system_type", UNSET)
 
@@ -154,19 +154,12 @@ class RunActionRequest:
 
         access_token = d.pop("access_token", UNSET)
 
-        _action_params = d.pop("action_params", UNSET)
-        action_params: RunActionRequestActionParams | Unset
-        if isinstance(_action_params, Unset):
-            action_params = UNSET
-        else:
-            action_params = RunActionRequestActionParams.from_dict(_action_params)
-
-        custom_string = d.pop("custom_string", UNSET)
-
         run_action_request = cls(
             provider_key=provider_key,
             instance_id=instance_id,
             action_key=action_key,
+            action_params=action_params,
+            custom_string=custom_string,
             phone_system_type=phone_system_type,
             app_version=app_version,
             app_ver=app_ver,
@@ -176,8 +169,6 @@ class RunActionRequest:
             sv=sv,
             ts=ts,
             access_token=access_token,
-            action_params=action_params,
-            custom_string=custom_string,
         )
 
         run_action_request.additional_properties = d

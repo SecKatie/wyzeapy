@@ -9,23 +9,34 @@ from __future__ import annotations
 import time
 import uuid
 from dataclasses import dataclass, field
-from typing import Awaitable, Callable, List, Optional, Union
+from typing import Awaitable, Callable, Optional, Union
 
-from .devices import create_device, WyzeDevice, WyzeLight, WyzeLock
+from wyzeapy_v2.wyze_api_client.api.user import get_user_profile
+
+from .devices import create_device, WyzeDevice
 from .exceptions import (
     AuthenticationError,
     TwoFactorAuthRequired,
     TokenRefreshError,
     NotAuthenticatedError,
 )
-from .utils import hash_password, ford_create_signature, PropertyID, FORD_APP_KEY
+from .utils import (
+    hash_password,
+    ford_create_signature,
+    olive_create_signature,
+    PropertyID,
+    FORD_APP_KEY,
+    OLIVE_APP_ID,
+    APP_INFO,
+)
 
-from .wyze_api_client import Client
+from .wyze_api_client import Client, AuthenticatedClient
 from .wyze_api_client.api.authentication import login_with_credentials, login_with_2fa, refresh_token
 from .wyze_api_client.api.devices import get_object_list, run_action, set_property
 from .wyze_api_client.api.lock import lock_control
 from .wyze_api_client.models import (
     LoginRequest,
+    RunActionRequestActionParams,
     TwoFactorLoginRequest,
     TwoFactorLoginRequestMfaType,
     CommonRequestParams,
@@ -36,6 +47,7 @@ from .wyze_api_client.models import (
     LockControlRequestAction,
     RefreshTokenRequest,
 )
+from .wyze_api_client.types import Unset
 
 
 # API Server URLs
@@ -68,6 +80,68 @@ class Token:
     @property
     def should_refresh(self) -> bool:
         return time.time() >= (self.created_at + self.REFRESH_INTERVAL)
+
+
+@dataclass
+class WyzeUser:
+    """Represents a Wyze user profile."""
+
+    notifications_enabled: bool = False
+
+    # Identity
+    user_id: Optional[str] = None
+
+    # Profile fields
+    nickname: Optional[str] = None
+    logo_url: Optional[str] = None
+    gender: Optional[str] = None
+    birthdate: Optional[str] = None
+    occupation: Optional[str] = None
+
+    # Body metrics (for Wyze Scale integration)
+    height: Optional[float] = None
+    height_unit: Optional[str] = None
+    weight: Optional[float] = None
+    weight_unit: Optional[str] = None
+    body_type: Optional[str] = None
+
+    # Account info
+    create_time: Optional[int] = None  # Timestamp in milliseconds
+    update_time: Optional[int] = None  # Timestamp in milliseconds
+    subscription: Optional[dict] = None
+    metadata: Optional[dict] = None
+    is_voip_on: Optional[bool] = None
+
+    # Raw data for any unmodeled fields
+    raw_data: dict = field(default_factory=dict)
+
+    @classmethod
+    def from_response(cls, data: dict) -> "WyzeUser":
+        """Create WyzeUser from API response data."""
+        return cls(
+            notifications_enabled=data.get("notification", False),
+            user_id=data.get("user_id"),
+            nickname=data.get("nickname"),
+            logo_url=data.get("logo_url"),
+            gender=data.get("gender"),
+            birthdate=data.get("birthdate"),
+            occupation=data.get("occupation"),
+            height=data.get("height"),
+            height_unit=data.get("height_unit"),
+            weight=data.get("weight"),
+            weight_unit=data.get("weight_unit"),
+            body_type=data.get("body_type"),
+            create_time=data.get("create_time"),
+            update_time=data.get("update_time"),
+            subscription=data.get("subscription"),
+            metadata=data.get("metadata"),
+            is_voip_on=data.get("is_voip_on"),
+            raw_data=data,
+        )
+
+
+# Platform service URL
+PLATFORM_SERVICE_URL = "https://wyze-platform-service.wyzecam.com"
 
 
 class Wyzeapy:
@@ -174,15 +248,28 @@ class Wyzeapy:
             raise AuthenticationError(f"Login failed: could not parse response - {result.content.decode()}")
 
         # Check for 2FA requirement
-        if response.mfa_options is not None:
+        if not isinstance(response.mfa_options, Unset) and response.mfa_options is not None:
             if "TotpVerificationCode" in response.mfa_options:
-                return await self._handle_2fa("TOTP", response.mfa_details.totp_apps[0].app_id)
+                if (
+                    not isinstance(response.mfa_details, Unset)
+                    and response.mfa_details is not None
+                    and hasattr(response.mfa_details, "totp_apps")
+                ):
+                    totp_apps = response.mfa_details.additional_properties.get("totp_apps", [])
+                    if totp_apps:
+                        return await self._handle_2fa("TOTP", totp_apps[0].get("app_id", ""))
+                raise AuthenticationError("TOTP 2FA required but no TOTP app configured")
 
             if "PrimaryPhone" in response.mfa_options:
-                return await self._handle_2fa("SMS", response.sms_session_id)
+                if not isinstance(response.sms_session_id, Unset) and response.sms_session_id is not None:
+                    return await self._handle_2fa("SMS", response.sms_session_id)
+                raise AuthenticationError("SMS 2FA required but no session ID provided")
 
-        if response.access_token is None:
+        if isinstance(response.access_token, Unset) or response.access_token is None:
             raise AuthenticationError(f"Login failed: {getattr(response, 'error_code', 'unknown error')}")
+
+        if isinstance(response.refresh_token, Unset) or response.refresh_token is None:
+            raise AuthenticationError("Login failed: no refresh token received")
 
         self._token = Token(
             access_token=response.access_token,
@@ -196,9 +283,11 @@ class Wyzeapy:
             raise TwoFactorAuthRequired(auth_type)
 
         # Call the callback (may be sync or async)
-        code = self._tfa_callback(auth_type)
-        if hasattr(code, "__await__"):
-            code = await code
+        result = self._tfa_callback(auth_type)
+        if isinstance(result, str):
+            code = result
+        else:
+            code = await result
 
         client = self._get_auth_client()
 
@@ -221,13 +310,24 @@ class Wyzeapy:
             ),
         )
 
-        if response is None or response.access_token is None:
+        if response is None:
             raise AuthenticationError("2FA login failed")
+
+        if isinstance(response.access_token, Unset) or response.access_token is None:
+            raise AuthenticationError("2FA login failed: no access token")
+
+        if isinstance(response.refresh_token, Unset) or response.refresh_token is None:
+            raise AuthenticationError("2FA login failed: no refresh token")
 
         self._token = Token(
             access_token=response.access_token,
             refresh_token=response.refresh_token,
         )
+        return self._token
+
+    def _get_token(self) -> Token:
+        if self._token is None:
+            raise NotAuthenticatedError("No token available")
         return self._token
 
     async def _refresh_token(self) -> Token:
@@ -245,8 +345,17 @@ class Wyzeapy:
             ),
         )
 
-        if response is None or response.data is None:
+        if response is None:
             raise TokenRefreshError("Token refresh failed")
+
+        if isinstance(response.data, Unset) or response.data is None:
+            raise TokenRefreshError("Token refresh failed: no data in response")
+
+        if isinstance(response.data.access_token, Unset) or response.data.access_token is None:
+            raise TokenRefreshError("Token refresh failed: no access token")
+
+        if isinstance(response.data.refresh_token, Unset) or response.data.refresh_token is None:
+            raise TokenRefreshError("Token refresh failed: no refresh token")
 
         self._token = Token(
             access_token=response.data.access_token,
@@ -273,10 +382,10 @@ class Wyzeapy:
             "sc": SC,
             "sv": SV,
             "ts": int(time.time()),
-            "access_token": self._token.access_token if self._token else "",
+            "access_token": self._get_token().access_token,
         }
 
-    async def list_devices(self) -> List[WyzeDevice]:
+    async def list_devices(self) -> list[WyzeDevice]:
         """
         Get all devices associated with the account.
 
@@ -292,10 +401,52 @@ class Wyzeapy:
             body=CommonRequestParams(**self._common_params()),
         )
 
-        if response is None or response.data is None:
+        if response is None or response.data is None or isinstance(response.data, Unset):
             return []
 
         return [create_device(device, self) for device in response.data.device_list or []]
+
+    
+    async def get_user(self) -> WyzeUser:
+        """
+        Get the current user's profile.
+
+        Returns:
+            WyzeUser object with profile information
+        """
+        await self._ensure_token_valid()
+
+        access_token = self._get_token().access_token
+        nonce = str(int(time.time() * 1000))
+        payload = {"nonce": nonce}
+        signature = olive_create_signature(payload, access_token)
+
+        # Create authenticated client for platform service
+        platform_client = AuthenticatedClient(
+            base_url=PLATFORM_SERVICE_URL,
+            token=access_token,
+            prefix="",  # No prefix, just the raw token
+            auth_header_name="access_token",
+        )
+
+        try:
+            response = await get_user_profile.asyncio(
+                client=platform_client,
+                nonce=nonce,
+                appid=OLIVE_APP_ID,
+                appinfo=APP_INFO,
+                phoneid=self._phone_id,
+                signature2=signature,
+            )
+
+            if response is None or isinstance(response.data, Unset):
+                return WyzeUser()
+
+            # Convert response data to dict to capture all properties
+            data_dict = response.data.to_dict()
+            return WyzeUser.from_response(data_dict)
+        finally:
+            await platform_client.get_async_httpx_client().aclose()
 
     # -------------------------------------------------------------------------
     # Internal API Methods (used by device classes)
@@ -315,6 +466,8 @@ class Wyzeapy:
                 provider_key=device.product_model or "",
                 instance_id=device.mac or "",
                 action_key=action,
+                action_params=RunActionRequestActionParams(),
+                custom_string="",
                 **self._common_params(),
             ),
         )
@@ -353,15 +506,16 @@ class Wyzeapy:
 
         try:
             timestamp = str(int(time.time() * 1000))
-            uuid = device.mac or ""
+            device_uuid = device.mac or ""
+            access_token = self._get_token().access_token
 
             # Build payload for signature
             payload = {
-                "access_token": self._token.access_token,
+                "access_token": access_token,
                 "action": action.value,
                 "key": FORD_APP_KEY,
                 "timestamp": timestamp,
-                "uuid": uuid,
+                "uuid": device_uuid,
             }
 
             signature = ford_create_signature(
@@ -371,12 +525,12 @@ class Wyzeapy:
             response = await lock_control.asyncio(
                 client=lock_client,
                 body=LockControlRequest(
-                    uuid=uuid,
+                    sign=signature,
+                    uuid=device_uuid,
                     action=action,
-                    access_token=self._token.access_token,
+                    access_token=access_token,
                     key=FORD_APP_KEY,
                     timestamp=timestamp,
-                    sign=signature,
                 ),
             )
 

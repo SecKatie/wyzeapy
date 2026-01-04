@@ -54,12 +54,12 @@ def _build_response(
 
 def sync_detailed(
     *,
-    client: AuthenticatedClient,
+    client: AuthenticatedClient | Client,
     body: RefreshTokenRequest,
 ) -> Response[RefreshTokenResponse]:
     """Refresh access token
 
-     Exchange refresh token for new access token
+     Exchange refresh token for new access token. Access token is passed in request body.
 
     Args:
         body (RefreshTokenRequest):
@@ -85,12 +85,12 @@ def sync_detailed(
 
 def sync(
     *,
-    client: AuthenticatedClient,
+    client: AuthenticatedClient | Client,
     body: RefreshTokenRequest,
 ) -> RefreshTokenResponse | None:
     """Refresh access token
 
-     Exchange refresh token for new access token
+     Exchange refresh token for new access token. Access token is passed in request body.
 
     Args:
         body (RefreshTokenRequest):
@@ -111,12 +111,12 @@ def sync(
 
 async def asyncio_detailed(
     *,
-    client: AuthenticatedClient,
+    client: AuthenticatedClient | Client,
     body: RefreshTokenRequest,
 ) -> Response[RefreshTokenResponse]:
     """Refresh access token
 
-     Exchange refresh token for new access token
+     Exchange refresh token for new access token. Access token is passed in request body.
 
     Args:
         body (RefreshTokenRequest):
@@ -140,12 +140,12 @@ async def asyncio_detailed(
 
 async def asyncio(
     *,
-    client: AuthenticatedClient,
+    client: AuthenticatedClient | Client,
     body: RefreshTokenRequest,
 ) -> RefreshTokenResponse | None:
     """Refresh access token
 
-     Exchange refresh token for new access token
+     Exchange refresh token for new access token. Access token is passed in request body.
 
     Args:
         body (RefreshTokenRequest):

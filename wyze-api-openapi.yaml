@@ -431,6 +431,8 @@ components:
             - provider_key
             - instance_id
             - action_key
+            - action_params
+            - custom_string
           properties:
             provider_key:
               type: string
@@ -1012,10 +1014,8 @@ paths:
       tags:
         - Authentication
       summary: Refresh access token
-      description: Exchange refresh token for new access token
+      description: Exchange refresh token for new access token. Access token is passed in request body.
       operationId: refreshToken
-      security:
-        - ApiKey: []
       requestBody:
         required: true
         content:
@@ -1036,10 +1036,8 @@ paths:
       tags:
         - Devices
       summary: Get all devices
-      description: Retrieve list of all devices associated with the account
+      description: Retrieve list of all devices associated with the account. Access token is passed in request body.
       operationId: getObjectList
-      security:
-        - AccessToken: []
       requestBody:
         required: true
         content:
@@ -1059,10 +1057,8 @@ paths:
       tags:
         - Devices
       summary: Get device properties
-      description: Get property list for a specific device
+      description: Get property list for a specific device. Access token is passed in request body.
       operationId: getPropertyList
-      security:
-        - AccessToken: []
       requestBody:
         required: true
         content:
@@ -1082,10 +1078,8 @@ paths:
       tags:
         - Devices
       summary: Set device property
-      description: Set a single property on a device
+      description: Set a single property on a device. Access token is passed in request body.
       operationId: setProperty
-      security:
-        - AccessToken: []
       requestBody:
         required: true
         content:
@@ -1105,10 +1099,8 @@ paths:
       tags:
         - Devices
       summary: Set multiple device properties
-      description: Set multiple properties on a device at once
+      description: Set multiple properties on a device at once. Access token is passed in request body.
       operationId: setPropertyList
-      security:
-        - AccessToken: []
       requestBody:
         required: true
         content:
@@ -1128,10 +1120,8 @@ paths:
       tags:
         - Devices
       summary: Get device info
-      description: Get detailed information about a device
+      description: Get detailed information about a device. Access token is passed in request body.
       operationId: getDeviceInfo
-      security:
-        - AccessToken: []
       requestBody:
         required: true
         content:
@@ -1158,10 +1148,8 @@ paths:
       tags:
         - Camera
       summary: Get device events
-      description: Get recent events for devices
+      description: Get recent events for devices. Access token is passed in request body.
       operationId: getEventList
-      security:
-        - AccessToken: []
       requestBody:
         required: true
         content:
@@ -1216,10 +1204,8 @@ paths:
         - Devices
         - Camera
       summary: Run device action
-      description: Execute an action on a device (power on/off, siren, etc.)
+      description: Execute an action on a device (power on/off, siren, etc.). Access token is passed in request body.
       operationId: runAction
-      security:
-        - AccessToken: []
       requestBody:
         required: true
         content:
@@ -1240,10 +1226,8 @@ paths:
         - Devices
         - Bulb
       summary: Run action list
-      description: Execute multiple actions on devices (used for mesh bulbs)
+      description: Execute multiple actions on devices (used for mesh bulbs). Access token is passed in request body.
       operationId: runActionList
-      security:
-        - AccessToken: []
       requestBody:
         required: true
         content:
@@ -1263,10 +1247,8 @@ paths:
       tags:
         - Switch
       summary: Get plug usage history
-      description: Get power usage history for a smart plug
+      description: Get power usage history for a smart plug. Access token is passed in request body.
       operationId: getPlugUsageHistory
-      security:
-        - AccessToken: []
       requestBody:
         required: true
         content:
@@ -1287,10 +1269,8 @@ paths:
       tags:
         - User
       summary: Set push notification settings
-      description: Enable or disable push notifications
+      description: Enable or disable push notifications. Access token is passed in request body.
       operationId: setPushInfo
-      security:
-        - AccessToken: []
       requestBody:
         required: true
         content:

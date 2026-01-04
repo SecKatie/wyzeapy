@@ -56,12 +56,12 @@ def _build_response(
 
 def sync_detailed(
     *,
-    client: AuthenticatedClient,
+    client: AuthenticatedClient | Client,
     body: GetPropertyListRequest,
 ) -> Response[GetPropertyListResponse]:
     """Get device properties
 
-     Get property list for a specific device
+     Get property list for a specific device. Access token is passed in request body.
 
     Args:
         body (GetPropertyListRequest):
@@ -87,12 +87,12 @@ def sync_detailed(
 
 def sync(
     *,
-    client: AuthenticatedClient,
+    client: AuthenticatedClient | Client,
     body: GetPropertyListRequest,
 ) -> GetPropertyListResponse | None:
     """Get device properties
 
-     Get property list for a specific device
+     Get property list for a specific device. Access token is passed in request body.
 
     Args:
         body (GetPropertyListRequest):
@@ -113,12 +113,12 @@ def sync(
 
 async def asyncio_detailed(
     *,
-    client: AuthenticatedClient,
+    client: AuthenticatedClient | Client,
     body: GetPropertyListRequest,
 ) -> Response[GetPropertyListResponse]:
     """Get device properties
 
-     Get property list for a specific device
+     Get property list for a specific device. Access token is passed in request body.
 
     Args:
         body (GetPropertyListRequest):
@@ -142,12 +142,12 @@ async def asyncio_detailed(
 
 async def asyncio(
     *,
-    client: AuthenticatedClient,
+    client: AuthenticatedClient | Client,
     body: GetPropertyListRequest,
 ) -> GetPropertyListResponse | None:
     """Get device properties
 
-     Get property list for a specific device
+     Get property list for a specific device. Access token is passed in request body.
 
     Args:
         body (GetPropertyListRequest):

@@ -52,12 +52,12 @@ def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Res
 
 def sync_detailed(
     *,
-    client: AuthenticatedClient,
+    client: AuthenticatedClient | Client,
     body: SetPropertyRequest,
 ) -> Response[StandardResponse]:
     """Set device property
 
-     Set a single property on a device
+     Set a single property on a device. Access token is passed in request body.
 
     Args:
         body (SetPropertyRequest):
@@ -83,12 +83,12 @@ def sync_detailed(
 
 def sync(
     *,
-    client: AuthenticatedClient,
+    client: AuthenticatedClient | Client,
     body: SetPropertyRequest,
 ) -> StandardResponse | None:
     """Set device property
 
-     Set a single property on a device
+     Set a single property on a device. Access token is passed in request body.
 
     Args:
         body (SetPropertyRequest):
@@ -109,12 +109,12 @@ def sync(
 
 async def asyncio_detailed(
     *,
-    client: AuthenticatedClient,
+    client: AuthenticatedClient | Client,
     body: SetPropertyRequest,
 ) -> Response[StandardResponse]:
     """Set device property
 
-     Set a single property on a device
+     Set a single property on a device. Access token is passed in request body.
 
     Args:
         body (SetPropertyRequest):
@@ -138,12 +138,12 @@ async def asyncio_detailed(
 
 async def asyncio(
     *,
-    client: AuthenticatedClient,
+    client: AuthenticatedClient | Client,
     body: SetPropertyRequest,
 ) -> StandardResponse | None:
     """Set device property
 
-     Set a single property on a device
+     Set a single property on a device. Access token is passed in request body.
 
     Args:
         body (SetPropertyRequest):

@@ -52,12 +52,12 @@ def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Res
 
 def sync_detailed(
     *,
-    client: AuthenticatedClient,
+    client: AuthenticatedClient | Client,
     body: PlugUsageRequest,
 ) -> Response[PlugUsageResponse]:
     """Get plug usage history
 
-     Get power usage history for a smart plug
+     Get power usage history for a smart plug. Access token is passed in request body.
 
     Args:
         body (PlugUsageRequest):
@@ -83,12 +83,12 @@ def sync_detailed(
 
 def sync(
     *,
-    client: AuthenticatedClient,
+    client: AuthenticatedClient | Client,
     body: PlugUsageRequest,
 ) -> PlugUsageResponse | None:
     """Get plug usage history
 
-     Get power usage history for a smart plug
+     Get power usage history for a smart plug. Access token is passed in request body.
 
     Args:
         body (PlugUsageRequest):
@@ -109,12 +109,12 @@ def sync(
 
 async def asyncio_detailed(
     *,
-    client: AuthenticatedClient,
+    client: AuthenticatedClient | Client,
     body: PlugUsageRequest,
 ) -> Response[PlugUsageResponse]:
     """Get plug usage history
 
-     Get power usage history for a smart plug
+     Get power usage history for a smart plug. Access token is passed in request body.
 
     Args:
         body (PlugUsageRequest):
@@ -138,12 +138,12 @@ async def asyncio_detailed(
 
 async def asyncio(
     *,
-    client: AuthenticatedClient,
+    client: AuthenticatedClient | Client,
     body: PlugUsageRequest,
 ) -> PlugUsageResponse | None:
     """Get plug usage history
 
-     Get power usage history for a smart plug
+     Get power usage history for a smart plug. Access token is passed in request body.
 
     Args:
         body (PlugUsageRequest):

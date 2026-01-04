@@ -1,6 +1,6 @@
 """Wyzeapy - A Python wrapper for the Wyze API."""
 
-from .wyzeapy import Wyzeapy, Token, TwoFactorCallback
+from .wyzeapy import Wyzeapy, Token, TwoFactorCallback, WyzeUser
 from .devices import (
     DeviceType,
     WyzeDevice,
@@ -33,6 +33,7 @@ __all__ = [
     "Wyzeapy",
     "Token",
     "TwoFactorCallback",
+    "WyzeUser",
     # Device types
     "DeviceType",
     "WyzeDevice",

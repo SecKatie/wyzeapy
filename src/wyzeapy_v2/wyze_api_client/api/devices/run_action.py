@@ -52,12 +52,12 @@ def _build_response(*, client: AuthenticatedClient | Client, response: httpx.Res
 
 def sync_detailed(
     *,
-    client: AuthenticatedClient,
+    client: AuthenticatedClient | Client,
     body: RunActionRequest,
 ) -> Response[StandardResponse]:
     """Run device action
 
-     Execute an action on a device (power on/off, siren, etc.)
+     Execute an action on a device (power on/off, siren, etc.). Access token is passed in request body.
 
     Args:
         body (RunActionRequest):
@@ -83,12 +83,12 @@ def sync_detailed(
 
 def sync(
     *,
-    client: AuthenticatedClient,
+    client: AuthenticatedClient | Client,
     body: RunActionRequest,
 ) -> StandardResponse | None:
     """Run device action
 
-     Execute an action on a device (power on/off, siren, etc.)
+     Execute an action on a device (power on/off, siren, etc.). Access token is passed in request body.
 
     Args:
         body (RunActionRequest):
@@ -109,12 +109,12 @@ def sync(
 
 async def asyncio_detailed(
     *,
-    client: AuthenticatedClient,
+    client: AuthenticatedClient | Client,
     body: RunActionRequest,
 ) -> Response[StandardResponse]:
     """Run device action
 
-     Execute an action on a device (power on/off, siren, etc.)
+     Execute an action on a device (power on/off, siren, etc.). Access token is passed in request body.
 
     Args:
         body (RunActionRequest):
@@ -138,12 +138,12 @@ async def asyncio_detailed(
 
 async def asyncio(
     *,
-    client: AuthenticatedClient,
+    client: AuthenticatedClient | Client,
     body: RunActionRequest,
 ) -> StandardResponse | None:
     """Run device action
 
-     Execute an action on a device (power on/off, siren, etc.)
+     Execute an action on a device (power on/off, siren, etc.). Access token is passed in request body.
 
     Args:
         body (RunActionRequest):

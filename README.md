@@ -14,22 +14,40 @@ This project is used by the [ha-wyzeapi](https://github.com/SecKatie/ha-wyzeapi)
 
 ## Usage/Examples
 
-Getting logged in:
+### Basic Usage
 
 ```python
 import asyncio
 from wyzeapy import Wyzeapy
 
+async def main():
+    async with Wyzeapy("email@example.com", "password", "key_id", "api_key") as wyze:
+        devices = await wyze.list_devices()
+        for device in devices:
+            print(f"{device.nickname}: {device.product_model}")
 
-async def async_main():
-    client = await Wyzeapy.create()
-    await client.login(email="EMAIL", password="PASSWORD", key_id="KEY_ID", api_key="API_KEY")
-
-
-if __name__ == "__main__":
-    asyncio.run(async_main())
+asyncio.run(main())
 ```
-Note: Visit the [Wyze developer console](https://developer-api-console.wyze.com/#/apikey/view) to generate an Key Id and Api Key.
+
+### With Two-Factor Authentication
+
+```python
+import asyncio
+from wyzeapy import Wyzeapy
+
+def get_2fa_code(auth_type: str) -> str:
+    return input(f"Enter {auth_type} code: ")
+
+async def main():
+    async with Wyzeapy("email@example.com", "password", "key_id", "api_key", tfa_callback=get_2fa_code) as wyze:
+        devices = await wyze.list_devices()
+        for device in devices:
+            print(f"{device.nickname}: {device.product_model}")
+
+asyncio.run(main())
+```
+
+Note: Visit the [Wyze developer console](https://developer-api-console.wyze.com/#/apikey/view) to generate a Key ID and API Key.
 
 ## Thanks to:
 
@@ -49,60 +67,34 @@ Developed by Katie Mulliken ([SecKatie](https://github.com/SecKatie))
 
 ### Testing
 
-This project uses Python's built-in `unittest` framework with `coverage` for code coverage reporting.
-
-#### Prerequisites
-
-First, install the development dependencies:
+This project uses `pytest` for testing.
 
 ```bash
-uv sync --group dev
+# Run all tests
+just test
+
+# Run unit tests only
+just test-unit
+
+# Run integration tests (requires credentials)
+just test-integration
 ```
 
-#### Running Tests
+For integration tests, set these environment variables:
 
-**Run all tests:**
 ```bash
-.venv/bin/python -m unittest discover tests
+export WYZE_EMAIL="your_email"
+export WYZE_PASSWORD="your_password"
+export WYZE_KEY_ID="your_key_id"
+export WYZE_API_KEY="your_api_key"
 ```
 
-**Run tests with verbose output:**
+### Regenerating the API Client
+
+The API client is generated from `wyze-api-openapi.yaml`:
+
 ```bash
-.venv/bin/python -m unittest discover tests -v
-```
-
-**Run a specific test file:**
-```bash
-.venv/bin/python -m unittest tests.test_camera_service
-```
-
-**Run a specific test method:**
-```bash
-.venv/bin/python -m unittest tests.test_camera_service.TestCameraService.test_get_cameras
-```
-
-#### Code Coverage
-
-**Run tests with coverage:**
-```bash
-.venv/bin/coverage run -m unittest discover tests
-```
-
-**View coverage report in terminal:**
-```bash
-.venv/bin/coverage report -m
-```
-
-**Generate HTML coverage report:**
-```bash
-.venv/bin/coverage html
-```
-
-Then open `htmlcov/index.html` in your web browser to view the detailed coverage report.
-
-**One-liner to run tests and view coverage:**
-```bash
-.venv/bin/coverage run -m unittest discover tests && .venv/bin/coverage report -m
+just generate
 ```
 
 ### Documentation

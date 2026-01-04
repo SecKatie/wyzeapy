@@ -1,271 +1,180 @@
+"""Tests for the Wyzeapy wrapper."""
+
+import hashlib
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 
-from wyzeapy import Wyzeapy, TwoFactorAuthenticationEnabled
-from wyzeapy.services.base_service import BaseService
-from wyzeapy.wyze_auth_lib import WyzeAuthLib, Token
+from src.wyzeapy import Wyzeapy, Token
+from src.wyzeapy.wyzeapy import _hash_password
 
 
-@pytest.fixture
-def mock_auth_lib():
-    with patch(
-        "wyzeapy.wyze_auth_lib.WyzeAuthLib.create", new_callable=AsyncMock
-    ) as mock_create:
-        mock_auth_lib_instance = MagicMock(spec=WyzeAuthLib)
-        mock_auth_lib_instance.token = Token("access", "refresh", 123)
-        mock_auth_lib_instance.should_refresh = False
-        mock_create.return_value = mock_auth_lib_instance
-        yield mock_auth_lib_instance
+class TestHashPassword:
+    """Tests for password hashing."""
+
+    def test_hash_password_returns_md5(self):
+        """Should return a 32-character hex string."""
+        result = _hash_password("test")
+        assert len(result) == 32
+        assert all(c in "0123456789abcdef" for c in result)
+
+    def test_hash_password_triple_hashes(self):
+        """Should apply MD5 three times."""
+        password = "mypassword"
+
+        # Manual triple hash
+        expected = password
+        for _ in range(3):
+            expected = hashlib.md5(expected.encode()).hexdigest()
+
+        assert _hash_password(password) == expected
+
+    def test_hash_password_deterministic(self):
+        """Same input should produce same output."""
+        assert _hash_password("test123") == _hash_password("test123")
 
 
-@pytest.fixture
-def mock_base_service():
-    with patch(
-        "wyzeapy.services.base_service.BaseService", new_callable=MagicMock
-    ) as mock_service:
-        yield mock_service
+class TestToken:
+    """Tests for Token dataclass."""
 
+    def test_token_creation(self):
+        """Should create token with access and refresh tokens."""
+        token = Token(access_token="access", refresh_token="refresh")
+        assert token.access_token == "access"
+        assert token.refresh_token == "refresh"
 
-@pytest.mark.asyncio
-async def test_create():
-    wyze = await Wyzeapy.create()
-    assert isinstance(wyze, Wyzeapy)
+    def test_token_should_refresh_false_when_new(self):
+        """New token should not need refresh."""
+        token = Token(access_token="access", refresh_token="refresh")
+        assert token.should_refresh is False
 
-
-@pytest.mark.asyncio
-async def test_login_success():
-    with patch(
-        "wyzeapy.wyze_auth_lib.WyzeAuthLib.create", new_callable=AsyncMock
-    ) as mock_create:
-        mock_auth_lib_instance = MagicMock(spec=WyzeAuthLib)
-        mock_auth_lib_instance.token = Token("access", "refresh", 123)
-        mock_auth_lib_instance.should_refresh = False
-        mock_create.return_value = mock_auth_lib_instance
-
-        wyze = await Wyzeapy.create()
-        await wyze.login("test@example.com", "password", "key_id", "api_key")
-        mock_create.assert_called_once()
-        mock_auth_lib_instance.get_token_with_username_password.assert_called_once()
-        assert isinstance(wyze._service, BaseService)
-
-
-@pytest.mark.asyncio
-async def test_login_with_token_success():
-    with patch(
-        "wyzeapy.wyze_auth_lib.WyzeAuthLib.create", new_callable=AsyncMock
-    ) as mock_create:
-        mock_auth_lib_instance = MagicMock(spec=WyzeAuthLib)
-        mock_auth_lib_instance.token = Token("access", "refresh", 123)
-        mock_auth_lib_instance.should_refresh = False
-        mock_create.return_value = mock_auth_lib_instance
-
-        wyze = await Wyzeapy.create()
-        token = Token("access", "refresh", 123)
-        await wyze.login(
-            "test@example.com", "password", "key_id", "api_key", token=token
+    def test_token_should_refresh_true_when_old(self):
+        """Old token should need refresh."""
+        import time
+        token = Token(
+            access_token="access",
+            refresh_token="refresh",
+            created_at=time.time() - 90000,  # 25 hours ago
         )
-        mock_create.assert_called_once()
-        mock_auth_lib_instance.refresh.assert_called_once()
-        mock_auth_lib_instance.get_token_with_username_password.assert_not_called()
-        assert isinstance(wyze._service, BaseService)
+        assert token.should_refresh is True
 
 
-@pytest.mark.asyncio
-async def test_login_2fa_enabled():
-    with patch(
-        "wyzeapy.wyze_auth_lib.WyzeAuthLib.create", new_callable=AsyncMock
-    ) as mock_create:
-        mock_auth_lib_instance = MagicMock(spec=WyzeAuthLib)
-        mock_auth_lib_instance.token = Token("access", "refresh", 123)
-        mock_auth_lib_instance.should_refresh = False
-        mock_create.side_effect = TwoFactorAuthenticationEnabled("2FA required")
+class TestWyzeapyInit:
+    """Tests for Wyzeapy initialization."""
 
-        wyze = await Wyzeapy.create()
-        with pytest.raises(TwoFactorAuthenticationEnabled):
-            await wyze.login("test@example.com", "password", "key_id", "api_key")
+    def test_init_stores_credentials(self):
+        """Should store hashed password and other credentials."""
+        wyze = Wyzeapy("test@example.com", "password", "key_id", "api_key")
 
+        assert wyze._email == "test@example.com"
+        assert wyze._password_hash == _hash_password("password")
+        assert wyze._key_id == "key_id"
+        assert wyze._api_key == "api_key"
 
-@pytest.mark.asyncio
-async def test_login_with_2fa(mock_auth_lib):
-    wyze = await Wyzeapy.create()
-    wyze._auth_lib = mock_auth_lib  # Manually set mock_auth_lib for this test
-    mock_auth_lib.get_token_with_2fa = AsyncMock()
-    token = await wyze.login_with_2fa("123456")
-    mock_auth_lib.get_token_with_2fa.assert_called_once_with("123456")
-    assert isinstance(wyze._service, BaseService)
-    assert token == mock_auth_lib.token
+    def test_init_generates_phone_id(self):
+        """Should generate a UUID for phone_id."""
+        wyze = Wyzeapy("test@example.com", "password", "key_id", "api_key")
 
+        assert wyze._phone_id is not None
+        assert len(wyze._phone_id) == 36  # UUID format
 
-@pytest.mark.asyncio
-async def test_register_for_token_callback():
-    wyze = await Wyzeapy.create()
-    mock_callback = MagicMock()
-    wyze.register_for_token_callback(mock_callback)
-    assert mock_callback in wyze._token_callbacks
+    def test_init_no_token(self):
+        """Should start without a token."""
+        wyze = Wyzeapy("test@example.com", "password", "key_id", "api_key")
+        assert wyze._token is None
 
+    def test_init_no_clients(self):
+        """Should start without HTTP clients."""
+        wyze = Wyzeapy("test@example.com", "password", "key_id", "api_key")
+        assert wyze._auth_client is None
+        assert wyze._main_client is None
 
-@pytest.mark.asyncio
-async def test_unregister_for_token_callback():
-    wyze = await Wyzeapy.create()
-    mock_callback = MagicMock()
-    wyze.register_for_token_callback(mock_callback)
-    wyze.unregister_for_token_callback(mock_callback)
-    assert mock_callback not in wyze._token_callbacks
+    def test_init_with_tfa_callback(self):
+        """Should store 2FA callback."""
+        callback = lambda auth_type: "123456"
+        wyze = Wyzeapy("test@example.com", "password", "key_id", "api_key", tfa_callback=callback)
+        assert wyze._tfa_callback is callback
 
 
-@pytest.mark.asyncio
-async def test_execute_token_callbacks_sync():
-    wyze = await Wyzeapy.create()
-    mock_callback = MagicMock()
-    wyze.register_for_token_callback(mock_callback)
-    token = Token("access", "refresh", 123)
-    await wyze.execute_token_callbacks(token)
-    mock_callback.assert_called_once_with(token)
+class TestWyzeapyCommonParams:
+    """Tests for common request parameters."""
+
+    def test_common_params_structure(self):
+        """Should return dict with all required fields."""
+        wyze = Wyzeapy("test@example.com", "password", "key_id", "api_key")
+        wyze._token = Token(access_token="test_token", refresh_token="refresh")
+
+        params = wyze._common_params()
+
+        assert "phone_system_type" in params
+        assert "app_version" in params
+        assert "app_ver" in params
+        assert "app_name" in params
+        assert "phone_id" in params
+        assert "sc" in params
+        assert "sv" in params
+        assert "ts" in params
+        assert "access_token" in params
+
+    def test_common_params_includes_token(self):
+        """Should include access token when authenticated."""
+        wyze = Wyzeapy("test@example.com", "password", "key_id", "api_key")
+        wyze._token = Token(access_token="my_access_token", refresh_token="refresh")
+
+        params = wyze._common_params()
+        assert params["access_token"] == "my_access_token"
+
+    def test_common_params_empty_token_when_unauthenticated(self):
+        """Should have empty access token when not authenticated."""
+        wyze = Wyzeapy("test@example.com", "password", "key_id", "api_key")
+
+        params = wyze._common_params()
+        assert params["access_token"] == ""
 
 
-@pytest.mark.asyncio
-async def test_execute_token_callbacks_async():
-    wyze = await Wyzeapy.create()
-    mock_callback = AsyncMock()
-    wyze.register_for_token_callback(mock_callback)
-    token = Token("access", "refresh", 123)
-    await wyze.execute_token_callbacks(token)
-    mock_callback.assert_called_once_with(token)
+@pytest.mark.integration
+class TestWyzeapyIntegration:
+    """Integration tests requiring real credentials."""
 
+    @pytest.mark.asyncio
+    async def test_login_and_list_devices(self, wyze_credentials):
+        """Should login and list devices."""
+        async with Wyzeapy(
+            wyze_credentials["email"],
+            wyze_credentials["password"],
+            wyze_credentials["key_id"],
+            wyze_credentials["api_key"],
+        ) as wyze:
+            devices = await wyze.list_devices()
 
-@pytest.mark.asyncio
-async def test_unique_device_ids(mock_auth_lib):
-    wyze = await Wyzeapy.create()
-    await wyze.login("test@example.com", "password", "key_id", "api_key")
-    wyze._service.get_object_list = AsyncMock(
-        return_value=[MagicMock(mac="mac1"), MagicMock(mac="mac2")]
-    )
-    device_ids = await wyze.unique_device_ids
-    assert device_ids == {"mac1", "mac2"}
+            assert isinstance(devices, list)
+            print(f"\nFound {len(devices)} devices:")
+            for device in devices:
+                print(f"  - {device.nickname} ({device.product_model})")
 
+    @pytest.mark.asyncio
+    async def test_list_devices_without_login_raises(self):
+        """Should raise error when listing devices without login."""
+        wyze = Wyzeapy("test@example.com", "password", "key_id", "api_key")
 
-@pytest.mark.asyncio
-async def test_notifications_are_on(mock_auth_lib):
-    wyze = await Wyzeapy.create()
-    await wyze.login("test@example.com", "password", "key_id", "api_key")
-    wyze._service.get_user_profile = AsyncMock(
-        return_value={"data": {"notification": True}}
-    )
-    assert await wyze.notifications_are_on is True
+        with pytest.raises(RuntimeError, match="Not authenticated"):
+            await wyze.list_devices()
 
+    @pytest.mark.asyncio
+    async def test_context_manager_cleanup(self, wyze_credentials):
+        """Should clean up clients on exit."""
+        wyze = Wyzeapy(
+            wyze_credentials["email"],
+            wyze_credentials["password"],
+            wyze_credentials["key_id"],
+            wyze_credentials["api_key"],
+        )
 
-@pytest.mark.asyncio
-async def test_enable_notifications(mock_auth_lib):
-    wyze = await Wyzeapy.create()
-    await wyze.login("test@example.com", "password", "key_id", "api_key")
-    wyze._service.set_push_info = AsyncMock()
-    await wyze.enable_notifications()
-    wyze._service.set_push_info.assert_called_once_with(True)
+        async with wyze:
+            # Force client creation
+            _ = wyze._get_auth_client()
+            _ = wyze._get_main_client()
 
+            assert wyze._auth_client is not None
+            assert wyze._main_client is not None
 
-@pytest.mark.asyncio
-async def test_disable_notifications(mock_auth_lib):
-    wyze = await Wyzeapy.create()
-    await wyze.login("test@example.com", "password", "key_id", "api_key")
-    wyze._service.set_push_info = AsyncMock()
-    await wyze.disable_notifications()
-    wyze._service.set_push_info.assert_called_once_with(False)
-
-
-@pytest.mark.asyncio
-async def test_valid_login_success(mock_auth_lib):
-    mock_auth_lib.should_refresh = False
-    is_valid = await Wyzeapy.valid_login(
-        "test@example.com", "password", "key_id", "api_key"
-    )
-    assert is_valid is True
-
-
-@pytest.mark.asyncio
-async def test_valid_login_failure(mock_auth_lib):
-    mock_auth_lib.should_refresh = True
-    is_valid = await Wyzeapy.valid_login(
-        "test@example.com", "password", "key_id", "api_key"
-    )
-    assert is_valid is False
-
-
-@pytest.mark.asyncio
-async def test_bulb_service(mock_auth_lib):
-    wyze = await Wyzeapy.create()
-    await wyze.login("test@example.com", "password", "key_id", "api_key")
-    service = await wyze.bulb_service
-    assert service is not None
-    assert wyze._bulb_service is service  # Check lazy initialization
-
-
-@pytest.mark.asyncio
-async def test_switch_service(mock_auth_lib):
-    wyze = await Wyzeapy.create()
-    await wyze.login("test@example.com", "password", "key_id", "api_key")
-    service = await wyze.switch_service
-    assert service is not None
-    assert wyze._switch_service is service
-
-
-@pytest.mark.asyncio
-async def test_camera_service(mock_auth_lib):
-    wyze = await Wyzeapy.create()
-    await wyze.login("test@example.com", "password", "key_id", "api_key")
-    service = await wyze.camera_service
-    assert service is not None
-    assert wyze._camera_service is service
-
-
-@pytest.mark.asyncio
-async def test_thermostat_service(mock_auth_lib):
-    wyze = await Wyzeapy.create()
-    await wyze.login("test@example.com", "password", "key_id", "api_key")
-    service = await wyze.thermostat_service
-    assert service is not None
-    assert wyze._thermostat_service is service
-
-
-@pytest.mark.asyncio
-async def test_hms_service(mock_auth_lib):
-    wyze = await Wyzeapy.create()
-    await wyze.login("test@example.com", "password", "key_id", "api_key")
-    service = await wyze.hms_service
-    assert service is not None
-    assert wyze._hms_service is service
-
-
-@pytest.mark.asyncio
-async def test_lock_service(mock_auth_lib):
-    wyze = await Wyzeapy.create()
-    await wyze.login("test@example.com", "password", "key_id", "api_key")
-    service = await wyze.lock_service
-    assert service is not None
-    assert wyze._lock_service is service
-
-
-@pytest.mark.asyncio
-async def test_sensor_service(mock_auth_lib):
-    wyze = await Wyzeapy.create()
-    await wyze.login("test@example.com", "password", "key_id", "api_key")
-    service = await wyze.sensor_service
-    assert service is not None
-    assert wyze._sensor_service is service
-
-
-@pytest.mark.asyncio
-async def test_wall_switch_service(mock_auth_lib):
-    wyze = await Wyzeapy.create()
-    await wyze.login("test@example.com", "password", "key_id", "api_key")
-    service = await wyze.wall_switch_service
-    assert service is not None
-    assert wyze._wall_switch_service is service
-
-
-@pytest.mark.asyncio
-async def test_switch_usage_service(mock_auth_lib):
-    wyze = await Wyzeapy.create()
-    await wyze.login("test@example.com", "password", "key_id", "api_key")
-    service = await wyze.switch_usage_service
-    assert service is not None
-    assert wyze._switch_usage_service is service
+        # After exit, clients should be closed (not None, but closed)
+        # We can't easily test closed state, but verify no exceptions

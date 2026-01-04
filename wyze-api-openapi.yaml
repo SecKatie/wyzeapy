@@ -1,0 +1,2320 @@
+openapi: 3.1.0
+info:
+  title: Wyze API
+  description: |
+    Comprehensive OpenAPI specification for the Wyze smart home API.
+    This specification covers authentication, device management, and control
+    for various Wyze devices including cameras, bulbs, switches, locks,
+    thermostats, irrigation systems, and home monitoring systems.
+
+    ## Server Selection
+
+    The Wyze API uses multiple backend servers. Each operation specifies which server to use:
+
+    | Server | Used For |
+    |--------|----------|
+    | `api.wyzecam.com` | Main device operations (default) - device listing, properties, actions, events |
+    | `auth-prod.api.wyze.com` | Authentication - login, 2FA, SMS codes |
+    | `wyze-platform-service.wyzecam.com` | User profile |
+    | `devicemgmt-service-beta.wyze.com` | Newer cameras (Floodlight Pro, Battery Cam Pro, OG) |
+    | `ai-subscription-service-beta.wyzecam.com` | Camera toggle management (notifications, recording) |
+    | `hms.api.wyze.com` | Home Monitoring System status and control |
+    | `wyze-membership-service.wyzecam.com` | HMS subscription/membership info |
+    | `yd-saas-toc.wyzecam.com` | Lock control and info |
+    | `wyze-earth-service.wyzecam.com` | Thermostat control |
+    | `wyze-sirius-service.wyzecam.com` | Wall switch control |
+    | `wyze-lockwood-service.wyzecam.com` | Irrigation controller |
+
+    **Note:** Operations that don't explicitly specify a server use `api.wyzecam.com` (the default).
+    Check each operation's `servers` field for the correct endpoint.
+  version: 1.0.0
+  contact:
+    name: Wyzeapy
+    email: katie@mulliken.net
+  license:
+    name: Proprietary
+    url: https://github.com/JoshuaMullworthy/wyzeapy
+
+servers:
+  - url: https://api.wyzecam.com
+    description: Main Wyze API
+  - url: https://auth-prod.api.wyze.com
+    description: Authentication API
+  - url: https://wyze-platform-service.wyzecam.com
+    description: Platform Service API
+  - url: https://devicemgmt-service-beta.wyze.com
+    description: Device Management API
+  - url: https://ai-subscription-service-beta.wyzecam.com
+    description: AI Subscription Service API
+  - url: https://hms.api.wyze.com
+    description: Home Monitoring System API
+  - url: https://wyze-membership-service.wyzecam.com
+    description: Membership Service API
+  - url: https://yd-saas-toc.wyzecam.com
+    description: Lock Service API
+  - url: https://wyze-earth-service.wyzecam.com
+    description: Thermostat Service API
+  - url: https://wyze-sirius-service.wyzecam.com
+    description: Wall Switch Service API
+  - url: https://wyze-lockwood-service.wyzecam.com
+    description: Irrigation Service API
+
+tags:
+  - name: Authentication
+    description: User authentication and token management
+  - name: Devices
+    description: Device discovery and management
+  - name: Camera
+    description: Camera control and events
+  - name: Bulb
+    description: Light bulb control
+  - name: Switch
+    description: Plug and switch control
+  - name: Lock
+    description: Lock control
+  - name: Thermostat
+    description: Thermostat control
+  - name: WallSwitch
+    description: Wall switch control
+  - name: Irrigation
+    description: Irrigation controller
+  - name: HMS
+    description: Home Monitoring System
+  - name: User
+    description: User profile and settings
+
+components:
+  securitySchemes:
+    AccessToken:
+      type: apiKey
+      in: header
+      name: access_token
+      description: Wyze access token obtained from login
+    Authorization:
+      type: http
+      scheme: bearer
+      description: Bearer token for some endpoints
+    ApiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: Wyze API key
+
+  schemas:
+    # Common schemas
+    CommonRequestParams:
+      type: object
+      properties:
+        phone_system_type:
+          type: string
+          description: Phone system type (1 for Android)
+          example: "1"
+        app_version:
+          type: string
+          description: Application version
+          example: "2.18.43"
+        app_ver:
+          type: string
+          description: Full application version string
+          example: "com.hualai.WyzeCam___2.18.43"
+        app_name:
+          type: string
+          description: Application name
+          example: "com.hualai.WyzeCam"
+        phone_id:
+          type: string
+          format: uuid
+          description: Unique phone identifier
+        sc:
+          type: string
+          description: Security code
+        sv:
+          type: string
+          description: Security version
+        ts:
+          type: integer
+          format: int64
+          description: Unix timestamp in seconds
+        access_token:
+          type: string
+          description: User access token
+
+    StandardResponse:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Response code
+        msg:
+          type: string
+          description: Response message
+        data:
+          type: object
+          description: Response data
+
+    Device:
+      type: object
+      properties:
+        mac:
+          type: string
+          description: Device MAC address
+        product_type:
+          type: string
+          description: Product type category
+        product_model:
+          type: string
+          description: Product model identifier
+        nickname:
+          type: string
+          description: User-defined device name
+        device_params:
+          type: object
+          description: Device-specific parameters
+        parent_device_mac:
+          type: string
+          description: Parent device MAC for sub-devices
+        firmware_ver:
+          type: string
+          description: Firmware version
+        hardware_ver:
+          type: string
+          description: Hardware version
+        conn_state:
+          type: integer
+          description: Connection state
+        push_switch:
+          type: integer
+          description: Push notification switch state
+
+    Property:
+      type: object
+      properties:
+        pid:
+          type: string
+          description: Property ID
+        value:
+          type: string
+          description: Property value
+
+    Event:
+      type: object
+      properties:
+        event_id:
+          type: string
+          description: Unique event identifier
+        device_mac:
+          type: string
+          description: Device MAC address
+        device_model:
+          type: string
+          description: Device model
+        event_category:
+          type: integer
+          description: Event category code
+        event_value:
+          type: string
+          description: Event value
+        event_ts:
+          type: integer
+          format: int64
+          description: Event timestamp in milliseconds
+        file_list:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventFile'
+
+    EventFile:
+      type: object
+      properties:
+        file_id:
+          type: string
+          description: File identifier
+        type:
+          type: integer
+          description: File type (1=Image, 2=Video)
+        url:
+          type: string
+          format: uri
+          description: File URL
+        status:
+          type: integer
+          description: File status
+
+    # Authentication schemas
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          description: User email address
+        password:
+          type: string
+          description: MD5 triple-hashed password
+
+    LoginResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+          description: Access token for API calls
+        refresh_token:
+          type: string
+          description: Token to refresh access token
+        user_id:
+          type: string
+          description: User identifier
+        mfa_options:
+          type: array
+          items:
+            type: string
+          description: Available MFA options if 2FA required
+        mfa_details:
+          oneOf:
+            - type: object
+            - type: 'null'
+          description: MFA details if 2FA required
+        sms_session_id:
+          type: string
+          description: SMS session ID for SMS 2FA
+
+    TwoFactorLoginRequest:
+      type: object
+      required:
+        - email
+        - password
+        - mfa_type
+        - verification_id
+        - verification_code
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+        mfa_type:
+          type: string
+          enum: [TotpVerificationCode, PrimaryPhone]
+        verification_id:
+          type: string
+          description: App ID for TOTP or session ID for SMS
+        verification_code:
+          type: string
+          description: 6-digit verification code
+
+    RefreshTokenRequest:
+      allOf:
+        - $ref: '#/components/schemas/CommonRequestParams'
+        - type: object
+          required:
+            - refresh_token
+          properties:
+            refresh_token:
+              type: string
+              description: Refresh token from login
+
+    RefreshTokenResponse:
+      type: object
+      properties:
+        code:
+          type: string
+        msg:
+          type: string
+        data:
+          type: object
+          properties:
+            access_token:
+              type: string
+            refresh_token:
+              type: string
+
+    # Device schemas
+    GetObjectListResponse:
+      type: object
+      properties:
+        code:
+          type: string
+        msg:
+          type: string
+        data:
+          type: object
+          properties:
+            device_list:
+              type: array
+              items:
+                $ref: '#/components/schemas/Device'
+
+    GetPropertyListRequest:
+      allOf:
+        - $ref: '#/components/schemas/CommonRequestParams'
+        - type: object
+          required:
+            - device_mac
+            - device_model
+          properties:
+            device_mac:
+              type: string
+            device_model:
+              type: string
+            target_pid_list:
+              type: array
+              items:
+                type: string
+
+    GetPropertyListResponse:
+      type: object
+      properties:
+        code:
+          type: string
+        msg:
+          type: string
+        data:
+          type: object
+          properties:
+            property_list:
+              type: array
+              items:
+                $ref: '#/components/schemas/Property'
+
+    SetPropertyRequest:
+      allOf:
+        - $ref: '#/components/schemas/CommonRequestParams'
+        - type: object
+          required:
+            - device_mac
+            - device_model
+            - pid
+            - pvalue
+          properties:
+            device_mac:
+              type: string
+            device_model:
+              type: string
+            pid:
+              type: string
+              description: Property ID
+            pvalue:
+              type: string
+              description: Property value
+
+    SetPropertyListRequest:
+      allOf:
+        - $ref: '#/components/schemas/CommonRequestParams'
+        - type: object
+          required:
+            - device_mac
+            - device_model
+            - property_list
+          properties:
+            device_mac:
+              type: string
+            device_model:
+              type: string
+            property_list:
+              type: array
+              items:
+                type: object
+                properties:
+                  pid:
+                    type: string
+                  pvalue:
+                    type: string
+
+    RunActionRequest:
+      allOf:
+        - $ref: '#/components/schemas/CommonRequestParams'
+        - type: object
+          required:
+            - provider_key
+            - instance_id
+            - action_key
+          properties:
+            provider_key:
+              type: string
+              description: Device product model
+            instance_id:
+              type: string
+              description: Device MAC address
+            action_key:
+              type: string
+              description: Action to perform
+              enum:
+                - power_on
+                - power_off
+                - siren_on
+                - siren_off
+                - garage_door_trigger
+            action_params:
+              type: object
+            custom_string:
+              type: string
+
+    RunActionListRequest:
+      allOf:
+        - $ref: '#/components/schemas/CommonRequestParams'
+        - type: object
+          required:
+            - action_list
+          properties:
+            action_list:
+              type: array
+              items:
+                type: object
+                properties:
+                  instance_id:
+                    type: string
+                  provider_key:
+                    type: string
+                  action_key:
+                    type: string
+                    enum: [set_mesh_property]
+                  action_params:
+                    type: object
+                    properties:
+                      list:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            mac:
+                              type: string
+                            plist:
+                              type: array
+                              items:
+                                $ref: '#/components/schemas/Property'
+
+    # Device Management schemas
+    DeviceMgmtRunActionRequest:
+      type: object
+      required:
+        - capabilities
+        - nonce
+        - targetInfo
+      properties:
+        capabilities:
+          type: array
+          items:
+            type: object
+            properties:
+              iid:
+                type: integer
+              name:
+                type: string
+                enum: [floodlight, spotlight, iot-device, siren]
+              properties:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    prop:
+                      type: string
+                    value:
+                      type: string
+              functions:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    in:
+                      type: object
+        nonce:
+          type: integer
+          format: int64
+        targetInfo:
+          type: object
+          properties:
+            id:
+              type: string
+              description: Device MAC
+            productModel:
+              type: string
+            type:
+              type: string
+              enum: [DEVICE]
+        transactionId:
+          type: string
+
+    DeviceMgmtGetIotPropRequest:
+      type: object
+      required:
+        - capabilities
+        - nonce
+        - targetInfo
+      properties:
+        capabilities:
+          type: array
+          items:
+            type: object
+            properties:
+              iid:
+                type: integer
+              name:
+                type: string
+              properties:
+                type: array
+                items:
+                  type: string
+        nonce:
+          type: integer
+          format: int64
+        targetInfo:
+          type: object
+          properties:
+            id:
+              type: string
+            productModel:
+              type: string
+            type:
+              type: string
+
+    # Toggle Management schemas
+    ToggleManagementRequest:
+      type: object
+      required:
+        - data
+        - nonce
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              device_firmware:
+                type: string
+              device_id:
+                type: string
+              device_model:
+                type: string
+              page_id:
+                type: array
+                items:
+                  type: string
+              toggle_update:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    toggle_id:
+                      type: string
+                    toggle_status:
+                      type: string
+                      enum: ["0", "1"]
+        nonce:
+          type: string
+
+    # HMS schemas
+    HMSProfileActiveRequest:
+      type: array
+      items:
+        type: object
+        properties:
+          state:
+            type: string
+            enum: [home, away]
+          active:
+            type: integer
+            enum: [0, 1]
+
+    HMSStateStatusResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          enum: [disarm, home, away, changing]
+
+    # Lock schemas
+    LockControlRequest:
+      type: object
+      required:
+        - uuid
+        - action
+        - access_token
+        - key
+        - timestamp
+        - sign
+      properties:
+        uuid:
+          type: string
+          description: Lock UUID
+        action:
+          type: string
+          enum: [remoteLock, remoteUnlock]
+        access_token:
+          type: string
+        key:
+          type: string
+          description: Ford app key
+        timestamp:
+          type: string
+          description: Timestamp in milliseconds
+        sign:
+          type: string
+          description: Request signature
+
+    LockInfoRequest:
+      type: object
+      required:
+        - uuid
+        - access_token
+        - key
+        - timestamp
+        - sign
+      properties:
+        uuid:
+          type: string
+        with_keypad:
+          type: string
+          enum: ["0", "1"]
+        access_token:
+          type: string
+        key:
+          type: string
+        timestamp:
+          type: string
+        sign:
+          type: string
+
+    LockInfoResponse:
+      type: object
+      properties:
+        device:
+          type: object
+          properties:
+            uuid:
+              type: string
+            onoff_line:
+              type: integer
+              description: Online status (1=online)
+            door_open_status:
+              type: integer
+              description: Door open status (1=open)
+            trash_mode:
+              type: integer
+            locker_status:
+              type: object
+              properties:
+                hardlock:
+                  type: integer
+                  description: Lock state (2=unlocked)
+
+    # Thermostat schemas
+    ThermostatIotPropResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            props:
+              type: object
+              properties:
+                temperature:
+                  type: string
+                humidity:
+                  type: string
+                cool_sp:
+                  type: string
+                heat_sp:
+                  type: string
+                mode_sys:
+                  type: string
+                  enum: [auto, heat, cool, off]
+                fan_mode:
+                  type: string
+                  enum: [auto, on]
+                current_scenario:
+                  type: string
+                  enum: [home, away, sleep]
+                temp_unit:
+                  type: string
+                  enum: [F, C]
+                iot_state:
+                  type: string
+                  enum: [connected, disconnected]
+                working_state:
+                  type: string
+                  enum: [idle, cooling, heating]
+
+    # Wall Switch schemas
+    WallSwitchIotPropResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            props:
+              type: object
+              properties:
+                iot_state:
+                  type: string
+                  enum: [connected, disconnected]
+                switch-power:
+                  type: boolean
+                switch-iot:
+                  type: boolean
+                single_press_type:
+                  type: integer
+                  enum: [1, 2]
+                  description: 1=Classic, 2=IoT
+
+    # Irrigation schemas
+    IrrigationZone:
+      type: object
+      properties:
+        zone_number:
+          type: integer
+        name:
+          type: string
+        enabled:
+          type: boolean
+        zone_id:
+          type: string
+        smart_duration:
+          type: integer
+          description: Duration in seconds
+
+    IrrigationZoneResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            zones:
+              type: array
+              items:
+                $ref: '#/components/schemas/IrrigationZone'
+
+    IrrigationQuickRunRequest:
+      type: object
+      required:
+        - device_id
+        - nonce
+        - zone_runs
+      properties:
+        device_id:
+          type: string
+        nonce:
+          type: string
+        zone_runs:
+          type: array
+          items:
+            type: object
+            properties:
+              zone_number:
+                type: integer
+              duration:
+                type: integer
+                description: Duration in seconds
+
+    IrrigationStopRequest:
+      type: object
+      required:
+        - device_id
+        - nonce
+        - action
+      properties:
+        device_id:
+          type: string
+        nonce:
+          type: string
+        action:
+          type: string
+          enum: [STOP]
+
+    # Plug Usage schemas
+    PlugUsageRequest:
+      allOf:
+        - $ref: '#/components/schemas/CommonRequestParams'
+        - type: object
+          required:
+            - device_mac
+            - date_begin
+            - date_end
+          properties:
+            device_mac:
+              type: string
+            date_begin:
+              type: integer
+              format: int64
+              description: Start timestamp in milliseconds
+            date_end:
+              type: integer
+              format: int64
+              description: End timestamp in milliseconds
+
+    PlugUsageResponse:
+      type: object
+      properties:
+        code:
+          type: string
+        msg:
+          type: string
+        data:
+          type: object
+          properties:
+            usage_record_list:
+              type: array
+              items:
+                type: object
+                properties:
+                  date:
+                    type: string
+                  usage:
+                    type: number
+
+    # User Profile schemas
+    UserProfileResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            notification:
+              type: boolean
+              description: Push notification status
+
+    # Push Info schemas
+    SetPushInfoRequest:
+      allOf:
+        - $ref: '#/components/schemas/CommonRequestParams'
+        - type: object
+          required:
+            - push_switch
+          properties:
+            push_switch:
+              type: string
+              enum: ["1", "2"]
+              description: "1=enabled, 2=disabled"
+
+paths:
+  # Authentication Endpoints
+  /api/user/login:
+    post:
+      tags:
+        - Authentication
+      summary: Login with email and password
+      description: Authenticate user with email and password. May return MFA options if 2FA is enabled.
+      operationId: loginWithCredentials
+      servers:
+        - url: https://auth-prod.api.wyze.com
+      parameters:
+        - name: keyid
+          in: header
+          required: true
+          schema:
+            type: string
+          description: Third-party API key ID
+        - name: apikey
+          in: header
+          required: true
+          schema:
+            type: string
+          description: Third-party API key
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Successful login or 2FA required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+
+  /user/login/sendSmsCode:
+    post:
+      tags:
+        - Authentication
+      summary: Send SMS verification code
+      description: Request SMS verification code for 2FA login
+      operationId: sendSmsCode
+      servers:
+        - url: https://auth-prod.api.wyze.com
+      parameters:
+        - name: keyid
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: apikey
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                mfaPhoneType:
+                  type: string
+                  enum: [Primary]
+                sessionId:
+                  type: string
+                userId:
+                  type: string
+      responses:
+        '200':
+          description: SMS code sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  session_id:
+                    type: string
+
+  /user/login:
+    post:
+      tags:
+        - Authentication
+      summary: Complete 2FA login
+      description: Complete login with 2FA verification code
+      operationId: loginWith2FA
+      servers:
+        - url: https://auth-prod.api.wyze.com
+      parameters:
+        - name: Phone-Id
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-API-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TwoFactorLoginRequest'
+      responses:
+        '200':
+          description: Successful 2FA login
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+
+  /app/user/refresh_token:
+    post:
+      tags:
+        - Authentication
+      summary: Refresh access token
+      description: Exchange refresh token for new access token
+      operationId: refreshToken
+      security:
+        - ApiKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefreshTokenResponse'
+
+  # Device Endpoints
+  /app/v2/home_page/get_object_list:
+    post:
+      tags:
+        - Devices
+      summary: Get all devices
+      description: Retrieve list of all devices associated with the account
+      operationId: getObjectList
+      security:
+        - AccessToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommonRequestParams'
+      responses:
+        '200':
+          description: List of devices
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetObjectListResponse'
+
+  /app/v2/device/get_property_list:
+    post:
+      tags:
+        - Devices
+      summary: Get device properties
+      description: Get property list for a specific device
+      operationId: getPropertyList
+      security:
+        - AccessToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetPropertyListRequest'
+      responses:
+        '200':
+          description: Device properties
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetPropertyListResponse'
+
+  /app/v2/device/set_property:
+    post:
+      tags:
+        - Devices
+      summary: Set device property
+      description: Set a single property on a device
+      operationId: setProperty
+      security:
+        - AccessToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetPropertyRequest'
+      responses:
+        '200':
+          description: Property set successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+
+  /app/v2/device/set_property_list:
+    post:
+      tags:
+        - Devices
+      summary: Set multiple device properties
+      description: Set multiple properties on a device at once
+      operationId: setPropertyList
+      security:
+        - AccessToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetPropertyListRequest'
+      responses:
+        '200':
+          description: Properties set successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+
+  /app/v2/device/get_device_Info:
+    post:
+      tags:
+        - Devices
+      summary: Get device info
+      description: Get detailed information about a device
+      operationId: getDeviceInfo
+      security:
+        - AccessToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/CommonRequestParams'
+                - type: object
+                  properties:
+                    device_mac:
+                      type: string
+                    device_model:
+                      type: string
+      responses:
+        '200':
+          description: Device info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+
+  /app/v2/device/get_event_list:
+    post:
+      tags:
+        - Camera
+      summary: Get device events
+      description: Get recent events for devices
+      operationId: getEventList
+      security:
+        - AccessToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/CommonRequestParams'
+                - type: object
+                  properties:
+                    count:
+                      type: integer
+                      description: Number of events to retrieve
+                    begin_time:
+                      type: integer
+                      format: int64
+                    end_time:
+                      type: integer
+                      format: int64
+                    event_type:
+                      type: string
+                    event_value_list:
+                      type: array
+                      items:
+                        type: string
+                    device_mac_list:
+                      type: array
+                      items:
+                        type: string
+                    order_by:
+                      type: integer
+      responses:
+        '200':
+          description: List of events
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      event_list:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Event'
+
+  /app/v2/auto/run_action:
+    post:
+      tags:
+        - Devices
+        - Camera
+      summary: Run device action
+      description: Execute an action on a device (power on/off, siren, etc.)
+      operationId: runAction
+      security:
+        - AccessToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RunActionRequest'
+      responses:
+        '200':
+          description: Action executed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+
+  /app/v2/auto/run_action_list:
+    post:
+      tags:
+        - Devices
+        - Bulb
+      summary: Run action list
+      description: Execute multiple actions on devices (used for mesh bulbs)
+      operationId: runActionList
+      security:
+        - AccessToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RunActionListRequest'
+      responses:
+        '200':
+          description: Actions executed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+
+  /app/v2/plug/usage_record_list:
+    post:
+      tags:
+        - Switch
+      summary: Get plug usage history
+      description: Get power usage history for a smart plug
+      operationId: getPlugUsageHistory
+      security:
+        - AccessToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlugUsageRequest'
+      responses:
+        '200':
+          description: Usage records
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlugUsageResponse'
+
+  # User Endpoints
+  /app/user/set_push_info:
+    post:
+      tags:
+        - User
+      summary: Set push notification settings
+      description: Enable or disable push notifications
+      operationId: setPushInfo
+      security:
+        - AccessToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetPushInfoRequest'
+      responses:
+        '200':
+          description: Settings updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+
+  /app/v2/platform/get_user_profile:
+    get:
+      tags:
+        - User
+      summary: Get user profile
+      description: Get user profile information including notification settings
+      operationId: getUserProfile
+      servers:
+        - url: https://wyze-platform-service.wyzecam.com
+      security:
+        - AccessToken: []
+      parameters:
+        - name: appid
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: appinfo
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: phoneid
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: signature2
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: nonce
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfileResponse'
+
+  # Device Management Endpoints
+  /device-management/api/action/run_action:
+    post:
+      tags:
+        - Camera
+      summary: Run device management action
+      description: Execute actions on newer camera models (Floodlight Pro, Battery Cam Pro, OG)
+      operationId: deviceMgmtRunAction
+      servers:
+        - url: https://devicemgmt-service-beta.wyze.com
+      security:
+        - Authorization: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceMgmtRunActionRequest'
+      responses:
+        '200':
+          description: Action executed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+
+  /device-management/api/device-property/get_iot_prop:
+    post:
+      tags:
+        - Camera
+      summary: Get IoT properties (Device Mgmt)
+      description: Get IoT properties for newer camera models
+      operationId: deviceMgmtGetIotProp
+      servers:
+        - url: https://devicemgmt-service-beta.wyze.com
+      security:
+        - Authorization: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceMgmtGetIotPropRequest'
+      responses:
+        '200':
+          description: IoT properties
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      capabilities:
+                        type: array
+                        items:
+                          type: object
+
+  # AI Subscription Service
+  /v4/subscription-service/toggle-management:
+    put:
+      tags:
+        - Camera
+      summary: Set toggle state
+      description: Set camera toggles like event recording and notifications
+      operationId: setToggle
+      servers:
+        - url: https://ai-subscription-service-beta.wyzecam.com
+      security:
+        - AccessToken: []
+      parameters:
+        - name: timestamp
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: appid
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: source
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: signature2
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: appplatform
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: appversion
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: requestid
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ToggleManagementRequest'
+      responses:
+        '200':
+          description: Toggle updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+
+  # HMS Endpoints
+  /api/v1/monitoring/v1/profile/state-status:
+    get:
+      tags:
+        - HMS
+      summary: Get HMS status
+      description: Get current Home Monitoring System status
+      operationId: getHMSStatus
+      servers:
+        - url: https://hms.api.wyze.com
+      security:
+        - AccessToken: []
+        - Authorization: []
+      parameters:
+        - name: appid
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: appinfo
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: phoneid
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: signature2
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: hms_id
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: nonce
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: HMS status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HMSStateStatusResponse'
+
+  /api/v1/monitoring/v1/profile/active:
+    patch:
+      tags:
+        - HMS
+      summary: Set HMS mode
+      description: Set Home Monitoring System mode (home/away/disarm)
+      operationId: setHMSMode
+      servers:
+        - url: https://hms.api.wyze.com
+      security:
+        - AccessToken: []
+        - Authorization: []
+      parameters:
+        - name: appid
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: appinfo
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: phoneid
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: signature2
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: hms_id
+          in: query
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HMSProfileActiveRequest'
+      responses:
+        '200':
+          description: Mode set successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+
+  /api/v1/reme-alarm:
+    delete:
+      tags:
+        - HMS
+      summary: Disable reme alarm
+      description: Disable the reme alarm (emergency alarm)
+      operationId: disableRemeAlarm
+      servers:
+        - url: https://hms.api.wyze.com
+      security:
+        - Authorization: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                hms_id:
+                  type: string
+                remediation_id:
+                  type: string
+                  enum: [emergency]
+      responses:
+        '200':
+          description: Alarm disabled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+
+  /platform/v2/membership/get_plan_binding_list_by_user:
+    get:
+      tags:
+        - HMS
+      summary: Get membership plan
+      description: Get HMS subscription plan for the user
+      operationId: getPlanBindingList
+      servers:
+        - url: https://wyze-membership-service.wyzecam.com
+      security:
+        - AccessToken: []
+      parameters:
+        - name: appid
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: appinfo
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: phoneid
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: signature2
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: group_id
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [hms]
+        - name: nonce
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Plan binding list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        deviceList:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              device_id:
+                                type: string
+
+  # Lock Endpoints
+  /openapi/lock/v1/control:
+    post:
+      tags:
+        - Lock
+      summary: Control lock
+      description: Lock or unlock a Wyze lock
+      operationId: lockControl
+      servers:
+        - url: https://yd-saas-toc.wyzecam.com
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LockControlRequest'
+      responses:
+        '200':
+          description: Lock controlled
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+
+  /openapi/lock/v1/info:
+    get:
+      tags:
+        - Lock
+      summary: Get lock info
+      description: Get lock status and information
+      operationId: getLockInfo
+      servers:
+        - url: https://yd-saas-toc.wyzecam.com
+      parameters:
+        - name: uuid
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: with_keypad
+          in: query
+          schema:
+            type: string
+            enum: ["0", "1"]
+        - name: access_token
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: key
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: timestamp
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: sign
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Lock info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LockInfoResponse'
+
+  /openapi/lock/v1/ble/token:
+    get:
+      tags:
+        - Lock
+      summary: Get BLE token
+      description: Get Bluetooth Low Energy token for lock communication
+      operationId: getLockBleToken
+      servers:
+        - url: https://yd-saas-toc.wyzecam.com
+      parameters:
+        - name: uuid
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: access_token
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: key
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: timestamp
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: sign
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: BLE token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      token:
+                        type: string
+                        description: Encrypted token
+
+  # Thermostat Endpoints
+  /plugin/earth/get_iot_prop:
+    get:
+      tags:
+        - Thermostat
+      summary: Get thermostat properties
+      description: Get IoT properties for a thermostat
+      operationId: getThermostatIotProp
+      servers:
+        - url: https://wyze-earth-service.wyzecam.com
+      security:
+        - AccessToken: []
+      parameters:
+        - name: appid
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: appinfo
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: phoneid
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: signature2
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: keys
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Comma-separated list of property keys
+        - name: did
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Device MAC address
+        - name: nonce
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Thermostat properties
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ThermostatIotPropResponse'
+
+  /plugin/earth/set_iot_prop_by_topic:
+    post:
+      tags:
+        - Thermostat
+      summary: Set thermostat property
+      description: Set a thermostat property value
+      operationId: setThermostatIotProp
+      servers:
+        - url: https://wyze-earth-service.wyzecam.com
+      security:
+        - AccessToken: []
+      parameters:
+        - name: appid
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: appinfo
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: phoneid
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: signature2
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                did:
+                  type: string
+                model:
+                  type: string
+                props:
+                  type: object
+                is_sub_device:
+                  type: integer
+                nonce:
+                  type: string
+      responses:
+        '200':
+          description: Property set
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+
+  # Wall Switch Endpoints
+  /plugin/sirius/get_iot_prop:
+    get:
+      tags:
+        - WallSwitch
+      summary: Get wall switch properties
+      description: Get IoT properties for a wall switch
+      operationId: getWallSwitchIotProp
+      servers:
+        - url: https://wyze-sirius-service.wyzecam.com
+      security:
+        - AccessToken: []
+      parameters:
+        - name: appid
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: appinfo
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: phoneid
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: signature2
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: keys
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: did
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: nonce
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Wall switch properties
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WallSwitchIotPropResponse'
+
+  /plugin/sirius/set_iot_prop_by_topic:
+    post:
+      tags:
+        - WallSwitch
+      summary: Set wall switch property
+      description: Set a wall switch property value
+      operationId: setWallSwitchIotProp
+      servers:
+        - url: https://wyze-sirius-service.wyzecam.com
+      security:
+        - AccessToken: []
+      parameters:
+        - name: appid
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: appinfo
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: phoneid
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: signature2
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                did:
+                  type: string
+                model:
+                  type: string
+                props:
+                  type: object
+                is_sub_device:
+                  type: integer
+                nonce:
+                  type: string
+      responses:
+        '200':
+          description: Property set
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+
+  # Irrigation Endpoints
+  /plugin/irrigation/get_iot_prop:
+    get:
+      tags:
+        - Irrigation
+      summary: Get irrigation properties
+      description: Get IoT properties for an irrigation controller
+      operationId: getIrrigationIotProp
+      servers:
+        - url: https://wyze-lockwood-service.wyzecam.com
+      security:
+        - AccessToken: []
+      parameters:
+        - name: appid
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: appinfo
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: phoneid
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: signature2
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: keys
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: did
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: nonce
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Irrigation properties
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      props:
+                        type: object
+                        properties:
+                          RSSI:
+                            type: integer
+                          IP:
+                            type: string
+                          sn:
+                            type: string
+                          ssid:
+                            type: string
+                          iot_state:
+                            type: string
+
+  /plugin/irrigation/zone:
+    get:
+      tags:
+        - Irrigation
+      summary: Get irrigation zones
+      description: Get zones for an irrigation controller
+      operationId: getIrrigationZones
+      servers:
+        - url: https://wyze-lockwood-service.wyzecam.com
+      security:
+        - AccessToken: []
+      parameters:
+        - name: appid
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: appinfo
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: phoneid
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: signature2
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: device_id
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: nonce
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Irrigation zones
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IrrigationZoneResponse'
+
+  /plugin/irrigation/quickrun:
+    post:
+      tags:
+        - Irrigation
+      summary: Quick run zone
+      description: Start a zone for a specified duration
+      operationId: irrigationQuickRun
+      servers:
+        - url: https://wyze-lockwood-service.wyzecam.com
+      security:
+        - AccessToken: []
+      parameters:
+        - name: appid
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: appinfo
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: phoneid
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: signature2
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IrrigationQuickRunRequest'
+      responses:
+        '200':
+          description: Zone started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+
+  /plugin/irrigation/runningschedule:
+    post:
+      tags:
+        - Irrigation
+      summary: Stop running schedule
+      description: Stop any currently running irrigation schedule
+      operationId: stopIrrigationSchedule
+      servers:
+        - url: https://wyze-lockwood-service.wyzecam.com
+      security:
+        - AccessToken: []
+      parameters:
+        - name: appid
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: appinfo
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: phoneid
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: signature2
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IrrigationStopRequest'
+      responses:
+        '200':
+          description: Schedule stopped
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+
+  /plugin/irrigation/schedule_runs:
+    get:
+      tags:
+        - Irrigation
+      summary: Get schedule runs
+      description: Get recent schedule runs for an irrigation controller
+      operationId: getIrrigationScheduleRuns
+      servers:
+        - url: https://wyze-lockwood-service.wyzecam.com
+      security:
+        - AccessToken: []
+      parameters:
+        - name: appid
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: appinfo
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: phoneid
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: signature2
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: device_id
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: nonce
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 2
+      responses:
+        '200':
+          description: Schedule runs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      schedules:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            schedule_state:
+                              type: string
+                              enum: [running, completed, pending]
+                            zone_runs:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  zone_number:
+                                    type: integer
+                                  zone_name:
+                                    type: string

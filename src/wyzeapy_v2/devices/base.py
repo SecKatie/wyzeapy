@@ -3,13 +3,29 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional, Protocol
 
 from ..wyze_api_client.models import Device
 from ..wyze_api_client.types import UNSET, Unset
 
 if TYPE_CHECKING:
     from ..wyzeapy import Wyzeapy
+
+
+class _HasDeviceParams(Protocol):
+    """Protocol for classes that have device_params property."""
+
+    @property
+    def device_params(self) -> Dict[str, Any]: ...
+
+
+class _HasClient(Protocol):
+    """Protocol for classes that have _ensure_client method and device attributes."""
+
+    mac: Optional[str]
+    product_model: Optional[str]
+
+    def _ensure_client(self) -> Wyzeapy: ...
 
 
 class DeviceType(Enum):
@@ -39,6 +55,54 @@ class DeviceType(Enum):
     UNKNOWN = "Unknown"
 
 
+class WiFiDeviceMixin:
+    """Mixin for devices with WiFi connectivity."""
+
+    @property
+    def ip_address(self: _HasDeviceParams) -> Optional[str]:
+        """Device's local IP address."""
+        return self.device_params.get("ip")
+
+    @property
+    def ssid(self: _HasDeviceParams) -> Optional[str]:
+        """Connected WiFi network name."""
+        return self.device_params.get("ssid")
+
+    @property
+    def rssi(self: _HasDeviceParams) -> Optional[int]:
+        """WiFi signal strength (RSSI)."""
+        rssi = self.device_params.get("rssi")
+        return int(rssi) if rssi else None
+
+
+class BatteryDeviceMixin:
+    """Mixin for battery-powered devices."""
+
+    @property
+    def is_low_battery(self: _HasDeviceParams) -> bool:
+        """Whether the device battery is low."""
+        return self.device_params.get("is_low_battery", 0) == 1
+
+    @property
+    def battery_level(self: _HasDeviceParams) -> Optional[int]:
+        """Battery level percentage (if available)."""
+        return self.device_params.get("battery")
+
+
+class SwitchableDeviceMixin:
+    """Mixin for devices that can be turned on/off."""
+
+    async def turn_on(self: WyzeDevice) -> bool:
+        """Turn on the device."""
+        client = self._ensure_client()
+        return await client._run_action(self, client._action_power_on)
+
+    async def turn_off(self: WyzeDevice) -> bool:
+        """Turn off the device."""
+        client = self._ensure_client()
+        return await client._run_action(self, client._action_power_off)
+
+
 class WyzeDevice:
     """Base wrapper for Wyze devices."""
 
@@ -65,16 +129,6 @@ class WyzeDevice:
                 "Use devices from Wyzeapy.list_devices() for control methods."
             )
         return self._client
-
-    async def turn_on(self) -> bool:
-        """Turn on the device."""
-        client = self._ensure_client()
-        return await client._run_action(self, client._action_power_on)
-
-    async def turn_off(self) -> bool:
-        """Turn off the device."""
-        client = self._ensure_client()
-        return await client._run_action(self, client._action_power_off)
 
     @property
     def type(self) -> DeviceType:

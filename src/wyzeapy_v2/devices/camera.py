@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from typing import Optional
 
-from .base import WyzeDevice
+from .base import WyzeDevice, WiFiDeviceMixin, SwitchableDeviceMixin
 
 
-class WyzeCamera(WyzeDevice):
+class WyzeCamera(WyzeDevice, WiFiDeviceMixin, SwitchableDeviceMixin):
     """Wyze Camera device."""
 
     @property
@@ -29,16 +29,6 @@ class WyzeCamera(WyzeDevice):
     def recording_enabled(self) -> bool:
         """Whether event recording is enabled."""
         return self.device_params.get("records_event_switch", 0) == 1
-
-    @property
-    def ip_address(self) -> Optional[str]:
-        """Camera's local IP address."""
-        return self.device_params.get("ip")
-
-    @property
-    def ssid(self) -> Optional[str]:
-        """Connected WiFi network name."""
-        return self.device_params.get("ssid")
 
     @property
     def p2p_id(self) -> Optional[str]:

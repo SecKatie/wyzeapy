@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Dict, Optional, Type
 from ..wyze_api_client.models import Device
 from ..wyze_api_client.types import UNSET
 
-from .base import DeviceType, WyzeDevice
+from .base import DeviceType, WyzeDevice, WiFiDeviceMixin, BatteryDeviceMixin, SwitchableDeviceMixin
 from .camera import WyzeCamera
 from .lock import WyzeLock
 from .gateway import WyzeGateway
@@ -23,6 +23,9 @@ if TYPE_CHECKING:
 __all__ = [
     "DeviceType",
     "WyzeDevice",
+    "WiFiDeviceMixin",
+    "BatteryDeviceMixin",
+    "SwitchableDeviceMixin",
     "WyzeCamera",
     "WyzeLock",
     "WyzeGateway",

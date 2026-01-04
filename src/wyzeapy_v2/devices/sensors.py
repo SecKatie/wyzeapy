@@ -2,16 +2,13 @@
 
 from __future__ import annotations
 
-from .base import WyzeDevice
+from .base import WyzeDevice, BatteryDeviceMixin
 
 
-class WyzeSensor(WyzeDevice):
+class WyzeSensor(WyzeDevice, BatteryDeviceMixin):
     """Base class for Wyze sensors (contact, motion, leak)."""
 
-    @property
-    def is_low_battery(self) -> bool:
-        """Whether the sensor battery is low."""
-        return self.device_params.get("is_low_battery", 0) == 1
+    pass
 
 
 class WyzeContactSensor(WyzeSensor):

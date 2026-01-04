@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from .base import WyzeDevice
+from .base import WyzeDevice, SwitchableDeviceMixin
 
 
-class WyzePlug(WyzeDevice):
+class WyzePlug(WyzeDevice, SwitchableDeviceMixin):
     """Wyze Plug/Switch device."""
 
     @property

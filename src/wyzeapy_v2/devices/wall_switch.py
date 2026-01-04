@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from typing import Optional
 
-from .base import WyzeDevice
+from .base import WyzeDevice, SwitchableDeviceMixin
 
 
-class WyzeWallSwitch(WyzeDevice):
+class WyzeWallSwitch(WyzeDevice, SwitchableDeviceMixin):
     """Wyze Wall Switch device."""
 
     @property

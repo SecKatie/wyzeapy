@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from typing import Optional
 
-from .base import WyzeDevice
+from .base import WyzeDevice, WiFiDeviceMixin, SwitchableDeviceMixin
 
 
-class WyzeLight(WyzeDevice):
+class WyzeLight(WyzeDevice, WiFiDeviceMixin, SwitchableDeviceMixin):
     """Wyze Light/Bulb device."""
 
     @property
@@ -29,22 +29,6 @@ class WyzeLight(WyzeDevice):
     def color(self) -> Optional[str]:
         """Color as hex string (for color bulbs)."""
         return self.device_params.get("color")
-
-    @property
-    def ip_address(self) -> Optional[str]:
-        """Light's local IP address."""
-        return self.device_params.get("ip")
-
-    @property
-    def ssid(self) -> Optional[str]:
-        """Connected WiFi network name."""
-        return self.device_params.get("ssid")
-
-    @property
-    def rssi(self) -> Optional[int]:
-        """WiFi signal strength."""
-        rssi = self.device_params.get("rssi")
-        return int(rssi) if rssi else None
 
     async def set_brightness(self, brightness: int) -> bool:
         """

@@ -3,7 +3,7 @@
 import asyncio
 import os
 
-from src.wyzeapy_v2 import Wyzeapy
+from src.wyzeapy_v2 import Wyzeapy, WyzeCamera
 
 
 def get_2fa_code(auth_type: str) -> str:
@@ -33,19 +33,17 @@ async def main():
             print(f"  Product Model: {device.product_model}")
             print(f"  Available: {device.available}")
 
-            # Get detailed device info
-            info = await device.get_info()
-            if info:
-                print("\n  Device Info:")
-                for key, value in info.items():
-                    print(f"    {key}: {value}")
-
-            # Get device properties
-            properties = await device.get_properties()
-            if properties:
-                print("\n  Properties:")
-                for pid, value in properties.items():
-                    print(f"    {pid}: {value}")
+            # Camera-specific: get recent events
+            if isinstance(device, WyzeCamera):
+                # Example of camera control (commented out for safety)
+                print("\n  Toggling motion detection...")
+                # await device.motion_detection_off()
+                await device.motion_detection_on()
+                #
+                if device.has_floodlight:
+                    print("  Toggling floodlight...")
+                    await device.floodlight_on()
+                #     await device.floodlight_off()
 
 
 if __name__ == "__main__":

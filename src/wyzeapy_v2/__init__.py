@@ -1,6 +1,6 @@
 """Wyzeapy - A Python wrapper for the Wyze API."""
 
-from .wyzeapy import Wyzeapy, Token, TwoFactorCallback, WyzeUser
+from .wyzeapy import Wyzeapy, TwoFactorCallback
 from .devices import (
     DeviceType,
     WyzeDevice,
@@ -16,6 +16,21 @@ from .devices import (
     WyzeThermostat,
     WyzeWallSwitch,
 )
+from .models import (
+    Token,
+    WyzeUser,
+    CameraEvent,
+    PlugUsageRecord,
+    HMSMode,
+    HMSStatus,
+    LockInfo,
+    ThermostatMode,
+    ThermostatFanMode,
+    ThermostatWorkingState,
+    ThermostatState,
+    IrrigationZone,
+)
+from .services.hms import WyzeHMS
 from .exceptions import (
     WyzeapyError,
     AuthenticationError,
@@ -48,6 +63,19 @@ __all__ = [
     "WyzePlug",
     "WyzeThermostat",
     "WyzeWallSwitch",
+    # Data models
+    "CameraEvent",
+    "PlugUsageRecord",
+    "HMSMode",
+    "HMSStatus",
+    "LockInfo",
+    "ThermostatMode",
+    "ThermostatFanMode",
+    "ThermostatWorkingState",
+    "ThermostatState",
+    "IrrigationZone",
+    # Services
+    "WyzeHMS",
     # Exceptions
     "WyzeapyError",
     "AuthenticationError",

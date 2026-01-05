@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from .base import WyzeDevice
+
+if TYPE_CHECKING:
+    from ..models import LockInfo
 
 
 class WyzeLock(WyzeDevice):
@@ -27,3 +32,16 @@ class WyzeLock(WyzeDevice):
         """Unlock the device."""
         client = self._ensure_client()
         return await client._lock_control(self, client._lock_action_unlock)
+
+    async def get_lock_info(self, with_keypad: bool = False) -> "LockInfo":
+        """
+        Get detailed lock information from the API.
+
+        Args:
+            with_keypad: Whether to include keypad information.
+
+        Returns:
+            LockInfo object with lock status, door state, and online status.
+        """
+        client = self._ensure_client()
+        return await client.get_lock_info(self, with_keypad=with_keypad)

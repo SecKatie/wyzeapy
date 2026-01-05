@@ -5,14 +5,31 @@ import hmac
 import urllib.parse
 from typing import Any, Dict, Union
 
-# Crypto secrets for lock API
-FORD_APP_KEY = "275965684684dbdaf29a0ed9"
-FORD_APP_SECRET = "4deekof1ba311c5c33a9cb8e12787e8c"
+from .const import (
+    FORD_APP_KEY,
+    FORD_APP_SECRET,
+    OLIVE_SIGNING_SECRET,
+    OLIVE_APP_ID,
+    APP_INFO,
+    PropertyID,
+    DEVICEMGMT_API_MODELS,
+    DEVICEMGMT_SERVICE_URL,
+)
 
-# Olive (platform service) constants
-OLIVE_SIGNING_SECRET = "wyze_app_secret_key_132"
-OLIVE_APP_ID = "9319141212m2ik"
-APP_INFO = "wyze_android_2.19.14"
+# Re-export for backwards compatibility
+__all__ = [
+    "hash_password",
+    "ford_create_signature",
+    "olive_create_signature",
+    "FORD_APP_KEY",
+    "FORD_APP_SECRET",
+    "OLIVE_SIGNING_SECRET",
+    "OLIVE_APP_ID",
+    "APP_INFO",
+    "PropertyID",
+    "DEVICEMGMT_API_MODELS",
+    "DEVICEMGMT_SERVICE_URL",
+]
 
 
 def hash_password(password: str) -> str:
@@ -57,16 +74,3 @@ def olive_create_signature(
     access_key = "{}{}".format(access_token, OLIVE_SIGNING_SECRET)
     secret = hashlib.md5(access_key.encode()).hexdigest()
     return hmac.new(secret.encode(), body.encode(), hashlib.md5).hexdigest()
-
-
-class PropertyID:
-    """Common property IDs for Wyze devices."""
-
-    POWER = "P3"  # Power on/off
-    BRIGHTNESS = "P1501"
-    COLOR_TEMP = "P1502"
-    COLOR = "P1507"
-    COLOR_MODE = "P1508"  # 1=color, 2=white
-    DOOR_OPEN = "P2001"
-    CAMERA_SIREN = "P1049"
-    MOTION_DETECTION = "P1047"

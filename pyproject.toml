@@ -1,24 +1,19 @@
 [project]
 name = "wyzeapy"
-version = "0.5.30"
+version = "0.6.0a1"
 description = "A library for interacting with Wyze devices"
-authors = [
-    { name = "Katie Mulliken", email = "katie@mulliken.net" },
-]
+authors = [{ name = "Katie Mulliken", email = "katie@mulliken.net" }]
 license = { text = "GPL-3.0-only" }
-requires-python = ">=3.11.0"
+requires-python = ">=3.13.2"
 dependencies = [
-    "aiohttp>=3.11.12,<4.0.0",
-    "aiodns>=3.2.0,<4.0.0",
-    "pycryptodome>=3.21.0,<4.0.0",
-    "httpx>=0.28.0,<1.0.0",
+  "aiohttp>=3.11.12,<4.0.0",
+  "aiodns>=3.2.0,<4.0.0",
+  "pycryptodome>=3.21.0,<4.0.0",
+  "httpx>=0.28.0,<1.0.0",
 ]
 
 [project.optional-dependencies]
-dev = [
-    "pdoc>=15.0.3,<17.0.0",
-    "pytest>=7.0.0,<10.0.0",
-]
+dev = ["pdoc>=15.0.3,<17.0.0", "pytest>=7.0.0,<10.0.0"]
 
 [build-system]
 requires = ["hatchling>=1.24"]
@@ -26,17 +21,17 @@ build-backend = "hatchling.build"
 
 [dependency-groups]
 dev = [
-    "ruff>=0.12.3",
-    "pytest>=7.0.0,<10.0.0",
-    "coverage>=7.9.2",
-    "openapi-spec-validator>=0.7.2",
-    "openapi-python-client>=0.28.0",
-    "pytest-asyncio>=1.3.0",
-    "ty>=0.0.8",
+  "ruff>=0.12.3",
+  "pytest>=7.0.0,<10.0.0",
+  "coverage>=7.9.2",
+  "openapi-spec-validator>=0.7.2",
+  "openapi-python-client>=0.28.0",
+  "pytest-asyncio>=1.3.0",
+  "ty>=0.0.8",
 ]
 
 [tool.ty.src]
 exclude = [
-    "src/wyzeapy/wyze_api_client/",  # Auto-generated code
-    "src/wyzeapy/tests/",  # Test files
+  "src/wyzeapy/wyze_api_client/", # Auto-generated code
+  "src/wyzeapy/tests/",           # Test files
 ]

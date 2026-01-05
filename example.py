@@ -3,7 +3,7 @@
 import asyncio
 import os
 
-from src.wyzeapy_v2 import Wyzeapy, WyzeCamera
+from wyzeapy import Wyzeapy, WyzeCamera
 
 
 def get_2fa_code(auth_type: str) -> str:

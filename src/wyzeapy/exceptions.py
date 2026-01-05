@@ -1,36 +1,62 @@
-#  Copyright (c) 2021. Mulliken, LLC - All Rights Reserved
-#  You may use, distribute and modify this code under the terms
-#  of the attached license. You should have received a copy of
-#  the license with this file. If not, please write to:
-#  katie@mulliken.net to receive a copy
-"""
-Custom exception classes for Wyzeapy API interactions.
-"""
+"""Wyzeapy exceptions."""
 
 
-class ActionNotSupported(Exception):
-    """Raised when an unsupported action is requested for a device type."""
+class WyzeapyError(Exception):
+    """Base exception for all Wyzeapy errors."""
 
-    def __init__(self, device_type: str):
-        message = f"The action specified is not supported by device type: {device_type}"
-        super().__init__(message)
+    pass
 
 
-class ParameterError(Exception):
-    """Raised when invalid parameters are provided to an API call."""
+class AuthenticationError(WyzeapyError):
+    """Raised when authentication fails."""
+
+    pass
 
 
-class AccessTokenError(Exception):
-    """Raised when the access token is invalid or has expired."""
+class TwoFactorAuthRequired(AuthenticationError):
+    """Raised when 2FA is required but no callback provided."""
+
+    def __init__(self, auth_type: str):
+        self.auth_type = auth_type
+        super().__init__(f"Two-factor authentication ({auth_type}) required")
 
 
-class LoginError(Exception):
-    """Raised during authentication or login failures."""
+class TokenRefreshError(AuthenticationError):
+    """Raised when token refresh fails."""
+
+    pass
 
 
-class UnknownApiError(Exception):
-    """Raised for unexpected or generic API errors."""
+class NotAuthenticatedError(WyzeapyError):
+    """Raised when attempting to use API without authentication."""
+
+    pass
 
 
-class TwoFactorAuthenticationEnabled(Exception):
-    """Raised when two-factor authentication is required for login."""
+class DeviceError(WyzeapyError):
+    """Base exception for device-related errors."""
+
+    pass
+
+
+class DeviceOfflineError(DeviceError):
+    """Raised when a device is offline."""
+
+    pass
+
+
+class ActionNotSupportedError(DeviceError):
+    """Raised when an action is not supported by a device."""
+
+    pass
+
+
+class ApiError(WyzeapyError):
+    """Raised when the API returns an error."""
+
+    def __init__(self, code: str, message: str = ""):
+        self.code = code
+        self.message = message
+        super().__init__(
+            f"API error {code}: {message}" if message else f"API error {code}"
+        )

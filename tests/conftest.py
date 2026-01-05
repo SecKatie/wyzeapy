@@ -2,6 +2,9 @@
 
 import os
 import pytest
+import pytest_asyncio
+
+from wyzeapy import Wyzeapy
 
 
 def pytest_configure(config):
@@ -11,7 +14,7 @@ def pytest_configure(config):
     )
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def wyze_credentials():
     """Get Wyze credentials from environment variables."""
     email = os.environ.get("WYZE_EMAIL")
@@ -30,3 +33,21 @@ def wyze_credentials():
         "key_id": key_id,
         "api_key": api_key,
     }
+
+
+@pytest_asyncio.fixture(loop_scope="module", scope="module")
+async def wyze_client(wyze_credentials):
+    """
+    Create a shared authenticated Wyzeapy client for integration tests.
+
+    This fixture is module-scoped to avoid rate limiting from logging in
+    multiple times.
+    """
+    client = await Wyzeapy.create(
+        wyze_credentials["email"],
+        wyze_credentials["password"],
+        wyze_credentials["key_id"],
+        wyze_credentials["api_key"],
+    )
+    yield client
+    await client.close()

@@ -1530,6 +1530,7 @@ source = { editable = "." }
 dependencies = [
     { name = "aiodns" },
     { name = "aiohttp" },
+    { name = "httpx" },
     { name = "pycryptodome" },
 ]
 
@@ -1554,6 +1555,7 @@ dev = [
 requires-dist = [
     { name = "aiodns", specifier = ">=3.2.0,<4.0.0" },
     { name = "aiohttp", specifier = ">=3.11.12,<4.0.0" },
+    { name = "httpx", specifier = ">=0.28.0,<1.0.0" },
     { name = "pdoc", marker = "extra == 'dev'", specifier = ">=15.0.3,<17.0.0" },
     { name = "pycryptodome", specifier = ">=3.21.0,<4.0.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.0.0,<10.0.0" },

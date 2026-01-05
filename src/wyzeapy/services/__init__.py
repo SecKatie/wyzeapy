@@ -1,3 +1,5 @@
-"""
-This module provides the services for interacting with Wyze devices.
-"""
+"""Wyze service modules."""
+
+from .hms import WyzeHMS
+
+__all__ = ["WyzeHMS"]

@@ -275,6 +275,7 @@ components:
         mfa_details:
           oneOf:
             - type: object
+              additionalProperties: true
             - type: 'null'
           description: MFA details if 2FA required
         sms_session_id:

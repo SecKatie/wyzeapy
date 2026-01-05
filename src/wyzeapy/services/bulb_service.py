@@ -15,7 +15,20 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class Bulb(Device):
-    """Bulb class for interacting with Wyze bulbs."""
+    """Bulb class for interacting with Wyze bulbs.
+
+    Note: When created via get_bulbs(), bulb properties (brightness, color,
+    color_temp, on) are initialized with default values. Call
+    BulbService.update(bulb) to fetch the actual current values from the
+    Wyze API.
+
+    Example:
+        bulb_service = await client.bulb_service
+        bulbs = await bulb_service.get_bulbs()
+        for bulb in bulbs:
+            bulb = await bulb_service.update(bulb)  # Fetches actual values
+            print(f"Brightness: {bulb.brightness}, Color: {bulb.color}")
+    """
 
     _brightness: int = 0
     _color_temp: int = 1800
@@ -90,10 +103,14 @@ class BulbService(BaseService):
     """Bulb service for interacting with Wyze bulbs."""
 
     async def update(self, bulb: Bulb) -> Bulb:
-        """Update the bulb object with the latest device parameters.
+        """Fetch and update the bulb's current state from the Wyze API.
+
+        This method retrieves the actual values for brightness, color,
+        color_temp, on/off state, and other properties from the Wyze API.
+        Must be called after get_bulbs() to get accurate property values.
 
         :param bulb: Bulb object to update
-        :return: Updated bulb object
+        :return: Updated bulb object with current property values
         """
         # Get updated device_params
         async with BaseService._update_lock:
@@ -131,7 +148,11 @@ class BulbService(BaseService):
     async def get_bulbs(self) -> List[Bulb]:
         """Get a list of all bulbs.
 
-        :return: List of Bulb objects
+        Note: Returned bulbs have default property values (brightness=0,
+        color="000000", etc.). Call update(bulb) on each bulb to fetch
+        the actual current values from the Wyze API.
+
+        :return: List of Bulb objects with default property values
         """
         if self._devices is None:
             self._devices = await self.get_object_list()

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-
 from .base import WyzeDevice
 from ..wyze_api_client.models import LockControlRequestAction
 
@@ -34,9 +33,9 @@ class WyzeLock(WyzeDevice):
         client = self._ensure_client()
         return await client._lock_control(self, LockControlRequestAction.REMOTEUNLOCK)
 
-    async def get_info(self, with_keypad: bool = False) -> "LockInfo":
+    async def get_lock_info(self, with_keypad: bool = False) -> "LockInfo":
         """
-        Get detailed lock information from the API.
+        Get detailed lock information as a typed LockInfo object.
 
         Args:
             with_keypad: Whether to include keypad information.

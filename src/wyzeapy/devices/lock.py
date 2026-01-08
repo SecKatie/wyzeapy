@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from .base import WyzeDevice
+from ..wyze_api_client.models import LockControlRequestAction
 
 if TYPE_CHECKING:
     from ..models import LockInfo
@@ -26,12 +27,12 @@ class WyzeLock(WyzeDevice):
     async def lock(self) -> bool:
         """Lock the device."""
         client = self._ensure_client()
-        return await client._lock_control(self, client._lock_action_lock)
+        return await client._lock_control(self, LockControlRequestAction.REMOTELOCK)
 
     async def unlock(self) -> bool:
         """Unlock the device."""
         client = self._ensure_client()
-        return await client._lock_control(self, client._lock_action_unlock)
+        return await client._lock_control(self, LockControlRequestAction.REMOTEUNLOCK)
 
     async def get_info(self, with_keypad: bool = False) -> "LockInfo":
         """

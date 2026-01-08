@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Optional
 
 from .base import WyzeDevice, WiFiDeviceMixin, SwitchableDeviceMixin
 from ..const import FLOODLIGHT_MODELS, LAMP_SOCKET_MODELS
+from ..wyze_api_client.models import RunActionRequestActionKey
 
 if TYPE_CHECKING:
     from ..models import CameraEvent
@@ -64,12 +65,12 @@ class WyzeCamera(WyzeDevice, WiFiDeviceMixin, SwitchableDeviceMixin):
     async def siren_on(self) -> bool:
         """Turn on camera siren."""
         client = self._ensure_client()
-        return await client.run_action(self, client._action_siren_on)
+        return await client.run_action(self, RunActionRequestActionKey.SIREN_ON)
 
     async def siren_off(self) -> bool:
         """Turn off camera siren."""
         client = self._ensure_client()
-        return await client.run_action(self, client._action_siren_off)
+        return await client.run_action(self, RunActionRequestActionKey.SIREN_OFF)
 
     async def floodlight_on(self) -> bool:
         """

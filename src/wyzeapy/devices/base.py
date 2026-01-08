@@ -5,7 +5,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Protocol
 
-from ..wyze_api_client.models import Device
+from ..wyze_api_client.models import Device, RunActionRequestActionKey
 from ..wyze_api_client.types import UNSET, Unset
 
 if TYPE_CHECKING:
@@ -95,12 +95,12 @@ class SwitchableDeviceMixin:
     async def turn_on(self: WyzeDevice) -> bool:
         """Turn on the device."""
         client = self._ensure_client()
-        return await client.run_action(self, client._action_power_on)
+        return await client.run_action(self, RunActionRequestActionKey.POWER_ON)
 
     async def turn_off(self: WyzeDevice) -> bool:
         """Turn off the device."""
         client = self._ensure_client()
-        return await client.run_action(self, client._action_power_off)
+        return await client.run_action(self, RunActionRequestActionKey.POWER_OFF)
 
 
 class WyzeDevice:

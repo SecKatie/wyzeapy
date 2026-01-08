@@ -158,20 +158,6 @@ class Wyzeapy:
         self._devices: Optional[list[WyzeDevice]] = None
         self._hms: Optional[WyzeHMS] = None
 
-        # Action keys for device control (accessed by device classes)
-        self._action_power_on = RunActionRequestActionKey.POWER_ON
-        self._action_power_off = RunActionRequestActionKey.POWER_OFF
-        self._action_siren_on = RunActionRequestActionKey.SIREN_ON
-        self._action_siren_off = RunActionRequestActionKey.SIREN_OFF
-        self._lock_action_lock = LockControlRequestAction.REMOTELOCK
-        self._lock_action_unlock = LockControlRequestAction.REMOTEUNLOCK
-
-        # Property IDs for device control (accessed by device classes)
-        self._prop_brightness = PropertyID.BRIGHTNESS
-        self._prop_color_temp = PropertyID.COLOR_TEMP
-        self._prop_color = PropertyID.COLOR
-        self._prop_color_mode = PropertyID.COLOR_MODE
-
     @classmethod
     async def create(
         cls,

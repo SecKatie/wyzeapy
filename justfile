@@ -24,3 +24,7 @@ test-unit:
 # Run integration tests only
 test-integration:
     uv run pytest tests/ -v -m integration
+
+# Generate documentation from docstrings
+docs:
+    uv run sphinx-build -b html docs docs/_build

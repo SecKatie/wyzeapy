@@ -22,6 +22,7 @@ from .light import WyzeLight
 from .plug import WyzePlug
 from .thermostat import WyzeThermostat
 from .wall_switch import WyzeWallSwitch
+from .irrigation import WyzeIrrigation
 
 if TYPE_CHECKING:
     from ..wyzeapy import Wyzeapy
@@ -43,6 +44,7 @@ __all__ = [
     "WyzePlug",
     "WyzeThermostat",
     "WyzeWallSwitch",
+    "WyzeIrrigation",
     "create_device",
 ]
 
@@ -63,6 +65,7 @@ _DEVICE_TYPE_MAP: Dict[str, Type[WyzeDevice]] = {
     DeviceType.OUTDOOR_PLUG.value: WyzePlug,
     DeviceType.THERMOSTAT.value: WyzeThermostat,
     DeviceType.WALL_SWITCH.value: WyzeWallSwitch,
+    DeviceType.COMMON.value: WyzeIrrigation,  # Irrigation controllers use "Common" type
 }
 
 

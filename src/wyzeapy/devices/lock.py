@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+
 from .base import WyzeDevice
-from ..wyze_api_client.models import LockControlRequestAction
+from ..const import FORD_APP_KEY
+from ..wyze_api_client.models import LockControlRequest, LockControlRequestAction
+from ..wyze_api_client.api.lock import lock_control, get_lock_info
 
 if TYPE_CHECKING:
     from ..models import LockInfo
@@ -25,15 +28,54 @@ class WyzeLock(WyzeDevice):
 
     async def lock(self) -> bool:
         """Lock the device."""
-        client = self._ensure_client()
-        return await client._lock_control(self, LockControlRequestAction.REMOTELOCK)
+        return await self._lock_control(LockControlRequestAction.REMOTELOCK)
 
     async def unlock(self) -> bool:
         """Unlock the device."""
-        client = self._ensure_client()
-        return await client._lock_control(self, LockControlRequestAction.REMOTEUNLOCK)
+        return await self._lock_control(LockControlRequestAction.REMOTEUNLOCK)
 
-    async def get_lock_info(self, with_keypad: bool = False) -> "LockInfo":
+    async def _lock_control(self, action: LockControlRequestAction) -> bool:
+        """Control the lock."""
+        ctx = self._get_context()
+        await ctx.ensure_token_valid()
+
+        lock_client = ctx.create_lock_client()
+
+        try:
+            timestamp = ctx.nonce()
+            device_uuid = self.mac or ""
+            access_token = ctx.access_token
+
+            # Build payload for signature
+            payload = {
+                "access_token": access_token,
+                "action": action.value,
+                "key": FORD_APP_KEY,
+                "timestamp": timestamp,
+                "uuid": device_uuid,
+            }
+
+            signature = ctx.ford_create_signature(
+                "/openapi/lock/v1/control", "POST", payload
+            )
+
+            response = await lock_control.asyncio(
+                client=lock_client,
+                body=LockControlRequest(
+                    sign=signature,
+                    uuid=device_uuid,
+                    action=action,
+                    access_token=access_token,
+                    key=FORD_APP_KEY,
+                    timestamp=timestamp,
+                ),
+            )
+
+            return response is not None and getattr(response, "code", 1) == 0
+        finally:
+            await lock_client.get_async_httpx_client().aclose()
+
+    async def get_info(self, with_keypad: bool = False) -> "LockInfo":
         """
         Get detailed lock information as a typed LockInfo object.
 
@@ -43,5 +85,45 @@ class WyzeLock(WyzeDevice):
         Returns:
             LockInfo object with lock status, door state, and online status.
         """
-        client = self._ensure_client()
-        return await client.get_lock_info(self, with_keypad=with_keypad)
+        from ..models import LockInfo
+
+        ctx = self._get_context()
+        await ctx.ensure_token_valid()
+
+        lock_client = ctx.create_lock_client()
+
+        try:
+            timestamp = ctx.nonce()
+            device_uuid = self.mac or ""
+            access_token = ctx.access_token
+
+            # Build payload for signature
+            payload = {
+                "access_token": access_token,
+                "key": FORD_APP_KEY,
+                "timestamp": timestamp,
+                "uuid": device_uuid,
+            }
+            if with_keypad:
+                payload["with_keypad"] = "1"
+
+            signature = ctx.ford_create_signature(
+                "/openapi/lock/v1/info", "GET", payload
+            )
+
+            response = await get_lock_info.asyncio(
+                client=lock_client,
+                uuid=device_uuid,
+                access_token=access_token,
+                key=FORD_APP_KEY,
+                timestamp=timestamp,
+                sign=signature,
+            )
+
+            if response is None:
+                return LockInfo(uuid="", is_online=False, is_locked=False, door_open=False, raw={})
+
+            raw_data = response.to_dict() if hasattr(response, "to_dict") else {}
+            return LockInfo.from_api_response(raw_data)
+        finally:
+            await lock_client.get_async_httpx_client().aclose()

@@ -5,6 +5,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Optional
 
 from .base import WyzeDevice
+from ..const import OLIVE_APP_ID, APP_INFO
+from ..wyze_api_client.models import SetThermostatIotPropBody, SetThermostatIotPropBodyProps
+from ..wyze_api_client.api.thermostat import get_thermostat_iot_prop, set_thermostat_iot_prop
 
 if TYPE_CHECKING:
     from ..models import ThermostatState
@@ -55,8 +58,103 @@ class WyzeThermostat(WyzeDevice):
         Returns:
             ThermostatState object with current temperature, setpoints, and mode.
         """
-        client = self._ensure_client()
-        return await client.get_thermostat_state(self)
+        from ..models import ThermostatState
+
+        ctx = self._get_context()
+        await ctx.ensure_token_valid()
+
+        access_token = ctx.access_token
+        nonce = int(ctx.nonce())
+
+        # Keys to request - common thermostat properties
+        keys = "temperature,humidity,cool_sp,heat_sp,mode_sys,fan_mode,working_state,temp_unit"
+        payload = {"keys": keys, "did": self.mac or "", "nonce": str(nonce)}
+        signature = ctx.olive_create_signature(payload, access_token)
+
+        platform_client = ctx.create_platform_client()
+
+        try:
+            response = await get_thermostat_iot_prop.asyncio(
+                client=platform_client,
+                keys=keys,
+                did=self.mac or "",
+                nonce=nonce,
+                appid=OLIVE_APP_ID,
+                appinfo=APP_INFO,
+                phoneid=ctx.phone_id,
+                signature2=signature,
+            )
+
+            if response is None:
+                return ThermostatState(
+                    temperature=None,
+                    humidity=None,
+                    cool_setpoint=None,
+                    heat_setpoint=None,
+                    mode=None,
+                    fan_mode=None,
+                    working_state=None,
+                    raw={},
+                )
+
+            raw_data = response.to_dict() if hasattr(response, "to_dict") else {}
+            return ThermostatState.from_api_response(raw_data)
+        finally:
+            await platform_client.get_async_httpx_client().aclose()
+
+    async def _set_properties(
+        self,
+        *,
+        cool_setpoint: Optional[int] = None,
+        heat_setpoint: Optional[int] = None,
+        fan_mode: Optional[str] = None,
+        hvac_mode: Optional[str] = None,
+    ) -> bool:
+        """Set thermostat properties."""
+        ctx = self._get_context()
+        await ctx.ensure_token_valid()
+
+        access_token = ctx.access_token
+        nonce = ctx.nonce()
+
+        # Build props
+        props = SetThermostatIotPropBodyProps()
+        if cool_setpoint is not None:
+            props["cool_sp"] = cool_setpoint
+        if heat_setpoint is not None:
+            props["heat_sp"] = heat_setpoint
+        if fan_mode is not None:
+            props["fan_mode"] = fan_mode
+        if hvac_mode is not None:
+            props["mode_sys"] = hvac_mode
+
+        body = SetThermostatIotPropBody(
+            did=self.mac or "",
+            model=self.product_model or "",
+            props=props,
+            is_sub_device=0,
+            nonce=nonce,
+        )
+
+        # Create signature from body dict
+        body_dict = body.to_dict()
+        signature = ctx.olive_create_signature(body_dict, access_token)
+
+        platform_client = ctx.create_platform_client()
+
+        try:
+            response = await set_thermostat_iot_prop.asyncio(
+                client=platform_client,
+                body=body,
+                appid=OLIVE_APP_ID,
+                appinfo=APP_INFO,
+                phoneid=ctx.phone_id,
+                signature2=signature,
+            )
+
+            return response is not None and getattr(response, "code", None) == "1"
+        finally:
+            await platform_client.get_async_httpx_client().aclose()
 
     async def set_cool_setpoint(self, temperature: int) -> bool:
         """
@@ -68,8 +166,7 @@ class WyzeThermostat(WyzeDevice):
         Returns:
             True if successful, False otherwise.
         """
-        client = self._ensure_client()
-        return await client.set_thermostat_properties(self, cool_setpoint=temperature)
+        return await self._set_properties(cool_setpoint=temperature)
 
     async def set_heat_setpoint(self, temperature: int) -> bool:
         """
@@ -81,8 +178,7 @@ class WyzeThermostat(WyzeDevice):
         Returns:
             True if successful, False otherwise.
         """
-        client = self._ensure_client()
-        return await client.set_thermostat_properties(self, heat_setpoint=temperature)
+        return await self._set_properties(heat_setpoint=temperature)
 
     async def set_hvac_mode(self, mode: str) -> bool:
         """
@@ -94,8 +190,7 @@ class WyzeThermostat(WyzeDevice):
         Returns:
             True if successful, False otherwise.
         """
-        client = self._ensure_client()
-        return await client.set_thermostat_properties(self, hvac_mode=mode)
+        return await self._set_properties(hvac_mode=mode)
 
     async def set_fan_mode(self, mode: str) -> bool:
         """
@@ -107,5 +202,4 @@ class WyzeThermostat(WyzeDevice):
         Returns:
             True if successful, False otherwise.
         """
-        client = self._ensure_client()
-        return await client.set_thermostat_properties(self, fan_mode=mode)
+        return await self._set_properties(fan_mode=mode)

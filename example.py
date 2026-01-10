@@ -1,9 +1,9 @@
 #!/usr/bin/env uv run --script
-"""Example script demonstrating Wyzeapy usage and dumping raw API data."""
+"""Example script demonstrating Wyzeapy usage."""
 import asyncio
 import os
 
-from wyzeapy import Wyzeapy, WyzeCamera
+from wyzeapy import Wyzeapy, WyzeCamera, WyzeLock, WyzeLight, WyzePlug
 
 
 def get_2fa_code(auth_type: str) -> str:
@@ -33,17 +33,22 @@ async def main():
             print(f"  Product Model: {device.product_model}")
             print(f"  Available: {device.available}")
 
-            # Camera-specific: get recent events
+            # Device-specific info
             if isinstance(device, WyzeCamera):
-                # Example of camera control (commented out for safety)
-                print("\n  Toggling motion detection...")
-                # await device.motion_detection_off()
-                await device.motion_detection_on()
-                #
-                if device.has_floodlight:
-                    print("  Toggling floodlight...")
-                    await device.floodlight_on()
-                #     await device.floodlight_off()
+                print(f"  Motion Detection: {device.motion_detection_enabled}")
+                print(f"  Has Floodlight: {device.has_floodlight}")
+                # For camera streaming, use docker-wyze-bridge:
+                # https://github.com/mrlt8/docker-wyze-bridge
+
+            elif isinstance(device, WyzeLock):
+                print(f"  Is Locked: {device.is_locked}")
+
+            elif isinstance(device, WyzeLight):
+                print(f"  Is On: {device.is_on}")
+                print(f"  Brightness: {device.brightness}")
+
+            elif isinstance(device, WyzePlug):
+                print(f"  Is On: {device.is_on}")
 
 
 if __name__ == "__main__":

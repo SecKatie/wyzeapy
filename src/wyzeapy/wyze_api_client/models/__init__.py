@@ -33,6 +33,8 @@ from .get_device_info_body import GetDeviceInfoBody
 from .get_event_list_body import GetEventListBody
 from .get_event_list_response_200 import GetEventListResponse200
 from .get_event_list_response_200_data import GetEventListResponse200Data
+from .get_home_favorites_request import GetHomeFavoritesRequest
+from .get_home_favorites_response import GetHomeFavoritesResponse
 from .get_irrigation_iot_prop_response_200 import GetIrrigationIotPropResponse200
 from .get_irrigation_iot_prop_response_200_data import GetIrrigationIotPropResponse200Data
 from .get_irrigation_iot_prop_response_200_data_props import GetIrrigationIotPropResponse200DataProps
@@ -61,11 +63,22 @@ from .get_plan_binding_list_response_200_data_item_device_list_item import (
 from .get_property_list_request import GetPropertyListRequest
 from .get_property_list_response import GetPropertyListResponse
 from .get_property_list_response_data import GetPropertyListResponseData
+from .get_streams_request import GetStreamsRequest
+from .get_streams_request_device import GetStreamsRequestDevice
+from .get_streams_response import GetStreamsResponse
 from .hms_profile_active_request_item import HMSProfileActiveRequestItem
 from .hms_profile_active_request_item_active import HMSProfileActiveRequestItemActive
 from .hms_profile_active_request_item_state import HMSProfileActiveRequestItemState
 from .hms_state_status_response import HMSStateStatusResponse
 from .hms_state_status_response_message import HMSStateStatusResponseMessage
+from .home_device_item import HomeDeviceItem
+from .home_device_param import HomeDeviceParam
+from .home_device_param_p2p import HomeDeviceParamP2P
+from .home_device_param_thumbnail import HomeDeviceParamThumbnail
+from .home_device_property import HomeDeviceProperty
+from .home_favorites_data import HomeFavoritesData
+from .home_favorites_data_app_settings_item import HomeFavoritesDataAppSettingsItem
+from .home_favorites_data_device_group_list_item import HomeFavoritesDataDeviceGroupListItem
 from .irrigation_quick_run_request import IrrigationQuickRunRequest
 from .irrigation_quick_run_request_zone_runs_item import IrrigationQuickRunRequestZoneRunsItem
 from .irrigation_stop_request import IrrigationStopRequest
@@ -116,6 +129,9 @@ from .set_wall_switch_iot_prop_body import SetWallSwitchIotPropBody
 from .set_wall_switch_iot_prop_body_props import SetWallSwitchIotPropBodyProps
 from .standard_response import StandardResponse
 from .standard_response_data import StandardResponseData
+from .stream_data_item import StreamDataItem
+from .stream_data_item_property import StreamDataItemProperty
+from .stream_params import StreamParams
 from .thermostat_iot_prop_response import ThermostatIotPropResponse
 from .thermostat_iot_prop_response_data import ThermostatIotPropResponseData
 from .thermostat_iot_prop_response_data_props import ThermostatIotPropResponseDataProps
@@ -169,6 +185,8 @@ __all__ = (
     "GetEventListBody",
     "GetEventListResponse200",
     "GetEventListResponse200Data",
+    "GetHomeFavoritesRequest",
+    "GetHomeFavoritesResponse",
     "GetIrrigationIotPropResponse200",
     "GetIrrigationIotPropResponse200Data",
     "GetIrrigationIotPropResponse200DataProps",
@@ -189,11 +207,22 @@ __all__ = (
     "GetPropertyListRequest",
     "GetPropertyListResponse",
     "GetPropertyListResponseData",
+    "GetStreamsRequest",
+    "GetStreamsRequestDevice",
+    "GetStreamsResponse",
     "HMSProfileActiveRequestItem",
     "HMSProfileActiveRequestItemActive",
     "HMSProfileActiveRequestItemState",
     "HMSStateStatusResponse",
     "HMSStateStatusResponseMessage",
+    "HomeDeviceItem",
+    "HomeDeviceParam",
+    "HomeDeviceParamP2P",
+    "HomeDeviceParamThumbnail",
+    "HomeDeviceProperty",
+    "HomeFavoritesData",
+    "HomeFavoritesDataAppSettingsItem",
+    "HomeFavoritesDataDeviceGroupListItem",
     "IrrigationQuickRunRequest",
     "IrrigationQuickRunRequestZoneRunsItem",
     "IrrigationStopRequest",
@@ -242,6 +271,9 @@ __all__ = (
     "SetWallSwitchIotPropBodyProps",
     "StandardResponse",
     "StandardResponseData",
+    "StreamDataItem",
+    "StreamDataItemProperty",
+    "StreamParams",
     "ThermostatIotPropResponse",
     "ThermostatIotPropResponseData",
     "ThermostatIotPropResponseDataProps",

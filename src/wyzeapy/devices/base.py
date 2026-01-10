@@ -5,11 +5,21 @@ from __future__ import annotations
 from enum import Enum
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Protocol
 
-from ..wyze_api_client.models import Device, RunActionRequestActionKey
+from ..wyze_api_client.models import (
+    Device,
+    RunActionRequestActionKey,
+    RunActionRequest,
+    RunActionRequestActionParams,
+    SetPropertyRequest,
+    GetDeviceInfoBody,
+    GetPropertyListRequest,
+)
+from ..wyze_api_client.api.devices import run_action, set_property, get_device_info, get_property_list
 from ..wyze_api_client.types import UNSET, Unset
 
 if TYPE_CHECKING:
     from ..wyzeapy import Wyzeapy
+    from ..context import WyzeApiContext
 
 
 class _HasDeviceParams(Protocol):
@@ -19,13 +29,13 @@ class _HasDeviceParams(Protocol):
     def device_params(self) -> Dict[str, Any]: ...
 
 
-class _HasClient(Protocol):
-    """Protocol for classes that have _ensure_client method and device attributes."""
+class _HasContext(Protocol):
+    """Protocol for classes that have _get_context method and device attributes."""
 
     mac: Optional[str]
     product_model: Optional[str]
 
-    def _ensure_client(self) -> Wyzeapy: ...
+    def _get_context(self) -> WyzeApiContext: ...
 
 
 class DeviceType(Enum):
@@ -53,6 +63,106 @@ class DeviceType(Enum):
     KEYPAD = "Keypad"
     COMMON = "Common"  # Used for irrigation and other generic devices
     UNKNOWN = "Unknown"
+
+
+class MainApiMixin:
+    """Mixin for devices using the main API (run_action, set_property)."""
+
+    async def _run_action(self: _HasContext, action: RunActionRequestActionKey) -> bool:
+        """Execute an action on this device."""
+        ctx = self._get_context()
+        await ctx.ensure_token_valid()
+
+        client = ctx.get_main_client()
+
+        response = await run_action.asyncio(
+            client=client,
+            body=RunActionRequest(
+                provider_key=self.product_model or "",
+                instance_id=self.mac or "",
+                action_key=action,
+                action_params=RunActionRequestActionParams(),
+                custom_string="",
+                **ctx.build_common_params(),
+            ),
+        )
+
+        return response is not None and getattr(response, "code", None) == "1"
+
+    async def _set_property(self: _HasContext, property_id: str, value: str) -> bool:
+        """Set a property on this device."""
+        ctx = self._get_context()
+        await ctx.ensure_token_valid()
+
+        client = ctx.get_main_client()
+
+        response = await set_property.asyncio(
+            client=client,
+            body=SetPropertyRequest(
+                device_mac=self.mac or "",
+                device_model=self.product_model or "",
+                pid=property_id,
+                pvalue=value,
+                **ctx.build_common_params(),
+            ),
+        )
+
+        return response is not None and getattr(response, "code", None) == "1"
+
+    async def _get_device_info(self: _HasContext) -> Dict[str, Any]:
+        """Get detailed information about this device."""
+        ctx = self._get_context()
+        await ctx.ensure_token_valid()
+
+        client = ctx.get_main_client()
+
+        response = await get_device_info.asyncio(
+            client=client,
+            body=GetDeviceInfoBody(
+                device_mac=self.mac or "",
+                device_model=self.product_model or "",
+                **ctx.build_common_params(),
+            ),
+        )
+
+        if response is None or isinstance(response.data, Unset):
+            return {}
+
+        return response.data.additional_properties
+
+    async def _get_device_properties(
+        self: _HasContext, property_ids: Optional[List[str]] = None
+    ) -> Dict[str, str]:
+        """Get property values for this device."""
+        ctx = self._get_context()
+        await ctx.ensure_token_valid()
+
+        client = ctx.get_main_client()
+
+        request_kwargs: Dict[str, Any] = {
+            "device_mac": self.mac or "",
+            "device_model": self.product_model or "",
+            **ctx.build_common_params(),
+        }
+        if property_ids:
+            request_kwargs["target_pid_list"] = property_ids
+
+        response = await get_property_list.asyncio(
+            client=client,
+            body=GetPropertyListRequest(**request_kwargs),
+        )
+
+        if response is None or isinstance(response.data, Unset):
+            return {}
+
+        if isinstance(response.data.property_list, Unset):
+            return {}
+
+        result = {}
+        for prop in response.data.property_list:
+            if not isinstance(prop.pid, Unset) and not isinstance(prop.value, Unset):
+                result[prop.pid] = prop.value
+        return result
 
 
 class WiFiDeviceMixin:
@@ -89,26 +199,25 @@ class BatteryDeviceMixin:
         return self.device_params.get("battery")
 
 
-class SwitchableDeviceMixin:
-    """Mixin for devices that can be turned on/off."""
+class SwitchableDeviceMixin(MainApiMixin):
+    """Mixin for devices that can be turned on/off. Requires MainApiMixin."""
 
-    async def turn_on(self: WyzeDevice) -> bool:
+    async def turn_on(self: _HasContext) -> bool:
         """Turn on the device."""
-        client = self._ensure_client()
-        return await client.run_action(self, RunActionRequestActionKey.POWER_ON)
+        return await self._run_action(RunActionRequestActionKey.POWER_ON)
 
-    async def turn_off(self: WyzeDevice) -> bool:
+    async def turn_off(self: _HasContext) -> bool:
         """Turn off the device."""
-        client = self._ensure_client()
-        return await client.run_action(self, RunActionRequestActionKey.POWER_OFF)
+        return await self._run_action(RunActionRequestActionKey.POWER_OFF)
 
 
-class WyzeDevice:
+class WyzeDevice(MainApiMixin):
     """Base wrapper for Wyze devices."""
 
     def __init__(self, device: Device, client: Optional[Wyzeapy] = None):
         self._device = device
         self._client: Optional[Wyzeapy] = client
+        self._context: Optional[WyzeApiContext] = None
         self.nickname: Optional[str] = (
             device.nickname if device.nickname is not UNSET else None
         )
@@ -135,14 +244,17 @@ class WyzeDevice:
             device.push_switch != 2 if device.push_switch is not UNSET else True
         )
 
-    def _ensure_client(self) -> Wyzeapy:
-        """Ensure we have a client for API calls."""
-        if self._client is None:
-            raise RuntimeError(
-                "Device not connected to API client. "
-                "Use devices from Wyzeapy.list_devices() for control methods."
-            )
-        return self._client
+    def _get_context(self) -> WyzeApiContext:
+        """Get API context for making API calls."""
+        if self._context is not None:
+            return self._context
+        if self._client is not None:
+            self._context = self._client.get_context()
+            return self._context
+        raise RuntimeError(
+            "Device not connected to API client. "
+            "Use devices from Wyzeapy.list_devices() for control methods."
+        )
 
     @property
     def type(self) -> DeviceType:
@@ -184,8 +296,7 @@ class WyzeDevice:
         Raises:
             RuntimeError: If the device is not connected to an API client.
         """
-        client = self._ensure_client()
-        return await client.get_device_info(self)
+        return await self._get_device_info()
 
     async def get_properties(
         self, property_ids: Optional[List[str]] = None
@@ -206,5 +317,4 @@ class WyzeDevice:
         Raises:
             RuntimeError: If the device is not connected to an API client.
         """
-        client = self._ensure_client()
-        return await client.get_device_properties(self, property_ids)
+        return await self._get_device_properties(property_ids)

@@ -5,6 +5,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from .base import WyzeDevice, SwitchableDeviceMixin
+from ..wyze_api_client.models import PlugUsageRequest
+from ..wyze_api_client.api.switch import get_plug_usage_history
+from ..wyze_api_client.types import Unset
 
 if TYPE_CHECKING:
     from ..models import PlugUsageRecord
@@ -22,7 +25,7 @@ class WyzePlug(WyzeDevice, SwitchableDeviceMixin):
         self,
         start_time: int,
         end_time: int,
-    ) -> list[PlugUsageRecord]:
+    ) -> list["PlugUsageRecord"]:
         """
         Get power usage history for this plug.
 
@@ -33,5 +36,30 @@ class WyzePlug(WyzeDevice, SwitchableDeviceMixin):
         Returns:
             List of PlugUsageRecord objects with date and usage data.
         """
-        client = self._ensure_client()
-        return await client.get_plug_usage(self, start_time, end_time)
+        from ..models import PlugUsageRecord
+
+        ctx = self._get_context()
+        await ctx.ensure_token_valid()
+
+        client = ctx.get_main_client()
+
+        response = await get_plug_usage_history.asyncio(
+            client=client,
+            body=PlugUsageRequest(
+                device_mac=self.mac or "",
+                date_begin=start_time,
+                date_end=end_time,
+                **ctx.build_common_params(),
+            ),
+        )
+
+        if response is None or isinstance(response.data, Unset):
+            return []
+
+        if isinstance(response.data.usage_record_list, Unset):
+            return []
+
+        return [
+            PlugUsageRecord.from_api_response(record.to_dict())
+            for record in response.data.usage_record_list
+        ]

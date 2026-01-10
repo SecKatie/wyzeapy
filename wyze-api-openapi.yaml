@@ -58,6 +58,8 @@ servers:
     description: Wall Switch Service API
   - url: https://wyze-lockwood-service.wyzecam.com
     description: Irrigation Service API
+  - url: https://app.wyzecam.com
+    description: App API (Home management)
 
 tags:
   - name: Authentication
@@ -82,6 +84,8 @@ tags:
     description: Home Monitoring System
   - name: User
     description: User profile and settings
+  - name: Home
+    description: Home management and favorites
 
 components:
   securitySchemes:
@@ -892,6 +896,211 @@ components:
               type: string
               enum: ["1", "2"]
               description: "1=enabled, 2=disabled"
+
+    # Home/Favorites schemas
+    GetHomeFavoritesRequest:
+      type: object
+      required:
+        - home_id
+        - nonce
+      properties:
+        home_id:
+          type: string
+          description: The home ID to get favorites for
+        nonce:
+          type: string
+          description: Nonce value (typically timestamp in milliseconds)
+
+    HomeDeviceParam:
+      type: object
+      properties:
+        firmware_version:
+          type: string
+        hardware_version:
+          type: string
+        thumbnail:
+          type: object
+          properties:
+            rotate:
+              type: integer
+            width:
+              type: integer
+            height:
+              type: integer
+            ts:
+              type: integer
+            url:
+              type: string
+        p2p:
+          type: object
+          properties:
+            providers:
+              type: array
+              items:
+                type: string
+
+    HomeDeviceProperty:
+      type: object
+      additionalProperties: true
+      description: Device properties (varies by device type)
+
+    HomeDeviceItem:
+      type: object
+      properties:
+        device_id:
+          type: string
+          description: Device MAC address or unique identifier
+        device_param:
+          $ref: '#/components/schemas/HomeDeviceParam'
+        is_favorite:
+          type: integer
+          description: Whether device is favorited (1=yes, 0=no)
+        nickname:
+          type: string
+          description: User-assigned device name
+        device_model:
+          type: string
+          description: Device model identifier
+        device_category:
+          type: string
+          description: Device category (Camera, gateway, ChimeSensor, etc.)
+        property:
+          $ref: '#/components/schemas/HomeDeviceProperty'
+        role:
+          type: integer
+        sort_id:
+          type: integer
+        favorite_order:
+          type: integer
+        device_order:
+          type: integer
+
+    HomeFavoritesData:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Home ID
+        name:
+          type: string
+          description: Home name
+        device_group_list:
+          type: array
+          items:
+            type: object
+        device_list:
+          type: array
+          items:
+            $ref: '#/components/schemas/HomeDeviceItem'
+        app_settings:
+          type: array
+          items:
+            type: object
+        sort_type:
+          type: integer
+        sort_direction:
+          type: integer
+
+    GetHomeFavoritesResponse:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Response code (1 for success)
+        ts:
+          type: integer
+          format: int64
+          description: Server timestamp
+        msg:
+          type: string
+          description: Response message
+        data:
+          $ref: '#/components/schemas/HomeFavoritesData'
+        traceId:
+          type: string
+
+    # Camera Streaming schemas
+    GetStreamsRequestDevice:
+      type: object
+      required:
+        - device_id
+        - device_model
+        - provider
+      properties:
+        device_id:
+          type: string
+          description: Device MAC address
+        device_model:
+          type: string
+          description: Device model identifier
+        provider:
+          type: string
+          description: Stream provider (typically 'tutk')
+          default: tutk
+
+    GetStreamsRequest:
+      type: object
+      required:
+        - device_list
+        - nonce
+      properties:
+        device_list:
+          type: array
+          items:
+            $ref: '#/components/schemas/GetStreamsRequestDevice'
+          description: List of devices to get stream info for
+        nonce:
+          type: string
+          description: Nonce value (typically timestamp in milliseconds)
+
+    StreamParams:
+      type: object
+      properties:
+        dtls:
+          type: integer
+          description: Whether DTLS is enabled (1=enabled)
+        enr:
+          type: string
+          description: ENR token for camera authentication
+        p2p_id:
+          type: string
+          description: P2P ID for TUTK connection
+
+    StreamDataItem:
+      type: object
+      properties:
+        device_id:
+          type: string
+          description: Device MAC address
+        provider:
+          type: string
+          description: Stream provider
+        property:
+          type: object
+          additionalProperties: true
+          description: Device properties (iot-state, iot-power, etc.)
+        params:
+          $ref: '#/components/schemas/StreamParams'
+
+    GetStreamsResponse:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Response code (1 for success)
+        ts:
+          type: integer
+          format: int64
+          description: Server timestamp
+        msg:
+          type: string
+          description: Response message
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/StreamDataItem'
+        traceId:
+          type: string
 
 paths:
   # Authentication Endpoints
@@ -2299,3 +2508,99 @@ paths:
                                     type: integer
                                   zone_name:
                                     type: string
+
+  # Home Endpoints
+  /app/v4/home/get-favorites:
+    post:
+      tags:
+        - Home
+      summary: Get home favorites
+      description: Get favorite devices and device list for a home
+      operationId: getHomeFavorites
+      servers:
+        - url: https://app.wyzecam.com
+      security:
+        - AccessToken: []
+      parameters:
+        - name: appid
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: appinfo
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: phoneid
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: signature2
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetHomeFavoritesRequest'
+      responses:
+        '200':
+          description: Home favorites and device list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetHomeFavoritesResponse'
+
+  # Camera Streaming Endpoints
+  /app/v4/camera/get_streams:
+    post:
+      tags:
+        - Camera
+      summary: Get camera stream connection info
+      description: |
+        Get P2P connection parameters for one or more cameras.
+        Returns the p2p_id and enr needed to establish a TUTK connection for video streaming.
+      operationId: getStreams
+      servers:
+        - url: https://app.wyzecam.com
+      security:
+        - AccessToken: []
+      parameters:
+        - name: appid
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: appinfo
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: phoneid
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: signature2
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetStreamsRequest'
+      responses:
+        '200':
+          description: Stream connection parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetStreamsResponse'

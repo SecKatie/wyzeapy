@@ -9,7 +9,7 @@ from __future__ import annotations
 import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 
 @dataclass
@@ -20,7 +20,7 @@ class Token:
     refresh_token: str
     created_at: float = field(default_factory=time.time)
 
-    REFRESH_INTERVAL = 82800  # 23 hours
+    REFRESH_INTERVAL: int = 82800  # 23 hours
 
     @property
     def should_refresh(self) -> bool:
@@ -34,38 +34,40 @@ class WyzeUser:
     notifications_enabled: bool = False
 
     # Identity
-    user_id: Optional[str] = None
+    user_id: str | None = None
+    open_user_id: str | None = None  # Used for TUTK camera authentication
 
     # Profile fields
-    nickname: Optional[str] = None
-    logo_url: Optional[str] = None
-    gender: Optional[str] = None
-    birthdate: Optional[str] = None
-    occupation: Optional[str] = None
+    nickname: str | None = None
+    logo_url: str | None = None
+    gender: str | None = None
+    birthdate: str | None = None
+    occupation: str | None = None
 
     # Body metrics (for Wyze Scale integration)
-    height: Optional[float] = None
-    height_unit: Optional[str] = None
-    weight: Optional[float] = None
-    weight_unit: Optional[str] = None
-    body_type: Optional[str] = None
+    height: float | None = None
+    height_unit: str | None = None
+    weight: float | None = None
+    weight_unit: str | None = None
+    body_type: str | None = None
 
     # Account info
-    create_time: Optional[int] = None  # Timestamp in milliseconds
-    update_time: Optional[int] = None  # Timestamp in milliseconds
-    subscription: Optional[dict] = None
-    metadata: Optional[dict] = None
-    is_voip_on: Optional[bool] = None
+    create_time: int | None = None  # Timestamp in milliseconds
+    update_time: int | None = None  # Timestamp in milliseconds
+    subscription: dict[str, Any] | None = None
+    metadata: dict[str, Any] | None = None
+    is_voip_on: bool | None = None
 
     # Raw data for any unmodeled fields
-    raw_data: dict = field(default_factory=dict)
+    raw_data: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
-    def from_response(cls, data: dict) -> "WyzeUser":
+    def from_response(cls, data: dict[str, Any]) -> "WyzeUser":
         """Create WyzeUser from API response data."""
         return cls(
             notifications_enabled=data.get("notification", False),
             user_id=data.get("user_id"),
+            open_user_id=data.get("open_user_id"),
             nickname=data.get("nickname"),
             logo_url=data.get("logo_url"),
             gender=data.get("gender"),
@@ -96,10 +98,10 @@ class CameraEvent:
     event_category: int
     event_value: str
     file_urls: list[str] = field(default_factory=list)
-    raw: dict = field(default_factory=dict)
+    raw: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
-    def from_api_response(cls, data: dict) -> CameraEvent:
+    def from_api_response(cls, data: dict[str, Any]) -> CameraEvent:
         file_urls = []
         file_list = data.get("file_list", [])
         if file_list:
@@ -125,10 +127,10 @@ class PlugUsageRecord:
 
     date: str  # Date string (format varies by API)
     usage: float  # Usage in watt-hours
-    raw: dict = field(default_factory=dict)
+    raw: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
-    def from_api_response(cls, data: dict) -> PlugUsageRecord:
+    def from_api_response(cls, data: dict[str, Any]) -> PlugUsageRecord:
         return cls(
             date=data.get("date", ""),
             usage=data.get("usage", 0.0),
@@ -148,11 +150,11 @@ class HMSMode(Enum):
 class HMSStatus:
     """Home Monitoring Service status."""
 
-    mode: Optional[HMSMode]
-    raw: dict = field(default_factory=dict)
+    mode: HMSMode | None
+    raw: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
-    def from_api_response(cls, data: dict) -> HMSStatus:
+    def from_api_response(cls, data: dict[str, Any]) -> HMSStatus:
         mode_str = data.get("message", "")
         mode = None
         if mode_str:
@@ -171,10 +173,10 @@ class LockInfo:
     is_online: bool
     is_locked: bool
     door_open: bool
-    raw: dict = field(default_factory=dict)
+    raw: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
-    def from_api_response(cls, data: dict) -> LockInfo:
+    def from_api_response(cls, data: dict[str, Any]) -> LockInfo:
         device = data.get("device", {})
         locker_status = device.get("locker_status", {})
 
@@ -216,21 +218,21 @@ class ThermostatWorkingState(Enum):
 class ThermostatState:
     """Current thermostat state."""
 
-    temperature: Optional[float]  # Current temperature
-    humidity: Optional[float]  # Current humidity percentage
-    cool_setpoint: Optional[float]  # Cooling setpoint
-    heat_setpoint: Optional[float]  # Heating setpoint
-    mode: Optional[ThermostatMode]
-    fan_mode: Optional[ThermostatFanMode]
-    working_state: Optional[ThermostatWorkingState]
+    temperature: float | None  # Current temperature
+    humidity: float | None  # Current humidity percentage
+    cool_setpoint: float | None  # Cooling setpoint
+    heat_setpoint: float | None  # Heating setpoint
+    mode: ThermostatMode | None
+    fan_mode: ThermostatFanMode | None
+    working_state: ThermostatWorkingState | None
     temp_unit: str = "F"  # "F" or "C"
-    raw: dict = field(default_factory=dict)
+    raw: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
-    def from_api_response(cls, data: dict) -> ThermostatState:
+    def from_api_response(cls, data: dict[str, Any]) -> ThermostatState:
         props = data.get("props", {})
 
-        def parse_float(val: Any) -> Optional[float]:
+        def parse_float(val: Any) -> float | None:
             if val is None or val == "":
                 return None
             try:
@@ -238,7 +240,7 @@ class ThermostatState:
             except (ValueError, TypeError):
                 return None
 
-        def parse_enum(val: Any, enum_cls: type) -> Optional[Any]:
+        def parse_enum(val: Any, enum_cls: type) -> Any | None:
             if val is None or val == "":
                 return None
             try:
@@ -267,10 +269,10 @@ class IrrigationZone:
     name: str
     enabled: bool
     duration_minutes: int = 0
-    raw: dict = field(default_factory=dict)
+    raw: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
-    def from_api_response(cls, data: dict) -> IrrigationZone:
+    def from_api_response(cls, data: dict[str, Any]) -> IrrigationZone:
         return cls(
             zone_id=data.get("zone_id", 0),
             name=data.get("name", ""),
@@ -278,3 +280,68 @@ class IrrigationZone:
             duration_minutes=data.get("duration", 0),
             raw=data,
         )
+
+
+@dataclass
+class HomeDevice:
+    """Device information from home favorites API."""
+
+    device_id: str
+    nickname: str
+    device_model: str
+    device_category: str
+    is_favorite: bool
+    firmware_version: str | None = None
+    hardware_version: str | None = None
+    thumbnail_url: str | None = None
+    favorite_order: int = 0
+    device_order: int = 0
+    raw: dict[str, Any] = field(default_factory=dict)
+
+    @classmethod
+    def from_api_response(cls, data: dict[str, Any]) -> "HomeDevice":
+        device_param = data.get("device_param", {})
+        thumbnail = device_param.get("thumbnail", {})
+
+        return cls(
+            device_id=data.get("device_id", ""),
+            nickname=data.get("nickname", ""),
+            device_model=data.get("device_model", ""),
+            device_category=data.get("device_category", ""),
+            is_favorite=data.get("is_favorite", 0) == 1,
+            firmware_version=device_param.get("firmware_version"),
+            hardware_version=device_param.get("hardware_version"),
+            thumbnail_url=thumbnail.get("url") if thumbnail.get("url") else None,
+            favorite_order=data.get("favorite_order", 0),
+            device_order=data.get("device_order", 0),
+            raw=data,
+        )
+
+
+@dataclass
+class HomeFavorites:
+    """Home favorites response containing device list."""
+
+    home_id: str
+    home_name: str
+    devices: list[HomeDevice] = field(default_factory=list)
+    raw: dict[str, Any] = field(default_factory=dict)
+
+    @classmethod
+    def from_api_response(cls, data: dict[str, Any]) -> "HomeFavorites":
+        device_list = data.get("device_list", [])
+        devices = [HomeDevice.from_api_response(d) for d in device_list]
+
+        return cls(
+            home_id=data.get("id", ""),
+            home_name=data.get("name", ""),
+            devices=devices,
+            raw=data,
+        )
+
+    @property
+    def favorite_devices(self) -> list[HomeDevice]:
+        """Get only devices marked as favorites."""
+        return [d for d in self.devices if d.is_favorite]
+
+

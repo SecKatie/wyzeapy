@@ -8,21 +8,19 @@ from __future__ import annotations
 
 import time
 import uuid
-from typing import Awaitable, Callable, Optional, Union
+from collections.abc import Awaitable, Callable
+from typing import Any
 
 from .wyze_api_client.api.user import get_user_profile
 
 from .devices import create_device, WyzeDevice
 from .models import (
-    CameraEvent,
-    PlugUsageRecord,
-    LockInfo,
-    ThermostatState,
-    IrrigationZone,
     Token,
     WyzeUser,
+    HomeFavorites,
 )
 from .services.hms import WyzeHMS
+from .context import WyzeApiContext
 from .exceptions import (
     AuthenticationError,
     TwoFactorAuthRequired,
@@ -33,6 +31,7 @@ from .utils import hash_password, ford_create_signature, olive_create_signature
 from .const import (
     AUTH_SERVER,
     MAIN_API_SERVER,
+    APP_API_SERVER,
     LOCK_API_SERVER,
     PLATFORM_SERVICE_URL,
     DEVICEMGMT_SERVICE_URL,
@@ -43,10 +42,7 @@ from .const import (
     SC,
     SV,
     APP_INFO,
-    FORD_APP_KEY,
     OLIVE_APP_ID,
-    PropertyID,
-    DEVICEMGMT_API_MODELS,
 )
 
 from .wyze_api_client import Client, AuthenticatedClient
@@ -55,64 +51,29 @@ from .wyze_api_client.api.authentication import (
     login_with_2fa,
     refresh_token,
 )
-from .wyze_api_client.api.devices import (
-    get_object_list,
-    run_action,
-    set_property,
-    get_device_info,
-    get_property_list,
-)
-from .wyze_api_client.api.camera import get_event_list, device_mgmt_run_action
-from .wyze_api_client.api.switch import get_plug_usage_history
-from .wyze_api_client.api.lock import lock_control, get_lock_info
-from .wyze_api_client.api.thermostat import get_thermostat_iot_prop, set_thermostat_iot_prop
-from .wyze_api_client.api.irrigation import (
-    get_irrigation_zones,
-    irrigation_quick_run,
-    stop_irrigation_schedule,
-)
+from .wyze_api_client.api.devices import get_object_list
+from .wyze_api_client.api.home import get_home_favorites
 from .wyze_api_client.models import (
     LoginRequest,
-    RunActionRequestActionParams,
     TwoFactorLoginRequest,
     TwoFactorLoginRequestMfaType,
     CommonRequestParams,
-    RunActionRequest,
-    RunActionRequestActionKey,
-    SetPropertyRequest,
-    LockControlRequest,
-    LockControlRequestAction,
     RefreshTokenRequest,
-    GetDeviceInfoBody,
-    GetPropertyListRequest,
-    GetEventListBody,
-    PlugUsageRequest,
-    SetThermostatIotPropBody,
-    SetThermostatIotPropBodyProps,
-    IrrigationQuickRunRequest,
-    IrrigationQuickRunRequestZoneRunsItem,
-    IrrigationStopRequest,
-    IrrigationStopRequestAction,
-    DeviceMgmtRunActionRequest,
-    DeviceMgmtRunActionRequestTargetInfo,
-    DeviceMgmtRunActionRequestTargetInfoType,
-    DeviceMgmtRunActionRequestCapabilitiesItem,
-    DeviceMgmtRunActionRequestCapabilitiesItemName,
-    DeviceMgmtRunActionRequestCapabilitiesItemPropertiesItem,
+    GetHomeFavoritesRequest,
 )
 from .wyze_api_client.types import Unset
 
 
 # Type alias for 2FA callback: receives auth_type ("TOTP" or "SMS"), returns verification code
-TwoFactorCallback = Callable[[str], Union[str, Awaitable[str]]]
+TwoFactorCallback = Callable[[str], str | Awaitable[str]]
 
 
 class Wyzeapy:
     """
     High-level async interface for the Wyze API.
 
-    Example:
-        ```python
+    Example::
+
         async with Wyzeapy("email@example.com", "password", key_id, api_key) as wyze:
             devices = await wyze.list_devices()
             for device in devices:
@@ -125,16 +86,14 @@ class Wyzeapy:
                     await device.set_brightness(75)
                 elif isinstance(device, WyzeLock):
                     await device.lock()
-        ```
 
-    With 2FA:
-        ```python
+    With 2FA::
+
         def get_2fa_code(auth_type: str) -> str:
             return input(f"Enter {auth_type} code: ")
 
         async with Wyzeapy(email, password, key_id, api_key, tfa_callback=get_2fa_code) as wyze:
             devices = await wyze.list_devices()
-        ```
     """
 
     def __init__(
@@ -143,20 +102,25 @@ class Wyzeapy:
         password: str,
         key_id: str,
         api_key: str,
-        tfa_callback: Optional[TwoFactorCallback] = None,
+        tfa_callback: TwoFactorCallback | None = None,
     ):
-        self._email = email
-        self._password_hash = hash_password(password)
-        self._key_id = key_id
-        self._api_key = api_key
-        self._phone_id = str(uuid.uuid4())
-        self._tfa_callback = tfa_callback
+        self._email: str = email
+        self._password_hash: str = hash_password(password)
+        self._key_id: str = key_id
+        self._api_key: str = api_key
+        self._phone_id: str = str(uuid.uuid4())
+        self._tfa_callback: TwoFactorCallback | None = tfa_callback
 
-        self._token: Optional[Token] = None
-        self._auth_client: Optional[Client] = None
-        self._main_client: Optional[Client] = None
-        self._devices: Optional[list[WyzeDevice]] = None
-        self._hms: Optional[WyzeHMS] = None
+        self._token: Token | None = None
+        self._auth_client: Client | None = None
+        self._main_client: Client | None = None
+        self._devices: list[WyzeDevice] | None = None
+        self._hms: WyzeHMS | None = None
+
+    @property
+    def phone_id(self) -> str:
+        """Get the phone ID used for API authentication."""
+        return self._phone_id
 
     @classmethod
     async def create(
@@ -165,25 +129,24 @@ class Wyzeapy:
         password: str,
         key_id: str,
         api_key: str,
-        tfa_callback: Optional[TwoFactorCallback] = None,
+        tfa_callback: TwoFactorCallback | None = None,
     ) -> "Wyzeapy":
         """
         Create and authenticate a Wyzeapy client.
 
         This is a convenience method that creates a client and logs in.
-        Note: You should call `close()` when done, or use the async context manager instead.
+        Note: You should call ``close()`` when done, or use the async context manager instead.
 
-        Example:
-            ```python
+        Example::
+
             wyze = await Wyzeapy.create(email, password, key_id, api_key)
             try:
                 devices = await wyze.list_devices()
             finally:
                 await wyze.close()
-            ```
         """
         client = cls(email, password, key_id, api_key, tfa_callback)
-        await client._login()
+        _ = await client._login()
         return client
 
     async def close(self) -> None:
@@ -197,7 +160,7 @@ class Wyzeapy:
 
     async def __aenter__(self) -> "Wyzeapy":
         """Login and return self."""
-        await self._login()
+        _ = await self._login()
         return self
 
     async def __aexit__(self, *args) -> None:
@@ -213,6 +176,58 @@ class Wyzeapy:
         if self._main_client is None:
             self._main_client = Client(base_url=MAIN_API_SERVER)
         return self._main_client
+
+    def _create_platform_client(self) -> AuthenticatedClient:
+        """Create a new authenticated client for platform service API."""
+        return AuthenticatedClient(
+            base_url=PLATFORM_SERVICE_URL,
+            token=self._get_token().access_token,
+            prefix="",
+            auth_header_name="access_token",
+        )
+
+    def _create_app_client(self) -> AuthenticatedClient:
+        """Create a new authenticated client for app API."""
+        return AuthenticatedClient(
+            base_url=APP_API_SERVER,
+            token=self._get_token().access_token,
+            prefix="",
+            auth_header_name="Access_token",
+        )
+
+    def _create_lock_client(self) -> Client:
+        """Create a new client for lock API."""
+        return Client(base_url=LOCK_API_SERVER)
+
+    def _create_devicemgmt_client(self) -> AuthenticatedClient:
+        """Create a new authenticated client for device management API."""
+        return AuthenticatedClient(
+            base_url=DEVICEMGMT_SERVICE_URL,
+            token=self._get_token().access_token,
+            prefix="",
+            auth_header_name="access_token",
+        )
+
+    def get_context(self) -> WyzeApiContext:
+        """
+        Get API context for device classes.
+
+        Returns a lightweight context object that provides device classes
+        with everything they need to make API calls.
+        """
+        return WyzeApiContext(
+            phone_id=self._phone_id,
+            get_token=self._get_token,
+            ensure_token_valid=self._ensure_token_valid,
+            get_main_client=self._get_main_client,
+            create_platform_client=self._create_platform_client,
+            create_app_client=self._create_app_client,
+            create_lock_client=self._create_lock_client,
+            create_devicemgmt_client=self._create_devicemgmt_client,
+            olive_create_signature=olive_create_signature,
+            ford_create_signature=ford_create_signature,
+            build_common_params=self._common_params,
+        )
 
     async def _login(self) -> Token:
         """Authenticate with the Wyze API."""
@@ -237,10 +252,7 @@ class Wyzeapy:
             )
 
         # Check for 2FA requirement
-        if (
-            not isinstance(response.mfa_options, Unset)
-            and response.mfa_options is not None
-        ):
+        if not isinstance(response.mfa_options, Unset):
             if "TotpVerificationCode" in response.mfa_options:
                 if (
                     not isinstance(response.mfa_details, Unset)
@@ -259,19 +271,16 @@ class Wyzeapy:
                 )
 
             if "PrimaryPhone" in response.mfa_options:
-                if (
-                    not isinstance(response.sms_session_id, Unset)
-                    and response.sms_session_id is not None
-                ):
+                if not isinstance(response.sms_session_id, Unset):
                     return await self._handle_2fa("SMS", response.sms_session_id)
                 raise AuthenticationError("SMS 2FA required but no session ID provided")
 
-        if isinstance(response.access_token, Unset) or response.access_token is None:
+        if isinstance(response.access_token, Unset):
             raise AuthenticationError(
                 f"Login failed: {getattr(response, 'error_code', 'unknown error')}"
             )
 
-        if isinstance(response.refresh_token, Unset) or response.refresh_token is None:
+        if isinstance(response.refresh_token, Unset):
             raise AuthenticationError("Login failed: no refresh token received")
 
         self._token = Token(
@@ -316,10 +325,10 @@ class Wyzeapy:
         if response is None:
             raise AuthenticationError("2FA login failed")
 
-        if isinstance(response.access_token, Unset) or response.access_token is None:
+        if isinstance(response.access_token, Unset):
             raise AuthenticationError("2FA login failed: no access token")
 
-        if isinstance(response.refresh_token, Unset) or response.refresh_token is None:
+        if isinstance(response.refresh_token, Unset):
             raise AuthenticationError("2FA login failed: no refresh token")
 
         self._token = Token(
@@ -351,19 +360,13 @@ class Wyzeapy:
         if response is None:
             raise TokenRefreshError("Token refresh failed")
 
-        if isinstance(response.data, Unset) or response.data is None:
+        if isinstance(response.data, Unset):
             raise TokenRefreshError("Token refresh failed: no data in response")
 
-        if (
-            isinstance(response.data.access_token, Unset)
-            or response.data.access_token is None
-        ):
+        if isinstance(response.data.access_token, Unset):
             raise TokenRefreshError("Token refresh failed: no access token")
 
-        if (
-            isinstance(response.data.refresh_token, Unset)
-            or response.data.refresh_token is None
-        ):
+        if isinstance(response.data.refresh_token, Unset):
             raise TokenRefreshError("Token refresh failed: no refresh token")
 
         self._token = Token(
@@ -378,9 +381,9 @@ class Wyzeapy:
             raise NotAuthenticatedError("Not authenticated")
 
         if self._token.should_refresh:
-            await self._refresh_token()
+            _ = await self._refresh_token()
 
-    def _common_params(self) -> dict:
+    def _common_params(self) -> dict[str, Any]:
         """Build common request parameters."""
         return {
             "phone_system_type": PHONE_SYSTEM_TYPE,
@@ -408,12 +411,11 @@ class Wyzeapy:
         """
         Access the Home Monitoring Service (HMS) API.
 
-        Example:
-            ```python
+        Example::
+
             async with Wyzeapy(email, password, key_id, api_key) as wyze:
                 status = await wyze.hms.get_status("your-hms-id")
                 await wyze.hms.set_mode("your-hms-id", HMSMode.AWAY)
-            ```
         """
         if self._hms is None:
             self._hms = WyzeHMS(self)
@@ -445,11 +447,7 @@ class Wyzeapy:
             body=CommonRequestParams(**self._common_params()),
         )
 
-        if (
-            response is None
-            or response.data is None
-            or isinstance(response.data, Unset)
-        ):
+        if response is None or isinstance(response.data, Unset):
             self._devices = []
             return self._devices
 
@@ -499,446 +497,36 @@ class Wyzeapy:
         finally:
             await platform_client.get_async_httpx_client().aclose()
 
-    # -------------------------------------------------------------------------
-    # Internal API Methods (used by device classes)
-    # -------------------------------------------------------------------------
-
-    async def run_action(
-        self, device: WyzeDevice, action: RunActionRequestActionKey
-    ) -> bool:
-        """Execute an action on a device."""
-        await self._ensure_token_valid()
-
-        client = self._get_main_client()
-
-        response = await run_action.asyncio(
-            client=client,
-            body=RunActionRequest(
-                provider_key=device.product_model or "",
-                instance_id=device.mac or "",
-                action_key=action,
-                action_params=RunActionRequestActionParams(),
-                custom_string="",
-                **self._common_params(),
-            ),
-        )
-
-        return response is not None and getattr(response, "code", None) == "1"
-
-    async def set_property(
-        self, device: WyzeDevice, property_id: str, value: str
-    ) -> bool:
-        """Set a property on a device."""
-        await self._ensure_token_valid()
-
-        client = self._get_main_client()
-
-        response = await set_property.asyncio(
-            client=client,
-            body=SetPropertyRequest(
-                device_mac=device.mac or "",
-                device_model=device.product_model or "",
-                pid=property_id,
-                pvalue=value,
-                **self._common_params(),
-            ),
-        )
-
-        return response is not None and getattr(response, "code", None) == "1"
-
-    async def _lock_control(
-        self, device: WyzeDevice, action: LockControlRequestAction
-    ) -> bool:
-        """Control a lock device."""
-        await self._ensure_token_valid()
-
-        # Lock API requires its own client with different base URL
-        lock_client = Client(base_url=LOCK_API_SERVER)
-
-        try:
-            timestamp = str(int(time.time() * 1000))
-            device_uuid = device.mac or ""
-            access_token = self._get_token().access_token
-
-            # Build payload for signature
-            payload = {
-                "access_token": access_token,
-                "action": action.value,
-                "key": FORD_APP_KEY,
-                "timestamp": timestamp,
-                "uuid": device_uuid,
-            }
-
-            signature = ford_create_signature(
-                "/openapi/lock/v1/control", "POST", payload
-            )
-
-            response = await lock_control.asyncio(
-                client=lock_client,
-                body=LockControlRequest(
-                    sign=signature,
-                    uuid=device_uuid,
-                    action=action,
-                    access_token=access_token,
-                    key=FORD_APP_KEY,
-                    timestamp=timestamp,
-                ),
-            )
-
-            return response is not None and getattr(response, "code", 1) == 0
-        finally:
-            await lock_client.get_async_httpx_client().aclose()
-
-    async def get_device_info(self, device: WyzeDevice) -> dict:
+    async def get_home_favorites(self, home_id: str) -> HomeFavorites:
         """
-        Get detailed information about a device.
+        Get favorites and device list for a home.
 
-        Fetches the latest device info from the API. This can be used to get
-        updated device state that may not be captured in the initial device list.
+        This endpoint returns all devices in the home with their favorite status,
+        device category, and other metadata.
 
         Args:
-            device: The device to get information for.
+            home_id: The home ID to get favorites for.
 
         Returns:
-            Dictionary containing detailed device information.
-        """
-        await self._ensure_token_valid()
+            HomeFavorites object containing the device list and home info.
 
-        client = self._get_main_client()
+        Example::
 
-        response = await get_device_info.asyncio(
-            client=client,
-            body=GetDeviceInfoBody(
-                device_mac=device.mac or "",
-                device_model=device.product_model or "",
-                **self._common_params(),
-            ),
-        )
-
-        if (
-            response is None
-            or isinstance(response.data, Unset)
-            or response.data is None
-        ):
-            return {}
-
-        return response.data.additional_properties
-
-    async def get_device_properties(
-        self, device: WyzeDevice, property_ids: Optional[list[str]] = None
-    ) -> dict[str, str]:
-        """
-        Get property values for a device.
-
-        Fetches the current property values from the API. Properties represent
-        device state like power status, brightness, color, etc.
-
-        Args:
-            device: The device to get properties for.
-            property_ids: Optional list of specific property IDs to fetch.
-                         If None, fetches all properties for the device.
-
-        Returns:
-            Dictionary mapping property ID to property value.
-        """
-        await self._ensure_token_valid()
-
-        client = self._get_main_client()
-
-        request_kwargs: dict = {
-            "device_mac": device.mac or "",
-            "device_model": device.product_model or "",
-            **self._common_params(),
-        }
-        if property_ids:
-            request_kwargs["target_pid_list"] = property_ids
-
-        response = await get_property_list.asyncio(
-            client=client,
-            body=GetPropertyListRequest(**request_kwargs),
-        )
-
-        if (
-            response is None
-            or isinstance(response.data, Unset)
-            or response.data is None
-        ):
-            return {}
-
-        if (
-            isinstance(response.data.property_list, Unset)
-            or response.data.property_list is None
-        ):
-            return {}
-
-        result = {}
-        for prop in response.data.property_list:
-            if not isinstance(prop.pid, Unset) and not isinstance(prop.value, Unset):
-                result[prop.pid] = prop.value
-        return result
-
-    async def get_camera_events(
-        self,
-        device: WyzeDevice,
-        count: int = 20,
-        begin_time: Optional[int] = None,
-        end_time: Optional[int] = None,
-    ) -> list[CameraEvent]:
-        """
-        Get recent events for a camera.
-
-        Args:
-            device: The camera device to get events for.
-            count: Maximum number of events to retrieve (default 20).
-            begin_time: Start timestamp in milliseconds (optional).
-            end_time: End timestamp in milliseconds (optional).
-
-        Returns:
-            List of CameraEvent objects.
-        """
-        await self._ensure_token_valid()
-
-        client = self._get_main_client()
-
-        request_kwargs: dict = {
-            "count": count,
-            "device_mac_list": [device.mac] if device.mac else [],
-            **self._common_params(),
-        }
-        if begin_time is not None:
-            request_kwargs["begin_time"] = begin_time
-        if end_time is not None:
-            request_kwargs["end_time"] = end_time
-
-        response = await get_event_list.asyncio(
-            client=client,
-            body=GetEventListBody(**request_kwargs),
-        )
-
-        if (
-            response is None
-            or isinstance(response.data, Unset)
-            or response.data is None
-        ):
-            return []
-
-        if (
-            isinstance(response.data.event_list, Unset)
-            or response.data.event_list is None
-        ):
-            return []
-
-        return [
-            CameraEvent.from_api_response(event.to_dict())
-            for event in response.data.event_list
-        ]
-
-    async def get_plug_usage(
-        self,
-        device: WyzeDevice,
-        start_time: int,
-        end_time: int,
-    ) -> list[PlugUsageRecord]:
-        """
-        Get power usage history for a smart plug.
-
-        Args:
-            device: The plug device to get usage for.
-            start_time: Start timestamp in milliseconds.
-            end_time: End timestamp in milliseconds.
-
-        Returns:
-            List of PlugUsageRecord objects with date and usage data.
-        """
-        await self._ensure_token_valid()
-
-        client = self._get_main_client()
-
-        response = await get_plug_usage_history.asyncio(
-            client=client,
-            body=PlugUsageRequest(
-                device_mac=device.mac or "",
-                date_begin=start_time,
-                date_end=end_time,
-                **self._common_params(),
-            ),
-        )
-
-        if (
-            response is None
-            or isinstance(response.data, Unset)
-            or response.data is None
-        ):
-            return []
-
-        if (
-            isinstance(response.data.usage_record_list, Unset)
-            or response.data.usage_record_list is None
-        ):
-            return []
-
-        return [
-            PlugUsageRecord.from_api_response(record.to_dict())
-            for record in response.data.usage_record_list
-        ]
-
-    async def get_lock_info(
-        self,
-        device: WyzeDevice,
-        with_keypad: bool = False,
-    ) -> LockInfo:
-        """
-        Get detailed information about a lock.
-
-        Args:
-            device: The lock device to get information for.
-            with_keypad: Whether to include keypad information.
-
-        Returns:
-            LockInfo object with lock status and door state.
-        """
-        await self._ensure_token_valid()
-
-        lock_client = Client(base_url=LOCK_API_SERVER)
-
-        try:
-            timestamp = str(int(time.time() * 1000))
-            device_uuid = device.mac or ""
-            access_token = self._get_token().access_token
-
-            # Build payload for signature
-            payload = {
-                "access_token": access_token,
-                "key": FORD_APP_KEY,
-                "timestamp": timestamp,
-                "uuid": device_uuid,
-            }
-            if with_keypad:
-                payload["with_keypad"] = "1"
-
-            signature = ford_create_signature(
-                "/openapi/lock/v1/info", "GET", payload
-            )
-
-            response = await get_lock_info.asyncio(
-                client=lock_client,
-                uuid=device_uuid,
-                access_token=access_token,
-                key=FORD_APP_KEY,
-                timestamp=timestamp,
-                sign=signature,
-            )
-
-            if response is None:
-                return LockInfo(uuid="", is_online=False, is_locked=False, door_open=False, raw={})
-
-            raw_data = response.to_dict() if hasattr(response, "to_dict") else {}
-            return LockInfo.from_api_response(raw_data)
-        finally:
-            await lock_client.get_async_httpx_client().aclose()
-
-    async def get_thermostat_state(
-        self,
-        device: WyzeDevice,
-    ) -> ThermostatState:
-        """
-        Get current thermostat state.
-
-        Args:
-            device: The thermostat device.
-
-        Returns:
-            ThermostatState object with current temperature, setpoints, and mode.
-        """
-        await self._ensure_token_valid()
-
-        access_token = self._get_token().access_token
-        nonce = int(time.time() * 1000)
-
-        # Keys to request - common thermostat properties
-        keys = "temperature,humidity,cool_sp,heat_sp,mode_sys,fan_mode,working_state,temp_unit"
-        payload = {"keys": keys, "did": device.mac or "", "nonce": str(nonce)}
-        signature = olive_create_signature(payload, access_token)
-
-        platform_client = AuthenticatedClient(
-            base_url=PLATFORM_SERVICE_URL,
-            token=access_token,
-            prefix="",
-            auth_header_name="access_token",
-        )
-
-        try:
-            response = await get_thermostat_iot_prop.asyncio(
-                client=platform_client,
-                keys=keys,
-                did=device.mac or "",
-                nonce=nonce,
-                appid=OLIVE_APP_ID,
-                appinfo=APP_INFO,
-                phoneid=self._phone_id,
-                signature2=signature,
-            )
-
-            if response is None:
-                return ThermostatState(
-                    temperature=None,
-                    humidity=None,
-                    cool_setpoint=None,
-                    heat_setpoint=None,
-                    mode=None,
-                    fan_mode=None,
-                    working_state=None,
-                    raw={},
-                )
-
-            raw_data = response.to_dict() if hasattr(response, "to_dict") else {}
-            return ThermostatState.from_api_response(raw_data)
-        finally:
-            await platform_client.get_async_httpx_client().aclose()
-
-    async def set_thermostat_properties(
-        self,
-        device: WyzeDevice,
-        *,
-        cool_setpoint: Optional[int] = None,
-        heat_setpoint: Optional[int] = None,
-        fan_mode: Optional[str] = None,
-        hvac_mode: Optional[str] = None,
-    ) -> bool:
-        """
-        Set thermostat properties.
-
-        Args:
-            device: The thermostat device.
-            cool_setpoint: Cooling setpoint temperature.
-            heat_setpoint: Heating setpoint temperature.
-            fan_mode: Fan mode ('auto', 'on', 'cycle').
-            hvac_mode: HVAC mode ('off', 'heat', 'cool', 'auto').
-
-        Returns:
-            True if successful, False otherwise.
+            async with Wyzeapy(email, password, key_id, api_key) as wyze:
+                favorites = await wyze.get_home_favorites("your-home-id")
+                for device in favorites.devices:
+                    print(f"{device.nickname}: {device.device_category}")
+                # Get only favorited devices
+                for fav in favorites.favorite_devices:
+                    print(f"Favorite: {fav.nickname}")
         """
         await self._ensure_token_valid()
 
         access_token = self._get_token().access_token
         nonce = str(int(time.time() * 1000))
 
-        # Build props
-        props = SetThermostatIotPropBodyProps()
-        if cool_setpoint is not None:
-            props["cool_sp"] = cool_setpoint
-        if heat_setpoint is not None:
-            props["heat_sp"] = heat_setpoint
-        if fan_mode is not None:
-            props["fan_mode"] = fan_mode
-        if hvac_mode is not None:
-            props["mode_sys"] = hvac_mode
-
-        body = SetThermostatIotPropBody(
-            did=device.mac or "",
-            model=device.product_model or "",
-            props=props,
-            is_sub_device=0,
+        body = GetHomeFavoritesRequest(
+            home_id=home_id,
             nonce=nonce,
         )
 
@@ -946,61 +534,17 @@ class Wyzeapy:
         body_dict = body.to_dict()
         signature = olive_create_signature(body_dict, access_token)
 
-        platform_client = AuthenticatedClient(
-            base_url=PLATFORM_SERVICE_URL,
+        app_client = AuthenticatedClient(
+            base_url=APP_API_SERVER,
             token=access_token,
             prefix="",
-            auth_header_name="access_token",
+            auth_header_name="Access_token",
         )
 
         try:
-            response = await set_thermostat_iot_prop.asyncio(
-                client=platform_client,
+            response = await get_home_favorites.asyncio(
+                client=app_client,
                 body=body,
-                appid=OLIVE_APP_ID,
-                appinfo=APP_INFO,
-                phoneid=self._phone_id,
-                signature2=signature,
-            )
-
-            return response is not None and getattr(response, "code", None) == "1"
-        finally:
-            await platform_client.get_async_httpx_client().aclose()
-
-    async def get_irrigation_zones(
-        self,
-        device: WyzeDevice,
-    ) -> list[IrrigationZone]:
-        """
-        Get irrigation zones for a controller.
-
-        Args:
-            device: The irrigation controller device.
-
-        Returns:
-            List of IrrigationZone objects.
-        """
-        await self._ensure_token_valid()
-
-        access_token = self._get_token().access_token
-        nonce = str(int(time.time() * 1000))
-        device_id = device.mac or ""
-
-        payload = {"device_id": device_id, "nonce": nonce}
-        signature = olive_create_signature(payload, access_token)
-
-        platform_client = AuthenticatedClient(
-            base_url=PLATFORM_SERVICE_URL,
-            token=access_token,
-            prefix="",
-            auth_header_name="access_token",
-        )
-
-        try:
-            response = await get_irrigation_zones.asyncio(
-                client=platform_client,
-                device_id=device_id,
-                nonce=nonce,
                 appid=OLIVE_APP_ID,
                 appinfo=APP_INFO,
                 phoneid=self._phone_id,
@@ -1008,259 +552,11 @@ class Wyzeapy:
             )
 
             if response is None or isinstance(response.data, Unset):
-                return []
+                return HomeFavorites(home_id="", home_name="", devices=[], raw={})
 
-            # Extract zones from response data
-            zones_data = getattr(response.data, "zones", [])
-            if isinstance(zones_data, Unset):
-                zones_data = []
-
-            return [
-                IrrigationZone.from_api_response(
-                    zone.to_dict() if hasattr(zone, "to_dict") else zone
-                )
-                for zone in zones_data
-            ]
+            # Convert response data to dict for our model
+            data_dict = response.data.to_dict()
+            return HomeFavorites.from_api_response(data_dict)
         finally:
-            await platform_client.get_async_httpx_client().aclose()
+            await app_client.get_async_httpx_client().aclose()
 
-    async def run_irrigation(
-        self,
-        device: WyzeDevice,
-        zones: list[tuple[int, int]],
-    ) -> bool:
-        """
-        Start irrigation on specified zones.
-
-        Args:
-            device: The irrigation controller device.
-            zones: List of (zone_number, duration_seconds) tuples.
-
-        Returns:
-            True if successful, False otherwise.
-        """
-        await self._ensure_token_valid()
-
-        access_token = self._get_token().access_token
-        nonce = str(int(time.time() * 1000))
-        device_id = device.mac or ""
-
-        # Build zone runs list
-        zone_runs = [
-            IrrigationQuickRunRequestZoneRunsItem(zone_number=zone_num, duration=duration)
-            for zone_num, duration in zones
-        ]
-
-        body = IrrigationQuickRunRequest(
-            device_id=device_id,
-            nonce=nonce,
-            zone_runs=zone_runs,
-        )
-
-        # Create signature from body dict
-        body_dict = body.to_dict()
-        signature = olive_create_signature(body_dict, access_token)
-
-        platform_client = AuthenticatedClient(
-            base_url=PLATFORM_SERVICE_URL,
-            token=access_token,
-            prefix="",
-            auth_header_name="access_token",
-        )
-
-        try:
-            response = await irrigation_quick_run.asyncio(
-                client=platform_client,
-                body=body,
-                appid=OLIVE_APP_ID,
-                appinfo=APP_INFO,
-                phoneid=self._phone_id,
-                signature2=signature,
-            )
-
-            return response is not None and getattr(response, "code", None) == "1"
-        finally:
-            await platform_client.get_async_httpx_client().aclose()
-
-    async def stop_irrigation(
-        self,
-        device: WyzeDevice,
-    ) -> bool:
-        """
-        Stop all running irrigation on a controller.
-
-        Args:
-            device: The irrigation controller device.
-
-        Returns:
-            True if successful, False otherwise.
-        """
-        await self._ensure_token_valid()
-
-        access_token = self._get_token().access_token
-        nonce = str(int(time.time() * 1000))
-        device_id = device.mac or ""
-
-        body = IrrigationStopRequest(
-            device_id=device_id,
-            nonce=nonce,
-            action=IrrigationStopRequestAction.STOP,
-        )
-
-        # Create signature from body dict
-        body_dict = body.to_dict()
-        signature = olive_create_signature(body_dict, access_token)
-
-        platform_client = AuthenticatedClient(
-            base_url=PLATFORM_SERVICE_URL,
-            token=access_token,
-            prefix="",
-            auth_header_name="access_token",
-        )
-
-        try:
-            response = await stop_irrigation_schedule.asyncio(
-                client=platform_client,
-                body=body,
-                appid=OLIVE_APP_ID,
-                appinfo=APP_INFO,
-                phoneid=self._phone_id,
-                signature2=signature,
-            )
-
-            return response is not None and getattr(response, "code", None) == "1"
-        finally:
-            await platform_client.get_async_httpx_client().aclose()
-
-    # -------------------------------------------------------------------------
-    # Camera Control Methods
-    # -------------------------------------------------------------------------
-
-    async def set_camera_motion_detection(
-        self,
-        device: WyzeDevice,
-        enabled: bool,
-    ) -> bool:
-        """
-        Enable or disable motion detection on a camera.
-
-        Args:
-            device: The camera device.
-            enabled: True to enable, False to disable.
-
-        Returns:
-            True if successful, False otherwise.
-        """
-        value = "1" if enabled else "0"
-
-        if device.product_model in DEVICEMGMT_API_MODELS:
-            return await self._run_devicemgmt_action(
-                device,
-                DeviceMgmtRunActionRequestCapabilitiesItemName.IOT_DEVICE,
-                {"motion-detect-recording": enabled},
-            )
-        else:
-            # For older cameras, set both properties
-            result1 = await self.set_property(device, PropertyID.MOTION_DETECTION, value)
-            result2 = await self.set_property(device, PropertyID.MOTION_DETECTION_TOGGLE, value)
-            return result1 and result2
-
-    async def set_camera_floodlight(
-        self,
-        device: WyzeDevice,
-        enabled: bool,
-    ) -> bool:
-        """
-        Turn camera floodlight on or off.
-
-        Args:
-            device: The camera device (must have floodlight capability).
-            enabled: True to turn on, False to turn off.
-
-        Returns:
-            True if successful, False otherwise.
-        """
-        if device.product_model == "AN_RSCW":
-            # Battery Cam Pro uses spotlight
-            return await self._run_devicemgmt_action(
-                device,
-                DeviceMgmtRunActionRequestCapabilitiesItemName.SPOTLIGHT,
-                {"on": enabled},
-            )
-        elif device.product_model in DEVICEMGMT_API_MODELS:
-            # Floodlight Pro and other devicemgmt cameras
-            return await self._run_devicemgmt_action(
-                device,
-                DeviceMgmtRunActionRequestCapabilitiesItemName.FLOODLIGHT,
-                {"on": enabled},
-            )
-        else:
-            # Older cameras use ACCESSORY property
-            # "1" = on, "2" = off (not "0"!)
-            value = "1" if enabled else "2"
-            return await self.set_property(device, PropertyID.ACCESSORY, value)
-
-    async def _run_devicemgmt_action(
-        self,
-        device: WyzeDevice,
-        capability_name: DeviceMgmtRunActionRequestCapabilitiesItemName,
-        properties: dict,
-    ) -> bool:
-        """
-        Run a device management action on a newer camera model.
-
-        Args:
-            device: The camera device.
-            capability_name: The capability to control (floodlight, spotlight, siren, iot-device).
-            properties: Dictionary of property name to value.
-
-        Returns:
-            True if successful, False otherwise.
-        """
-        await self._ensure_token_valid()
-
-        access_token = self._get_token().access_token
-        nonce = int(time.time() * 1000)
-
-        # Build properties list
-        props_list = [
-            DeviceMgmtRunActionRequestCapabilitiesItemPropertiesItem(
-                prop=prop_name, value=str(prop_value)
-            )
-            for prop_name, prop_value in properties.items()
-        ]
-
-        body = DeviceMgmtRunActionRequest(
-            capabilities=[
-                DeviceMgmtRunActionRequestCapabilitiesItem(
-                    name=capability_name,
-                    properties=props_list,
-                )
-            ],
-            nonce=nonce,
-            target_info=DeviceMgmtRunActionRequestTargetInfo(
-                id=device.mac or "",
-                type_=DeviceMgmtRunActionRequestTargetInfoType.DEVICE,
-            ),
-        )
-
-        # Create signature from body dict
-        body_dict = body.to_dict()
-        signature = olive_create_signature(body_dict, access_token)
-
-        devicemgmt_client = AuthenticatedClient(
-            base_url=DEVICEMGMT_SERVICE_URL,
-            token=access_token,
-            prefix="",
-            auth_header_name="access_token",
-        )
-
-        try:
-            response = await device_mgmt_run_action.asyncio(
-                client=devicemgmt_client,
-                body=body,
-            )
-
-            return response is not None and getattr(response, "code", None) == "1"
-        finally:
-            await devicemgmt_client.get_async_httpx_client().aclose()

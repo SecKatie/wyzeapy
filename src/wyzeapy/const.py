@@ -6,6 +6,7 @@
 
 AUTH_SERVER = "https://auth-prod.api.wyze.com"
 MAIN_API_SERVER = "https://api.wyzecam.com"
+APP_API_SERVER = "https://app.wyzecam.com"
 LOCK_API_SERVER = "https://yd-saas-toc.wyzecam.com"
 PLATFORM_SERVICE_URL = "https://wyze-platform-service.wyzecam.com"
 DEVICEMGMT_SERVICE_URL = "https://devicemgmt-service-beta.wyze.com"
@@ -46,22 +47,22 @@ class PropertyID:
     """Common property IDs for Wyze devices."""
 
     # General
-    POWER = "P3"  # Power on/off
+    POWER: str = "P3"  # Power on/off
 
     # Lighting
-    BRIGHTNESS = "P1501"
-    COLOR_TEMP = "P1502"
-    COLOR = "P1507"
-    COLOR_MODE = "P1508"  # 1=color, 2=white
+    BRIGHTNESS: str = "P1501"
+    COLOR_TEMP: str = "P1502"
+    COLOR: str = "P1507"
+    COLOR_MODE: str = "P1508"  # 1=color, 2=white
 
     # Lock
-    DOOR_OPEN = "P2001"
+    DOOR_OPEN: str = "P2001"
 
     # Camera
-    CAMERA_SIREN = "P1049"
-    MOTION_DETECTION = "P1047"  # Motion detection state
-    MOTION_DETECTION_TOGGLE = "P1001"  # Toggle motion detection on/off
-    ACCESSORY = "P1056"  # Camera accessories (floodlight, lamp socket, etc.)
+    CAMERA_SIREN: str = "P1049"
+    MOTION_DETECTION: str = "P1047"  # Motion detection state
+    MOTION_DETECTION_TOGGLE: str = "P1001"  # Toggle motion detection on/off
+    ACCESSORY: str = "P1056"  # Camera accessories (floodlight, lamp socket, etc.)
 
 
 # =============================================================================

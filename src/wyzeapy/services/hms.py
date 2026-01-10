@@ -27,10 +27,10 @@ class WyzeHMS:
     """
     Wyze Home Monitoring Service API.
 
-    Access this via `wyze.hms` property on the main client.
+    Access this via ``wyze.hms`` property on the main client.
 
-    Example:
-        ```python
+    Example::
+
         async with Wyzeapy(email, password, key_id, api_key) as wyze:
             # Get HMS status
             status = await wyze.hms.get_status("your-hms-id")
@@ -38,7 +38,6 @@ class WyzeHMS:
 
             # Set HMS mode
             await wyze.hms.set_mode("your-hms-id", HMSMode.AWAY)
-        ```
     """
 
     def __init__(self, client: "Wyzeapy"):

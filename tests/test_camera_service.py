@@ -77,6 +77,18 @@ class TestCameraService(unittest.IsolatedAsyncioTestCase):
             }
         )
 
+        self.bulb_cam = Camera(
+            {
+                "device_type": DeviceTypes.CAMERA.value,
+                "product_type": DeviceTypes.CAMERA.value,
+                "product_model": "HL_BC",  # Wyze Bulb Cam
+                "mac": "TEST_BC",
+                "nickname": "Test Bulb Cam",
+                "device_params": {"ip": "192.168.1.104"},
+                "raw_dict": {},
+            }
+        )
+
     async def test_update_legacy_camera(self):
         # Mock responses
         self.camera_service._get_event_list.return_value = {
@@ -215,6 +227,51 @@ class TestCameraService(unittest.IsolatedAsyncioTestCase):
         self.camera_service._run_action_devicemgmt.assert_awaited_with(
             self.bcp_camera, "spotlight", "0"
         )
+
+    async def test_floodlight_control_bulb_cam(self):
+        """Test Bulb Cam (HL_BC) light control uses run_action."""
+        await self.camera_service.floodlight_on(self.bulb_cam)
+        self.camera_service._run_action.assert_awaited_with(
+            self.bulb_cam, "floodlight_on"
+        )
+
+        await self.camera_service.floodlight_off(self.bulb_cam)
+        self.camera_service._run_action.assert_awaited_with(
+            self.bulb_cam, "floodlight_off"
+        )
+
+    async def test_update_bulb_cam_light_state(self):
+        """Test that Bulb Cam correctly reads P1056 as light state.
+
+        For Bulb Cam (HL_BC):
+        - P1056='1' means light is ON
+        - P1056='2' means light is OFF
+        """
+        # Mock responses
+        self.camera_service._get_event_list.return_value = {
+            "data": {"event_list": []}
+        }
+        self.camera_service.get_updated_params.return_value = {"ip": "192.168.1.104"}
+
+        # Test light ON state (P1056='1')
+        self.camera_service._get_property_list.return_value = [
+            (PropertyIDs.AVAILABLE, "1"),
+            (PropertyIDs.ON, "1"),
+            (PropertyIDs.ACCESSORY, "1"),  # Light is ON
+        ]
+
+        updated_camera = await self.camera_service.update(self.bulb_cam)
+        self.assertTrue(updated_camera.floodlight)
+
+        # Test light OFF state (P1056='2')
+        self.camera_service._get_property_list.return_value = [
+            (PropertyIDs.AVAILABLE, "1"),
+            (PropertyIDs.ON, "1"),
+            (PropertyIDs.ACCESSORY, "2"),  # Light is OFF
+        ]
+
+        updated_camera = await self.camera_service.update(self.bulb_cam)
+        self.assertFalse(updated_camera.floodlight)
 
     async def test_notification_control_legacy_camera(self):
         await self.camera_service.turn_on_notifications(self.test_camera)

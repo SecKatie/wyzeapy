@@ -15,6 +15,7 @@ from .devices import (
     WyzePlug,
     WyzeThermostat,
     WyzeWallSwitch,
+    WyzeIrrigation,
 )
 from .models import (
     Token,
@@ -40,6 +41,7 @@ from .exceptions import (
     DeviceError,
     DeviceOfflineError,
     ActionNotSupportedError,
+    ActionFailedError,
     ApiError,
 )
 
@@ -63,6 +65,7 @@ __all__ = [
     "WyzePlug",
     "WyzeThermostat",
     "WyzeWallSwitch",
+    "WyzeIrrigation",
     # Data models
     "CameraEvent",
     "PlugUsageRecord",
@@ -85,5 +88,6 @@ __all__ = [
     "DeviceError",
     "DeviceOfflineError",
     "ActionNotSupportedError",
+    "ActionFailedError",
     "ApiError",
 ]

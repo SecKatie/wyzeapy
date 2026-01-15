@@ -10,41 +10,25 @@ from wyzeapy import (
     ActionFailedError,
     ApiRequestError,
 )
-from wyzeapy.utils import is_set, get_or_default
-from wyzeapy.wyze_api_client.types import UNSET, Unset
+from wyzeapy.utils import or_none
+from wyzeapy.wyze_api_client.types import UNSET
 from wyzeapy.wyze_api_client.models import Device
 
 
-class TestUnsetUtilities:
-    """Tests for Unset utility functions."""
+class TestOrNone:
+    """Tests for or_none utility function."""
 
-    def test_is_set_returns_false_for_unset(self):
-        """is_set(UNSET) should return False."""
-        assert is_set(UNSET) is False
+    def test_or_none_returns_none_for_unset(self):
+        """or_none(UNSET) should return None."""
+        assert or_none(UNSET) is None
 
-    def test_is_set_returns_true_for_value(self):
-        """is_set(some_value) should return True."""
-        assert is_set("hello") is True
-        assert is_set(123) is True
-        assert is_set(None) is True  # None is still a value, not Unset
-        assert is_set([]) is True
-        assert is_set({}) is True
-
-    def test_get_or_default_returns_value_when_set(self):
-        """get_or_default should return the value when it's set."""
-        assert get_or_default("hello", "default") == "hello"
-        assert get_or_default(123, 0) == 123
-        assert get_or_default(None, "default") is None  # None is a valid value
-
-    def test_get_or_default_returns_default_when_unset(self):
-        """get_or_default should return the default when value is Unset."""
-        assert get_or_default(UNSET, "default") == "default"
-        assert get_or_default(UNSET, 42) == 42
-        assert get_or_default(UNSET, None) is None
-
-    def test_get_or_default_returns_none_by_default(self):
-        """get_or_default should return None if no default specified."""
-        assert get_or_default(UNSET) is None
+    def test_or_none_returns_value_for_set(self):
+        """or_none(value) should return the value when it's set."""
+        assert or_none("hello") == "hello"
+        assert or_none(123) == 123
+        assert or_none(None) is None  # None is a valid value, not Unset
+        assert or_none([]) == []
+        assert or_none({}) == {}
 
 
 def create_mock_device(
@@ -77,16 +61,15 @@ def create_mock_device(
 def create_mock_context():
     """Create a mock WyzeApiContext for testing."""
     ctx = MagicMock()
-    ctx.ensure_token_valid = AsyncMock()
-    ctx.get_main_client.return_value = MagicMock()
-    ctx.get_lock_client.return_value = MagicMock()
+    ctx.main_client = AsyncMock(return_value=MagicMock())
+    ctx.lock_client = AsyncMock(return_value=MagicMock())
+    ctx.get_access_token = AsyncMock(return_value="test-token")
     ctx.build_common_params.return_value = {
         "phone_system_type": "1",
         "app_version": "1.0",
         "phone_id": "test-phone",
         "access_token": "test-token",
     }
-    ctx.access_token = "test-token"
     ctx.phone_id = "test-phone"
     ctx.nonce.return_value = "123456789"
     ctx.ford_create_signature.return_value = "test-signature"

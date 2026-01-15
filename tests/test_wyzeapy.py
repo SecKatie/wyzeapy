@@ -18,6 +18,7 @@ from wyzeapy import (
     DeviceType,
 )
 from wyzeapy.utils import hash_password
+from wyzeapy.wyze_api_client.types import UNSET
 
 
 class TestHashPassword:
@@ -141,6 +142,34 @@ class TestWyzeapyCommonParams:
 
         with pytest.raises(NotAuthenticatedError):
             wyze._common_params()
+
+
+@pytest.mark.asyncio
+async def test_list_devices_triggers_token_validation(monkeypatch):
+    """list_devices should validate token via lazy helper."""
+    wyze = Wyzeapy("test@example.com", "password", "key_id", "api_key")
+    wyze._token = Token(access_token="access", refresh_token="refresh")
+
+    called = {"value": False}
+
+    async def fake_ensure_token_valid() -> None:
+        called["value"] = True
+
+    monkeypatch.setattr(wyze, "_ensure_token_valid", fake_ensure_token_valid)
+
+    class DummyResponse:
+        data = UNSET
+
+    async def fake_get_object_list(*args, **kwargs):
+        return DummyResponse()
+
+    from wyzeapy import wyzeapy as wyzeapy_module
+
+    monkeypatch.setattr(wyzeapy_module.get_object_list, "asyncio", fake_get_object_list)
+
+    devices = await wyze.list_devices()
+    assert devices == []
+    assert called["value"] is True
 
 
 @pytest.mark.integration

@@ -68,9 +68,7 @@ class WyzeThermostat(WyzeDevice):
         from ..models import ThermostatState
 
         ctx = self._get_context()
-        await ctx.ensure_token_valid()
-
-        access_token = ctx.access_token
+        access_token = await ctx.get_access_token()
         nonce = int(ctx.nonce())
 
         # Keys to request - common thermostat properties
@@ -78,7 +76,7 @@ class WyzeThermostat(WyzeDevice):
         payload = {"keys": keys, "did": self.mac or "", "nonce": str(nonce)}
         signature = ctx.olive_create_signature(payload, access_token)
 
-        platform_client = ctx.get_platform_client()
+        platform_client = await ctx.platform_client()
 
         response = await get_thermostat_iot_prop.asyncio(
             client=platform_client,
@@ -107,9 +105,7 @@ class WyzeThermostat(WyzeDevice):
     ) -> None:
         """Set thermostat properties."""
         ctx = self._get_context()
-        await ctx.ensure_token_valid()
-
-        access_token = ctx.access_token
+        access_token = await ctx.get_access_token()
         nonce = ctx.nonce()
 
         # Build props
@@ -134,7 +130,7 @@ class WyzeThermostat(WyzeDevice):
         body_dict = body.to_dict()
         signature = ctx.olive_create_signature(body_dict, access_token)
 
-        platform_client = ctx.get_platform_client()
+        platform_client = await ctx.platform_client()
 
         response = await set_thermostat_iot_prop.asyncio(
             client=platform_client,

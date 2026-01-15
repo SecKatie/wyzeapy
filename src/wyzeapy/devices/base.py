@@ -82,9 +82,7 @@ class MainApiMixin:
         :raises ActionFailedError: If the action fails.
         """
         ctx = self._get_context()
-        await ctx.ensure_token_valid()
-
-        client = ctx.get_main_client()
+        client = await ctx.main_client()
 
         response = await run_action.asyncio(
             client=client,
@@ -110,9 +108,7 @@ class MainApiMixin:
         :raises ActionFailedError: If setting the property fails.
         """
         ctx = self._get_context()
-        await ctx.ensure_token_valid()
-
-        client = ctx.get_main_client()
+        client = await ctx.main_client()
 
         response = await set_property.asyncio(
             client=client,
@@ -137,9 +133,7 @@ class MainApiMixin:
         :raises ApiRequestError: If the API request fails.
         """
         ctx = self._get_context()
-        await ctx.ensure_token_valid()
-
-        client = ctx.get_main_client()
+        client = await ctx.main_client()
 
         response = await get_device_info.asyncio(
             client=client,
@@ -167,9 +161,7 @@ class MainApiMixin:
         :raises ApiRequestError: If the API request fails.
         """
         ctx = self._get_context()
-        await ctx.ensure_token_valid()
-
-        client = ctx.get_main_client()
+        client = await ctx.main_client()
 
         request_kwargs: dict[str, Any] = {
             "device_mac": self.mac or "",
@@ -235,13 +227,13 @@ class BatteryDeviceMixin:
 
 
 class _HasContextAndMainApi(Protocol):
-    """Protocol for classes that have _get_context and _run_action."""
+    """Protocol for classes that have _get_context and run_action."""
 
     mac: str | None
     product_model: str | None
 
     def _get_context(self) -> WyzeApiContext: ...
-    async def _run_action(self, action: RunActionRequestActionKey) -> None: ...
+    async def run_action(self, action: RunActionRequestActionKey) -> None: ...
 
 
 class SwitchableDeviceMixin(MainApiMixin):
@@ -253,7 +245,7 @@ class SwitchableDeviceMixin(MainApiMixin):
 
         :raises ActionFailedError: If the action fails.
         """
-        await self._run_action(RunActionRequestActionKey.POWER_ON)
+        await self.run_action(RunActionRequestActionKey.POWER_ON)
 
     async def turn_off(self: _HasContextAndMainApi) -> None:
         """
@@ -261,7 +253,7 @@ class SwitchableDeviceMixin(MainApiMixin):
 
         :raises ActionFailedError: If the action fails.
         """
-        await self._run_action(RunActionRequestActionKey.POWER_OFF)
+        await self.run_action(RunActionRequestActionKey.POWER_OFF)
 
 
 class WyzeDevice(MainApiMixin):

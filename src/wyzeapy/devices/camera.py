@@ -161,8 +161,6 @@ class WyzeCamera(WyzeDevice, WiFiDeviceMixin, SwitchableDeviceMixin):
     ) -> None:
         """Run a device management action on a newer camera model."""
         ctx = self._get_context()
-        await ctx.ensure_token_valid()
-
         nonce = int(ctx.nonce())
 
         # Build properties list
@@ -187,7 +185,7 @@ class WyzeCamera(WyzeDevice, WiFiDeviceMixin, SwitchableDeviceMixin):
             ),
         )
 
-        devicemgmt_client = ctx.get_devicemgmt_client()
+        devicemgmt_client = await ctx.devicemgmt_client()
 
         response = await device_mgmt_run_action.asyncio(
             client=devicemgmt_client,
@@ -216,9 +214,7 @@ class WyzeCamera(WyzeDevice, WiFiDeviceMixin, SwitchableDeviceMixin):
         from ..models import CameraEvent
 
         ctx = self._get_context()
-        await ctx.ensure_token_valid()
-
-        client = ctx.get_main_client()
+        client = await ctx.main_client()
 
         request_kwargs: dict[str, Any] = {
             "count": count,

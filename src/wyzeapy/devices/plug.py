@@ -40,9 +40,7 @@ class WyzePlug(WyzeDevice, SwitchableDeviceMixin):
         from ..models import PlugUsageRecord
 
         ctx = self._get_context()
-        await ctx.ensure_token_valid()
-
-        client = ctx.get_main_client()
+        client = await ctx.main_client()
 
         response = await get_plug_usage_history.asyncio(
             client=client,

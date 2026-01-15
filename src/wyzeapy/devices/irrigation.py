@@ -37,16 +37,14 @@ class WyzeIrrigation(WyzeDevice):
         from ..models import IrrigationZone
 
         ctx = self._get_context()
-        await ctx.ensure_token_valid()
-
-        access_token = ctx.access_token
+        access_token = await ctx.get_access_token()
         nonce = ctx.nonce()
         device_id = self.mac or ""
 
         payload = {"device_id": device_id, "nonce": nonce}
         signature = ctx.olive_create_signature(payload, access_token)
 
-        platform_client = ctx.get_platform_client()
+        platform_client = await ctx.platform_client()
 
         response = await get_irrigation_zones.asyncio(
             client=platform_client,
@@ -84,9 +82,7 @@ class WyzeIrrigation(WyzeDevice):
         :raises ActionFailedError: If starting irrigation fails.
         """
         ctx = self._get_context()
-        await ctx.ensure_token_valid()
-
-        access_token = ctx.access_token
+        access_token = await ctx.get_access_token()
         nonce = ctx.nonce()
         device_id = self.mac or ""
 
@@ -104,7 +100,7 @@ class WyzeIrrigation(WyzeDevice):
         body_dict = body.to_dict()
         signature = ctx.olive_create_signature(body_dict, access_token)
 
-        platform_client = ctx.get_platform_client()
+        platform_client = await ctx.platform_client()
 
         response = await irrigation_quick_run.asyncio(
             client=platform_client,
@@ -127,9 +123,7 @@ class WyzeIrrigation(WyzeDevice):
         :raises ActionFailedError: If stopping irrigation fails.
         """
         ctx = self._get_context()
-        await ctx.ensure_token_valid()
-
-        access_token = ctx.access_token
+        access_token = await ctx.get_access_token()
         nonce = ctx.nonce()
         device_id = self.mac or ""
 
@@ -142,7 +136,7 @@ class WyzeIrrigation(WyzeDevice):
         body_dict = body.to_dict()
         signature = ctx.olive_create_signature(body_dict, access_token)
 
-        platform_client = ctx.get_platform_client()
+        platform_client = await ctx.platform_client()
 
         response = await stop_irrigation_schedule.asyncio(
             client=platform_client,

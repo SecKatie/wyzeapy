@@ -52,14 +52,12 @@ class WyzeHMS:
         :returns: HMSStatus object with current mode and raw API response.
         :rtype: HMSStatus
         """
-        await self._client._ensure_token_valid()
-
-        access_token = self._client._get_token().access_token
+        access_token = await self._client._get_access_token()
         nonce = str(int(time.time() * 1000))
         payload = {"hms_id": hms_id, "nonce": nonce}
         signature = olive_create_signature(payload, access_token)
 
-        platform_client = self._client._get_platform_client()
+        platform_client = await self._client._get_platform_client_authed()
 
         response = await get_hms_status.asyncio(
             client=platform_client,
@@ -92,9 +90,7 @@ class WyzeHMS:
         :type mode: HMSMode
         :raises ActionFailedError: If setting the mode fails.
         """
-        await self._client._ensure_token_valid()
-
-        access_token = self._client._get_token().access_token
+        access_token = await self._client._get_access_token()
 
         # Build the request body
         if mode == HMSMode.DISARMED:
@@ -163,7 +159,7 @@ class WyzeHMS:
         }
         signature = olive_create_signature(body_dict, access_token)
 
-        platform_client = self._client._get_platform_client()
+        platform_client = await self._client._get_platform_client_authed()
 
         response = await set_hms_mode.asyncio(
             client=platform_client,

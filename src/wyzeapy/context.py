@@ -75,6 +75,16 @@ class WyzeApiContext:
         """
         return self.get_token().access_token
 
+    async def get_access_token(self) -> str:
+        """
+        Ensure token is valid and return access token.
+
+        :returns: Current access token.
+        :rtype: str
+        """
+        await self.ensure_token_valid()
+        return self.get_token().access_token
+
     def nonce(self) -> str:
         """
         Generate a nonce for API requests.
@@ -83,3 +93,28 @@ class WyzeApiContext:
         :rtype: str
         """
         return str(int(time.time() * 1000))
+
+    async def main_client(self) -> Client:
+        """Get the main API client with token validation."""
+        await self.ensure_token_valid()
+        return self.get_main_client()
+
+    async def platform_client(self) -> AuthenticatedClient:
+        """Get the platform API client with token validation."""
+        await self.ensure_token_valid()
+        return self.get_platform_client()
+
+    async def app_client(self) -> AuthenticatedClient:
+        """Get the app API client with token validation."""
+        await self.ensure_token_valid()
+        return self.get_app_client()
+
+    async def lock_client(self) -> Client:
+        """Get the lock API client with token validation."""
+        await self.ensure_token_valid()
+        return self.get_lock_client()
+
+    async def devicemgmt_client(self) -> AuthenticatedClient:
+        """Get the device management API client with token validation."""
+        await self.ensure_token_valid()
+        return self.get_devicemgmt_client()

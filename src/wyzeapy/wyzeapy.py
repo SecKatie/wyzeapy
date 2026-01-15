@@ -256,6 +256,36 @@ class Wyzeapy:
             )
         return self._devicemgmt_client
 
+    async def _get_access_token(self) -> str:
+        """Ensure token is valid and return access token."""
+        await self._ensure_token_valid()
+        return self._get_token().access_token
+
+    async def _get_main_client_authed(self) -> Client:
+        """Get main API client with token validation."""
+        await self._ensure_token_valid()
+        return self._get_main_client()
+
+    async def _get_platform_client_authed(self) -> AuthenticatedClient:
+        """Get platform API client with token validation."""
+        await self._ensure_token_valid()
+        return self._get_platform_client()
+
+    async def _get_app_client_authed(self) -> AuthenticatedClient:
+        """Get app API client with token validation."""
+        await self._ensure_token_valid()
+        return self._get_app_client()
+
+    async def _get_lock_client_authed(self) -> Client:
+        """Get lock API client with token validation."""
+        await self._ensure_token_valid()
+        return self._get_lock_client()
+
+    async def _get_devicemgmt_client_authed(self) -> AuthenticatedClient:
+        """Get device management API client with token validation."""
+        await self._ensure_token_valid()
+        return self._get_devicemgmt_client()
+
     def get_context(self) -> WyzeApiContext:
         """
         Get API context for device classes.
@@ -509,9 +539,7 @@ class Wyzeapy:
         """
         from .devices import create_device
 
-        await self._ensure_token_valid()
-
-        client = self._get_main_client()
+        client = await self._get_main_client_authed()
 
         response = await get_object_list.asyncio(
             client=client,
@@ -612,14 +640,12 @@ class Wyzeapy:
         :returns: WyzeUser object with profile information
         :rtype: WyzeUser
         """
-        await self._ensure_token_valid()
-
-        access_token = self._get_token().access_token
+        access_token = await self._get_access_token()
         nonce = str(int(time.time() * 1000))
         payload = {"nonce": nonce}
         signature = olive_create_signature(payload, access_token)
 
-        platform_client = self._get_platform_client()
+        platform_client = await self._get_platform_client_authed()
 
         response = await get_user_profile.asyncio(
             client=platform_client,
@@ -661,9 +687,7 @@ class Wyzeapy:
                 for fav in favorites.favorite_devices:
                     print(f"Favorite: {fav.nickname}")
         """
-        await self._ensure_token_valid()
-
-        access_token = self._get_token().access_token
+        access_token = await self._get_access_token()
         nonce = str(int(time.time() * 1000))
 
         body = GetHomeFavoritesRequest(
@@ -674,7 +698,7 @@ class Wyzeapy:
         body_dict = body.to_dict()
         signature = olive_create_signature(body_dict, access_token)
 
-        app_client = self._get_app_client()
+        app_client = await self._get_app_client_authed()
 
         response = await get_home_favorites.asyncio(
             client=app_client,

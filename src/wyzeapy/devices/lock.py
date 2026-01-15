@@ -46,13 +46,11 @@ class WyzeLock(WyzeDevice):
     async def _lock_control(self, action: LockControlRequestAction) -> None:
         """Control the lock."""
         ctx = self._get_context()
-        await ctx.ensure_token_valid()
-
-        lock_client = ctx.get_lock_client()
+        lock_client = await ctx.lock_client()
 
         timestamp = ctx.nonce()
         device_uuid = self.mac or ""
-        access_token = ctx.access_token
+        access_token = await ctx.get_access_token()
 
         payload = {
             "access_token": access_token,
@@ -95,13 +93,11 @@ class WyzeLock(WyzeDevice):
         from ..models import LockInfo
 
         ctx = self._get_context()
-        await ctx.ensure_token_valid()
-
-        lock_client = ctx.get_lock_client()
+        lock_client = await ctx.lock_client()
 
         timestamp = ctx.nonce()
         device_uuid = self.mac or ""
-        access_token = ctx.access_token
+        access_token = await ctx.get_access_token()
 
         payload = {
             "access_token": access_token,

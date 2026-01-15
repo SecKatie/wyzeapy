@@ -40,3 +40,20 @@ docs-clean:
 
 docs-open: docs
     xdg-open docs/_build/index.html
+
+# Build the package
+build:
+    rm -rf dist/
+    uv build
+
+# Check package metadata before publishing
+check: build
+    uv run twine check dist/*
+
+# Publish to TestPyPI (requires TEST_PYPI_TOKEN env var)
+publish-test: check
+    UV_PUBLISH_TOKEN=$TEST_PYPI_TOKEN uv publish --publish-url https://test.pypi.org/legacy/
+
+# Publish to PyPI (requires PYPI_TOKEN env var)
+publish: check
+    UV_PUBLISH_TOKEN=$PYPI_TOKEN uv publish

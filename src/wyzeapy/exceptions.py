@@ -56,6 +56,25 @@ class ActionNotSupportedError(DeviceError):
     pass
 
 
+class ActionFailedError(DeviceError):
+    """
+    Raised when a device action fails.
+
+    :param action: The action that failed.
+    :type action: str
+    :param device_mac: The MAC address of the device.
+    :type device_mac: str
+    :param response: The API response, if any.
+    :type response: Any
+    """
+
+    def __init__(self, action: str, device_mac: str, response: object = None):
+        self.action = action
+        self.device_mac = device_mac
+        self.response = response
+        super().__init__(f"Action '{action}' failed for device {device_mac}")
+
+
 class ApiError(WyzeapyError):
     """
     Raised when the API returns an error.

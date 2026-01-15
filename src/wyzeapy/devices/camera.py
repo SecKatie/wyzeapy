@@ -23,6 +23,7 @@ from ..wyze_api_client.models import (
 )
 from ..wyze_api_client.api.camera import get_event_list, device_mgmt_run_action
 from ..wyze_api_client.types import Unset
+from ..exceptions import ActionFailedError
 
 if TYPE_CHECKING:
     from ..models import CameraEvent
@@ -71,43 +72,49 @@ class WyzeCamera(WyzeDevice, WiFiDeviceMixin, SwitchableDeviceMixin):
 
         return False
 
-    async def siren_on(self) -> bool:
-        """Turn on camera siren."""
-        return await self._run_action(RunActionRequestActionKey.SIREN_ON)
+    async def siren_on(self) -> None:
+        """
+        Turn on camera siren.
 
-    async def siren_off(self) -> bool:
-        """Turn off camera siren."""
-        return await self._run_action(RunActionRequestActionKey.SIREN_OFF)
+        :raises ActionFailedError: If the action fails.
+        """
+        await self._run_action(RunActionRequestActionKey.SIREN_ON)
 
-    async def floodlight_on(self) -> bool:
+    async def siren_off(self) -> None:
+        """
+        Turn off camera siren.
+
+        :raises ActionFailedError: If the action fails.
+        """
+        await self._run_action(RunActionRequestActionKey.SIREN_OFF)
+
+    async def floodlight_on(self) -> None:
         """
         Turn on camera floodlight.
 
-        :returns: True if successful, False otherwise.
-        :rtype: bool
+        :raises ActionFailedError: If the action fails.
         """
-        return await self._set_floodlight(enabled=True)
+        await self._set_floodlight(enabled=True)
 
-    async def floodlight_off(self) -> bool:
+    async def floodlight_off(self) -> None:
         """
         Turn off camera floodlight.
 
-        :returns: True if successful, False otherwise.
-        :rtype: bool
+        :raises ActionFailedError: If the action fails.
         """
-        return await self._set_floodlight(enabled=False)
+        await self._set_floodlight(enabled=False)
 
-    async def _set_floodlight(self, enabled: bool) -> bool:
+    async def _set_floodlight(self, enabled: bool) -> None:
         """Set floodlight/spotlight state."""
         if self.product_model == "AN_RSCW":
             # Battery Cam Pro uses spotlight
-            return await self._run_devicemgmt_action(
+            await self._run_devicemgmt_action(
                 DeviceMgmtRunActionRequestCapabilitiesItemName.SPOTLIGHT,
                 {"on": enabled},
             )
         elif self.product_model in DEVICEMGMT_API_MODELS:
             # Floodlight Pro and other devicemgmt cameras
-            return await self._run_devicemgmt_action(
+            await self._run_devicemgmt_action(
                 DeviceMgmtRunActionRequestCapabilitiesItemName.FLOODLIGHT,
                 {"on": enabled},
             )
@@ -115,48 +122,43 @@ class WyzeCamera(WyzeDevice, WiFiDeviceMixin, SwitchableDeviceMixin):
             # Older cameras use ACCESSORY property
             # "1" = on, "2" = off (not "0"!)
             value = "1" if enabled else "2"
-            return await self._set_property(PropertyID.ACCESSORY, value)
+            await self._set_property(PropertyID.ACCESSORY, value)
 
-    async def motion_detection_on(self) -> bool:
+    async def motion_detection_on(self) -> None:
         """
         Enable motion detection on camera.
 
-        :returns: True if successful, False otherwise.
-        :rtype: bool
+        :raises ActionFailedError: If the action fails.
         """
-        return await self._set_motion_detection(enabled=True)
+        await self._set_motion_detection(enabled=True)
 
-    async def motion_detection_off(self) -> bool:
+    async def motion_detection_off(self) -> None:
         """
         Disable motion detection on camera.
 
-        :returns: True if successful, False otherwise.
-        :rtype: bool
+        :raises ActionFailedError: If the action fails.
         """
-        return await self._set_motion_detection(enabled=False)
+        await self._set_motion_detection(enabled=False)
 
-    async def _set_motion_detection(self, enabled: bool) -> bool:
+    async def _set_motion_detection(self, enabled: bool) -> None:
         """Set motion detection state."""
         value = "1" if enabled else "0"
 
         if self.product_model in DEVICEMGMT_API_MODELS:
-            return await self._run_devicemgmt_action(
+            await self._run_devicemgmt_action(
                 DeviceMgmtRunActionRequestCapabilitiesItemName.IOT_DEVICE,
                 {"motion-detect-recording": enabled},
             )
         else:
             # For older cameras, set both properties
-            result1 = await self._set_property(PropertyID.MOTION_DETECTION, value)
-            result2 = await self._set_property(
-                PropertyID.MOTION_DETECTION_TOGGLE, value
-            )
-            return result1 and result2
+            await self._set_property(PropertyID.MOTION_DETECTION, value)
+            await self._set_property(PropertyID.MOTION_DETECTION_TOGGLE, value)
 
     async def _run_devicemgmt_action(
         self,
         capability_name: DeviceMgmtRunActionRequestCapabilitiesItemName,
         properties: dict[str, Any],
-    ) -> bool:
+    ) -> None:
         """Run a device management action on a newer camera model."""
         ctx = self._get_context()
         await ctx.ensure_token_valid()
@@ -185,15 +187,17 @@ class WyzeCamera(WyzeDevice, WiFiDeviceMixin, SwitchableDeviceMixin):
             ),
         )
 
-        devicemgmt_client = ctx.create_devicemgmt_client()
-        try:
-            response = await device_mgmt_run_action.asyncio(
-                client=devicemgmt_client,
-                body=body,
-            )
-            return response is not None and getattr(response, "code", None) == "1"
-        finally:
-            await devicemgmt_client.get_async_httpx_client().aclose()
+        devicemgmt_client = ctx.get_devicemgmt_client()
+
+        response = await device_mgmt_run_action.asyncio(
+            client=devicemgmt_client,
+            body=body,
+        )
+
+        if response is None:
+            raise ActionFailedError(capability_name.value, self.mac or "", None)
+        if getattr(response, "code", None) != "1":
+            raise ActionFailedError(capability_name.value, self.mac or "", response)
 
     async def get_events(
         self,

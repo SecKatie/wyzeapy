@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import time
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from ..models import HMSMode, HMSStatus
 from ..utils import olive_create_signature
-from ..const import OLIVE_APP_ID, APP_INFO, PLATFORM_SERVICE_URL
-from ..wyze_api_client import AuthenticatedClient
+from ..const import OLIVE_APP_ID, APP_INFO
+from ..exceptions import ActionFailedError
 from ..wyze_api_client.api.hms import get_hms_status, set_hms_mode
 from ..wyze_api_client.models import HMSProfileActiveRequestItem
 from ..wyze_api_client.models.hms_profile_active_request_item_state import (
@@ -59,39 +59,30 @@ class WyzeHMS:
         payload = {"hms_id": hms_id, "nonce": nonce}
         signature = olive_create_signature(payload, access_token)
 
-        platform_client = AuthenticatedClient(
-            base_url=PLATFORM_SERVICE_URL,
-            token=access_token,
-            prefix="",
-            auth_header_name="access_token",
+        platform_client = self._client._get_platform_client()
+
+        response = await get_hms_status.asyncio(
+            client=platform_client,
+            hms_id=hms_id,
+            nonce=nonce,
+            appid=OLIVE_APP_ID,
+            appinfo=APP_INFO,
+            phoneid=self._client._phone_id,
+            signature2=signature,
         )
 
-        try:
-            response = await get_hms_status.asyncio(
-                client=platform_client,
-                hms_id=hms_id,
-                nonce=nonce,
-                appid=OLIVE_APP_ID,
-                appinfo=APP_INFO,
-                phoneid=self._client._phone_id,
-                signature2=signature,
-            )
+        if response is None:
+            return HMSStatus(mode=None, raw={})
 
-            if response is None:
-                return HMSStatus(mode=None, raw={})
+        raw_data = response.to_dict() if hasattr(response, "to_dict") else {}
 
-            raw_data = response.to_dict() if hasattr(response, "to_dict") else {}
+        message = None
+        if not isinstance(response.message, Unset) and response.message:
+            message = response.message
 
-            # Extract mode from response message field
-            message = None
-            if not isinstance(response.message, Unset) and response.message:
-                message = response.message
+        return HMSStatus.from_api_response({"message": message, **raw_data})
 
-            return HMSStatus.from_api_response({"message": message, **raw_data})
-        finally:
-            await platform_client.get_async_httpx_client().aclose()
-
-    async def set_mode(self, hms_id: str, mode: HMSMode) -> bool:
+    async def set_mode(self, hms_id: str, mode: HMSMode) -> None:
         """
         Set HMS mode.
 
@@ -99,8 +90,7 @@ class WyzeHMS:
         :type hms_id: str
         :param mode: The mode to set (HOME, AWAY, or DISARMED).
         :type mode: HMSMode
-        :returns: True if successful, False otherwise.
-        :rtype: bool
+        :raises ActionFailedError: If setting the mode fails.
         """
         await self._client._ensure_token_valid()
 
@@ -141,35 +131,29 @@ class WyzeHMS:
         }
         signature = olive_create_signature(body_dict, access_token)
 
-        platform_client = AuthenticatedClient(
-            base_url=PLATFORM_SERVICE_URL,
-            token=access_token,
-            prefix="",
-            auth_header_name="access_token",
+        platform_client = self._client._get_platform_client()
+
+        response = await set_hms_mode.asyncio(
+            client=platform_client,
+            body=body,
+            hms_id=hms_id,
+            appid=OLIVE_APP_ID,
+            appinfo=APP_INFO,
+            phoneid=self._client._phone_id,
+            signature2=signature,
         )
 
-        try:
-            response = await set_hms_mode.asyncio(
-                client=platform_client,
-                body=body,
-                hms_id=hms_id,
-                appid=OLIVE_APP_ID,
-                appinfo=APP_INFO,
-                phoneid=self._client._phone_id,
-                signature2=signature,
-            )
+        if response is None:
+            raise ActionFailedError("set_hms_mode", hms_id, None)
+        if getattr(response, "code", None) != "1":
+            raise ActionFailedError("set_hms_mode", hms_id, response)
 
-            return response is not None and getattr(response, "code", None) == "1"
-        finally:
-            await platform_client.get_async_httpx_client().aclose()
-
-    async def disarm(self, hms_id: str) -> bool:
+    async def disarm(self, hms_id: str) -> None:
         """
         Disarm HMS (convenience method).
 
         :param hms_id: The HMS system ID.
         :type hms_id: str
-        :returns: True if successful, False otherwise.
-        :rtype: bool
+        :raises ActionFailedError: If disarming fails.
         """
-        return await self.set_mode(hms_id, HMSMode.DISARMED)
+        await self.set_mode(hms_id, HMSMode.DISARMED)

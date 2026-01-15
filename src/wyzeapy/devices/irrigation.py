@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 from .base import WyzeDevice
 from ..const import OLIVE_APP_ID, APP_INFO
+from ..exceptions import ActionFailedError
 from ..wyze_api_client.models import (
     IrrigationQuickRunRequest,
     IrrigationQuickRunRequestZoneRunsItem,
@@ -45,45 +46,39 @@ class WyzeIrrigation(WyzeDevice):
         payload = {"device_id": device_id, "nonce": nonce}
         signature = ctx.olive_create_signature(payload, access_token)
 
-        platform_client = ctx.create_platform_client()
+        platform_client = ctx.get_platform_client()
 
-        try:
-            response = await get_irrigation_zones.asyncio(
-                client=platform_client,
-                device_id=device_id,
-                nonce=nonce,
-                appid=OLIVE_APP_ID,
-                appinfo=APP_INFO,
-                phoneid=ctx.phone_id,
-                signature2=signature,
+        response = await get_irrigation_zones.asyncio(
+            client=platform_client,
+            device_id=device_id,
+            nonce=nonce,
+            appid=OLIVE_APP_ID,
+            appinfo=APP_INFO,
+            phoneid=ctx.phone_id,
+            signature2=signature,
+        )
+
+        if response is None or isinstance(response.data, Unset):
+            return []
+
+        zones_data = getattr(response.data, "zones", [])
+        if isinstance(zones_data, Unset):
+            zones_data = []
+
+        return [
+            IrrigationZone.from_api_response(
+                zone.to_dict() if hasattr(zone, "to_dict") else zone
             )
+            for zone in zones_data
+        ]
 
-            if response is None or isinstance(response.data, Unset):
-                return []
-
-            # Extract zones from response data
-            zones_data = getattr(response.data, "zones", [])
-            if isinstance(zones_data, Unset):
-                zones_data = []
-
-            return [
-                IrrigationZone.from_api_response(
-                    zone.to_dict() if hasattr(zone, "to_dict") else zone
-                )
-                for zone in zones_data
-            ]
-        finally:
-            await platform_client.get_async_httpx_client().aclose()
-
-    async def run(self, zones: list[tuple[int, int]]) -> bool:
+    async def run(self, zones: list[tuple[int, int]]) -> None:
         """
         Start irrigation on specified zones.
 
-        Args:
-            zones: List of (zone_number, duration_seconds) tuples.
-
-        Returns:
-            True if successful, False otherwise.
+        :param zones: List of (zone_number, duration_seconds) tuples.
+        :type zones: list[tuple[int, int]]
+        :raises ActionFailedError: If starting irrigation fails.
         """
         ctx = self._get_context()
         await ctx.ensure_token_valid()
@@ -92,7 +87,6 @@ class WyzeIrrigation(WyzeDevice):
         nonce = ctx.nonce()
         device_id = self.mac or ""
 
-        # Build zone runs list
         zone_runs = [
             IrrigationQuickRunRequestZoneRunsItem(zone_number=zone_num, duration=duration)
             for zone_num, duration in zones
@@ -104,32 +98,30 @@ class WyzeIrrigation(WyzeDevice):
             zone_runs=zone_runs,
         )
 
-        # Create signature from body dict
         body_dict = body.to_dict()
         signature = ctx.olive_create_signature(body_dict, access_token)
 
-        platform_client = ctx.create_platform_client()
+        platform_client = ctx.get_platform_client()
 
-        try:
-            response = await irrigation_quick_run.asyncio(
-                client=platform_client,
-                body=body,
-                appid=OLIVE_APP_ID,
-                appinfo=APP_INFO,
-                phoneid=ctx.phone_id,
-                signature2=signature,
-            )
+        response = await irrigation_quick_run.asyncio(
+            client=platform_client,
+            body=body,
+            appid=OLIVE_APP_ID,
+            appinfo=APP_INFO,
+            phoneid=ctx.phone_id,
+            signature2=signature,
+        )
 
-            return response is not None and getattr(response, "code", None) == "1"
-        finally:
-            await platform_client.get_async_httpx_client().aclose()
+        if response is None:
+            raise ActionFailedError("irrigation_run", device_id, None)
+        if getattr(response, "code", None) != "1":
+            raise ActionFailedError("irrigation_run", device_id, response)
 
-    async def stop(self) -> bool:
+    async def stop(self) -> None:
         """
         Stop all running irrigation on this controller.
 
-        Returns:
-            True if successful, False otherwise.
+        :raises ActionFailedError: If stopping irrigation fails.
         """
         ctx = self._get_context()
         await ctx.ensure_token_valid()
@@ -144,22 +136,21 @@ class WyzeIrrigation(WyzeDevice):
             action=IrrigationStopRequestAction.STOP,
         )
 
-        # Create signature from body dict
         body_dict = body.to_dict()
         signature = ctx.olive_create_signature(body_dict, access_token)
 
-        platform_client = ctx.create_platform_client()
+        platform_client = ctx.get_platform_client()
 
-        try:
-            response = await stop_irrigation_schedule.asyncio(
-                client=platform_client,
-                body=body,
-                appid=OLIVE_APP_ID,
-                appinfo=APP_INFO,
-                phoneid=ctx.phone_id,
-                signature2=signature,
-            )
+        response = await stop_irrigation_schedule.asyncio(
+            client=platform_client,
+            body=body,
+            appid=OLIVE_APP_ID,
+            appinfo=APP_INFO,
+            phoneid=ctx.phone_id,
+            signature2=signature,
+        )
 
-            return response is not None and getattr(response, "code", None) == "1"
-        finally:
-            await platform_client.get_async_httpx_client().aclose()
+        if response is None:
+            raise ActionFailedError("irrigation_stop", device_id, None)
+        if getattr(response, "code", None) != "1":
+            raise ActionFailedError("irrigation_stop", device_id, response)

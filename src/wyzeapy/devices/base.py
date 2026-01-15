@@ -21,6 +21,7 @@ from ..wyze_api_client.api.devices import (
     get_property_list,
 )
 from ..wyze_api_client.types import UNSET, Unset
+from ..exceptions import ActionFailedError
 
 if TYPE_CHECKING:
     from ..wyzeapy import Wyzeapy
@@ -73,8 +74,12 @@ class DeviceType(Enum):
 class MainApiMixin:
     """Mixin for devices using the main API (run_action, set_property)."""
 
-    async def _run_action(self: _HasContext, action: RunActionRequestActionKey) -> bool:
-        """Execute an action on this device."""
+    async def _run_action(self: _HasContext, action: RunActionRequestActionKey) -> None:
+        """
+        Execute an action on this device.
+
+        :raises ActionFailedError: If the action fails.
+        """
         ctx = self._get_context()
         await ctx.ensure_token_valid()
 
@@ -92,10 +97,17 @@ class MainApiMixin:
             ),
         )
 
-        return response is not None and getattr(response, "code", None) == "1"
+        if response is None:
+            raise ActionFailedError(action.value, self.mac or "", None)
+        if getattr(response, "code", None) != "1":
+            raise ActionFailedError(action.value, self.mac or "", response)
 
-    async def _set_property(self: _HasContext, property_id: str, value: str) -> bool:
-        """Set a property on this device."""
+    async def _set_property(self: _HasContext, property_id: str, value: str) -> None:
+        """
+        Set a property on this device.
+
+        :raises ActionFailedError: If setting the property fails.
+        """
         ctx = self._get_context()
         await ctx.ensure_token_valid()
 
@@ -112,7 +124,10 @@ class MainApiMixin:
             ),
         )
 
-        return response is not None and getattr(response, "code", None) == "1"
+        if response is None:
+            raise ActionFailedError(f"set_{property_id}", self.mac or "", None)
+        if getattr(response, "code", None) != "1":
+            raise ActionFailedError(f"set_{property_id}", self.mac or "", response)
 
     async def _get_device_info(self: _HasContext) -> Dict[str, Any]:
         """Get detailed information about this device."""
@@ -204,16 +219,34 @@ class BatteryDeviceMixin:
         return self.device_params.get("battery")
 
 
+class _HasContextAndMainApi(Protocol):
+    """Protocol for classes that have _get_context and _run_action."""
+
+    mac: Optional[str]
+    product_model: Optional[str]
+
+    def _get_context(self) -> WyzeApiContext: ...
+    async def _run_action(self, action: RunActionRequestActionKey) -> None: ...
+
+
 class SwitchableDeviceMixin(MainApiMixin):
     """Mixin for devices that can be turned on/off. Requires MainApiMixin."""
 
-    async def turn_on(self: _HasContext) -> bool:
-        """Turn on the device."""
-        return await self._run_action(RunActionRequestActionKey.POWER_ON)
+    async def turn_on(self: _HasContextAndMainApi) -> None:
+        """
+        Turn on the device.
 
-    async def turn_off(self: _HasContext) -> bool:
-        """Turn off the device."""
-        return await self._run_action(RunActionRequestActionKey.POWER_OFF)
+        :raises ActionFailedError: If the action fails.
+        """
+        await self._run_action(RunActionRequestActionKey.POWER_ON)
+
+    async def turn_off(self: _HasContextAndMainApi) -> None:
+        """
+        Turn off the device.
+
+        :raises ActionFailedError: If the action fails.
+        """
+        await self._run_action(RunActionRequestActionKey.POWER_OFF)
 
 
 class WyzeDevice(MainApiMixin):

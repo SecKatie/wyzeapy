@@ -1,6 +1,8 @@
 """Tests for the Wyzeapy wrapper."""
 
 import hashlib
+from unittest.mock import AsyncMock, MagicMock
+
 import pytest
 
 from wyzeapy import (
@@ -19,6 +21,7 @@ from wyzeapy import (
 )
 from wyzeapy.utils import hash_password
 from wyzeapy.wyze_api_client.types import UNSET
+from wyzeapy.context import WyzeApiContext
 
 
 class TestHashPassword:
@@ -142,6 +145,41 @@ class TestWyzeapyCommonParams:
 
         with pytest.raises(NotAuthenticatedError):
             wyze._common_params()
+
+
+@pytest.mark.asyncio
+async def test_context_helpers_validate_token():
+    """Context async helpers should validate token before returning."""
+    token = Token(access_token="access", refresh_token="refresh")
+
+    ensure_token_valid = AsyncMock()
+    main_client = MagicMock()
+    platform_client = MagicMock()
+    app_client = MagicMock()
+    lock_client = MagicMock()
+    devicemgmt_client = MagicMock()
+
+    ctx = WyzeApiContext(
+        phone_id="test-phone",
+        get_token=lambda: token,
+        ensure_token_valid=ensure_token_valid,
+        get_main_client=lambda: main_client,
+        get_platform_client=lambda: platform_client,
+        get_app_client=lambda: app_client,
+        get_lock_client=lambda: lock_client,
+        get_devicemgmt_client=lambda: devicemgmt_client,
+        olive_create_signature=lambda *_: "sig",
+        ford_create_signature=lambda *_: "sig",
+        build_common_params=lambda: {"access_token": token.access_token},
+    )
+
+    assert await ctx.get_access_token() == "access"
+    assert await ctx.main_client() is main_client
+    assert await ctx.platform_client() is platform_client
+    assert await ctx.app_client() is app_client
+    assert await ctx.lock_client() is lock_client
+    assert await ctx.devicemgmt_client() is devicemgmt_client
+    assert ensure_token_valid.await_count == 6
 
 
 @pytest.mark.asyncio

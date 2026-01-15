@@ -6,6 +6,7 @@ This module provides a high-level async interface for interacting with Wyze smar
 
 from __future__ import annotations
 
+import asyncio
 import time
 import uuid
 from collections.abc import Awaitable, Callable
@@ -13,7 +14,16 @@ from typing import Any
 
 from .wyze_api_client.api.user import get_user_profile
 
-from .devices import create_device, WyzeDevice
+from .devices import (
+    create_device,
+    WyzeDevice,
+    WyzeCamera,
+    WyzeLight,
+    WyzeLock,
+    WyzePlug,
+    WyzeThermostat,
+    WyzeSensor,
+)
 from .models import (
     Token,
     WyzeUser,
@@ -112,8 +122,13 @@ class Wyzeapy:
         self._tfa_callback: TwoFactorCallback | None = tfa_callback
 
         self._token: Token | None = None
+        self._token_refresh_lock: asyncio.Lock = asyncio.Lock()
         self._auth_client: Client | None = None
         self._main_client: Client | None = None
+        self._platform_client: AuthenticatedClient | None = None
+        self._app_client: AuthenticatedClient | None = None
+        self._lock_client: Client | None = None
+        self._devicemgmt_client: AuthenticatedClient | None = None
         self._hms: WyzeHMS | None = None
 
     @property
@@ -163,12 +178,23 @@ class Wyzeapy:
 
     async def close(self) -> None:
         """Close HTTP clients and clean up resources."""
-        if self._auth_client:
-            await self._auth_client.get_async_httpx_client().aclose()
-            self._auth_client = None
-        if self._main_client:
-            await self._main_client.get_async_httpx_client().aclose()
-            self._main_client = None
+        clients: list[Client | AuthenticatedClient | None] = [
+            self._auth_client,
+            self._main_client,
+            self._platform_client,
+            self._app_client,
+            self._lock_client,
+            self._devicemgmt_client,
+        ]
+        for client in clients:
+            if client is not None:
+                await client.get_async_httpx_client().aclose()
+        self._auth_client = None
+        self._main_client = None
+        self._platform_client = None
+        self._app_client = None
+        self._lock_client = None
+        self._devicemgmt_client = None
 
     async def __aenter__(self) -> "Wyzeapy":
         """Login and return self."""
@@ -189,36 +215,44 @@ class Wyzeapy:
             self._main_client = Client(base_url=MAIN_API_SERVER)
         return self._main_client
 
-    def _create_platform_client(self) -> AuthenticatedClient:
-        """Create a new authenticated client for platform service API."""
-        return AuthenticatedClient(
-            base_url=PLATFORM_SERVICE_URL,
-            token=self._get_token().access_token,
-            prefix="",
-            auth_header_name="access_token",
-        )
+    def _get_platform_client(self) -> AuthenticatedClient:
+        """Get persistent authenticated client for platform service API."""
+        if self._platform_client is None:
+            self._platform_client = AuthenticatedClient(
+                base_url=PLATFORM_SERVICE_URL,
+                token=self._get_token().access_token,
+                prefix="",
+                auth_header_name="access_token",
+            )
+        return self._platform_client
 
-    def _create_app_client(self) -> AuthenticatedClient:
-        """Create a new authenticated client for app API."""
-        return AuthenticatedClient(
-            base_url=APP_API_SERVER,
-            token=self._get_token().access_token,
-            prefix="",
-            auth_header_name="Access_token",
-        )
+    def _get_app_client(self) -> AuthenticatedClient:
+        """Get persistent authenticated client for app API."""
+        if self._app_client is None:
+            self._app_client = AuthenticatedClient(
+                base_url=APP_API_SERVER,
+                token=self._get_token().access_token,
+                prefix="",
+                auth_header_name="Access_token",
+            )
+        return self._app_client
 
-    def _create_lock_client(self) -> Client:
-        """Create a new client for lock API."""
-        return Client(base_url=LOCK_API_SERVER)
+    def _get_lock_client(self) -> Client:
+        """Get persistent client for lock API."""
+        if self._lock_client is None:
+            self._lock_client = Client(base_url=LOCK_API_SERVER)
+        return self._lock_client
 
-    def _create_devicemgmt_client(self) -> AuthenticatedClient:
-        """Create a new authenticated client for device management API."""
-        return AuthenticatedClient(
-            base_url=DEVICEMGMT_SERVICE_URL,
-            token=self._get_token().access_token,
-            prefix="",
-            auth_header_name="access_token",
-        )
+    def _get_devicemgmt_client(self) -> AuthenticatedClient:
+        """Get persistent authenticated client for device management API."""
+        if self._devicemgmt_client is None:
+            self._devicemgmt_client = AuthenticatedClient(
+                base_url=DEVICEMGMT_SERVICE_URL,
+                token=self._get_token().access_token,
+                prefix="",
+                auth_header_name="access_token",
+            )
+        return self._devicemgmt_client
 
     def get_context(self) -> WyzeApiContext:
         """
@@ -235,10 +269,10 @@ class Wyzeapy:
             get_token=self._get_token,
             ensure_token_valid=self._ensure_token_valid,
             get_main_client=self._get_main_client,
-            create_platform_client=self._create_platform_client,
-            create_app_client=self._create_app_client,
-            create_lock_client=self._create_lock_client,
-            create_devicemgmt_client=self._create_devicemgmt_client,
+            get_platform_client=self._get_platform_client,
+            get_app_client=self._get_app_client,
+            get_lock_client=self._get_lock_client,
+            get_devicemgmt_client=self._get_devicemgmt_client,
             olive_create_signature=olive_create_signature,
             ford_create_signature=ford_create_signature,
             build_common_params=self._common_params,
@@ -388,7 +422,23 @@ class Wyzeapy:
             access_token=response.data.access_token,
             refresh_token=response.data.refresh_token,
         )
+
+        # Invalidate clients that have stale token baked into headers
+        await self._invalidate_authenticated_clients()
+
         return self._token
+
+    async def _invalidate_authenticated_clients(self) -> None:
+        """Close and reset authenticated clients that have stale tokens."""
+        if self._platform_client is not None:
+            await self._platform_client.get_async_httpx_client().aclose()
+            self._platform_client = None
+        if self._app_client is not None:
+            await self._app_client.get_async_httpx_client().aclose()
+            self._app_client = None
+        if self._devicemgmt_client is not None:
+            await self._devicemgmt_client.get_async_httpx_client().aclose()
+            self._devicemgmt_client = None
 
     async def _ensure_token_valid(self) -> None:
         """Check if token needs refresh and refresh if necessary."""
@@ -396,7 +446,10 @@ class Wyzeapy:
             raise NotAuthenticatedError("Not authenticated")
 
         if self._token.should_refresh:
-            _ = await self._refresh_token()
+            async with self._token_refresh_lock:
+                # Double-check after acquiring lock (another task may have refreshed)
+                if self._token.should_refresh:
+                    await self._refresh_token()
 
     def _common_params(self) -> dict[str, Any]:
         """Build common request parameters."""
@@ -430,12 +483,27 @@ class Wyzeapy:
             self._hms = WyzeHMS(self)
         return self._hms
 
-    async def list_devices(self) -> list[WyzeDevice]:
+    async def list_devices(
+        self, device_type: type[WyzeDevice] | None = None
+    ) -> list[WyzeDevice]:
         """
-        Get all devices associated with the account.
+        Get devices associated with the account, optionally filtered by type.
 
-        :returns: List of Device objects with control methods available
+        :param device_type: Optional device class to filter by (e.g., WyzeLight, WyzeLock).
+        :type device_type: type[WyzeDevice] | None
+        :returns: List of Device objects with control methods available.
         :rtype: list[WyzeDevice]
+
+        Example::
+
+            # Get all devices
+            devices = await wyze.list_devices()
+
+            # Get only lights
+            lights = await wyze.list_devices(WyzeLight)
+
+            # Get only locks
+            locks = await wyze.list_devices(WyzeLock)
         """
         await self._ensure_token_valid()
 
@@ -449,9 +517,74 @@ class Wyzeapy:
         if response is None or isinstance(response.data, Unset):
             return []
 
-        return [
+        devices = [
             create_device(device, self) for device in response.data.device_list or []
         ]
+
+        if device_type is not None:
+            devices = [d for d in devices if isinstance(d, device_type)]
+
+        return devices
+
+    async def get_cameras(self) -> list[WyzeCamera]:
+        """
+        Get all camera devices.
+
+        :returns: List of WyzeCamera objects.
+        :rtype: list[WyzeCamera]
+        """
+        devices = await self.list_devices(WyzeCamera)
+        return [d for d in devices if isinstance(d, WyzeCamera)]
+
+    async def get_lights(self) -> list[WyzeLight]:
+        """
+        Get all light devices (bulbs, light strips, mesh lights).
+
+        :returns: List of WyzeLight objects.
+        :rtype: list[WyzeLight]
+        """
+        devices = await self.list_devices(WyzeLight)
+        return [d for d in devices if isinstance(d, WyzeLight)]
+
+    async def get_locks(self) -> list[WyzeLock]:
+        """
+        Get all lock devices.
+
+        :returns: List of WyzeLock objects.
+        :rtype: list[WyzeLock]
+        """
+        devices = await self.list_devices(WyzeLock)
+        return [d for d in devices if isinstance(d, WyzeLock)]
+
+    async def get_plugs(self) -> list[WyzePlug]:
+        """
+        Get all plug devices.
+
+        :returns: List of WyzePlug objects.
+        :rtype: list[WyzePlug]
+        """
+        devices = await self.list_devices(WyzePlug)
+        return [d for d in devices if isinstance(d, WyzePlug)]
+
+    async def get_thermostats(self) -> list[WyzeThermostat]:
+        """
+        Get all thermostat devices.
+
+        :returns: List of WyzeThermostat objects.
+        :rtype: list[WyzeThermostat]
+        """
+        devices = await self.list_devices(WyzeThermostat)
+        return [d for d in devices if isinstance(d, WyzeThermostat)]
+
+    async def get_sensors(self) -> list[WyzeSensor]:
+        """
+        Get all sensor devices (contact, motion, leak sensors).
+
+        :returns: List of WyzeSensor objects.
+        :rtype: list[WyzeSensor]
+        """
+        devices = await self.list_devices(WyzeSensor)
+        return [d for d in devices if isinstance(d, WyzeSensor)]
 
     async def get_user(self) -> WyzeUser:
         """
@@ -467,32 +600,22 @@ class Wyzeapy:
         payload = {"nonce": nonce}
         signature = olive_create_signature(payload, access_token)
 
-        # Create authenticated client for platform service
-        platform_client = AuthenticatedClient(
-            base_url=PLATFORM_SERVICE_URL,
-            token=access_token,
-            prefix="",  # No prefix, just the raw token
-            auth_header_name="access_token",
+        platform_client = self._get_platform_client()
+
+        response = await get_user_profile.asyncio(
+            client=platform_client,
+            nonce=nonce,
+            appid=OLIVE_APP_ID,
+            appinfo=APP_INFO,
+            phoneid=self._phone_id,
+            signature2=signature,
         )
 
-        try:
-            response = await get_user_profile.asyncio(
-                client=platform_client,
-                nonce=nonce,
-                appid=OLIVE_APP_ID,
-                appinfo=APP_INFO,
-                phoneid=self._phone_id,
-                signature2=signature,
-            )
+        if response is None or isinstance(response.data, Unset):
+            return WyzeUser()
 
-            if response is None or isinstance(response.data, Unset):
-                return WyzeUser()
-
-            # Convert response data to dict to capture all properties
-            data_dict = response.data.to_dict()
-            return WyzeUser.from_response(data_dict)
-        finally:
-            await platform_client.get_async_httpx_client().aclose()
+        data_dict = response.data.to_dict()
+        return WyzeUser.from_response(data_dict)
 
     async def get_home_favorites(self, home_id: str) -> HomeFavorites:
         """
@@ -526,32 +649,22 @@ class Wyzeapy:
             nonce=nonce,
         )
 
-        # Create signature from body dict
         body_dict = body.to_dict()
         signature = olive_create_signature(body_dict, access_token)
 
-        app_client = AuthenticatedClient(
-            base_url=APP_API_SERVER,
-            token=access_token,
-            prefix="",
-            auth_header_name="Access_token",
+        app_client = self._get_app_client()
+
+        response = await get_home_favorites.asyncio(
+            client=app_client,
+            body=body,
+            appid=OLIVE_APP_ID,
+            appinfo=APP_INFO,
+            phoneid=self._phone_id,
+            signature2=signature,
         )
 
-        try:
-            response = await get_home_favorites.asyncio(
-                client=app_client,
-                body=body,
-                appid=OLIVE_APP_ID,
-                appinfo=APP_INFO,
-                phoneid=self._phone_id,
-                signature2=signature,
-            )
+        if response is None or isinstance(response.data, Unset):
+            return HomeFavorites(home_id="", home_name="", devices=[], raw={})
 
-            if response is None or isinstance(response.data, Unset):
-                return HomeFavorites(home_id="", home_name="", devices=[], raw={})
-
-            # Convert response data to dict for our model
-            data_dict = response.data.to_dict()
-            return HomeFavorites.from_api_response(data_dict)
-        finally:
-            await app_client.get_async_httpx_client().aclose()
+        data_dict = response.data.to_dict()
+        return HomeFavorites.from_api_response(data_dict)

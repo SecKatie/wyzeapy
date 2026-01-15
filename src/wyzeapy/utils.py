@@ -5,7 +5,7 @@ import hmac
 import urllib.parse
 from typing import Any, TypeVar, overload
 
-from .wyze_api_client.types import UNSET, Unset
+from .wyze_api_client.types import Unset
 from .const import (
     FORD_APP_KEY,
     FORD_APP_SECRET,
@@ -34,23 +34,23 @@ __all__ = [
     "DEVICEMGMT_SERVICE_URL",
 ]
 
-T = TypeVar("T")
 
-
-def is_set(value: T | Unset) -> bool:
+def is_set(value: object | Unset) -> bool:
     """Check if a value is set (not Unset)."""
     return not isinstance(value, Unset)
 
 
 @overload
-def get_or_default(value: T | Unset, default: T) -> T: ...
+def get_or_default(value: object | Unset, default: object) -> object: ...
 
 
 @overload
-def get_or_default(value: T | Unset, default: None = None) -> T | None: ...
+def get_or_default(value: object | Unset, default: None = None) -> object | None: ...
 
 
-def get_or_default(value: T | Unset, default: T | None = None) -> T | None:
+def get_or_default(
+    value: object | Unset, default: object | None = None
+) -> object | None:
     """
     Get the value if set, otherwise return the default.
 
@@ -70,7 +70,9 @@ def hash_password(password: str) -> str:
     return password
 
 
-def ford_create_signature(url_path: str, request_method: str, payload: dict) -> str:
+def ford_create_signature(
+    url_path: str, request_method: str, payload: dict[str, object]
+) -> str:
     """Create signature for lock API requests."""
     string_buf = request_method + url_path
     for entry in sorted(payload.keys()):

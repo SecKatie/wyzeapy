@@ -57,6 +57,11 @@ exclude = [
   "src/wyzeapy/tests/",           # Test files
 ]
 
+[tool.basedpyright]
+typeCheckingMode = "basic"
+reportAny = false
+
+
 [dependency-groups]
 dev = [
     "basedpyright>=1.37.1",

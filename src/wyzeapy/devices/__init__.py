@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Type
+from typing import TYPE_CHECKING
 
 from ..wyze_api_client.models import Device
 from ..wyze_api_client.types import UNSET
@@ -18,14 +18,14 @@ from .base import (
     SwitchableDeviceMixin,
 )
 from .camera import WyzeCamera
-from .lock import WyzeLock
 from .gateway import WyzeGateway
-from .sensors import WyzeSensor, WyzeContactSensor, WyzeMotionSensor, WyzeLeakSensor
+from .irrigation import WyzeIrrigation
 from .light import WyzeLight
+from .lock import WyzeLock
 from .plug import WyzePlug
+from .sensors import WyzeSensor, WyzeContactSensor, WyzeMotionSensor, WyzeLeakSensor
 from .thermostat import WyzeThermostat
 from .wall_switch import WyzeWallSwitch
-from .irrigation import WyzeIrrigation
 
 if TYPE_CHECKING:
     from ..wyzeapy import Wyzeapy
@@ -52,7 +52,7 @@ __all__ = [
 ]
 
 # Mapping from product type to device class
-_DEVICE_TYPE_MAP: dict[str, Type[WyzeDevice]] = {
+_DEVICE_TYPE_MAP: dict[str, type[WyzeDevice]] = {
     DeviceType.CAMERA.value: WyzeCamera,
     DeviceType.LOCK.value: WyzeLock,
     DeviceType.GATEWAY.value: WyzeGateway,
@@ -72,7 +72,7 @@ _DEVICE_TYPE_MAP: dict[str, Type[WyzeDevice]] = {
 }
 
 
-def create_device(device: Device, client: Wyzeapy | None = None) -> WyzeDevice:
+def create_device(device: Device, client: "Wyzeapy | None" = None) -> WyzeDevice:
     """
     Create the appropriate WyzeDevice subclass based on product type.
 
@@ -91,8 +91,10 @@ def create_device(device: Device, client: Wyzeapy | None = None) -> WyzeDevice:
     if product_type:
         nickname = device.nickname if device.nickname is not UNSET else "unknown"
         _logger.warning(
-            "Unknown device type '%s' for device '%s' (mac=%s). "
-            "Falling back to base WyzeDevice. Consider reporting this device type.",
+            (
+                "Unknown device type '%s' for device '%s' (mac=%s). "
+                "Falling back to base WyzeDevice. Consider reporting this device type."
+            ),
             product_type,
             nickname,
             device.mac if device.mac is not UNSET else "unknown",

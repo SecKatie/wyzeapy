@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Awaitable
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol, override
 
 from ..wyze_api_client.models import (
     Device,
@@ -21,7 +20,7 @@ from ..wyze_api_client.api.devices import (
     get_device_info,
     get_property_list,
 )
-from ..wyze_api_client.types import UNSET, Unset
+from ..wyze_api_client.types import Unset
 from ..exceptions import ActionFailedError, ApiRequestError
 
 if TYPE_CHECKING:
@@ -267,34 +266,54 @@ class SwitchableDeviceMixin(MainApiMixin):
 class WyzeDevice(MainApiMixin):
     """Base wrapper for Wyze devices."""
 
-    def __init__(self, device: Device, client: Wyzeapy | None = None):
-        self._device = device
-        self._client: Wyzeapy | None = client
+    def __init__(self, device: Device, client: "Wyzeapy | None" = None):
+        self._device: Device = device
+        self._client: "Wyzeapy | None" = client
         self._context: WyzeApiContext | None = None
+
+        nickname_val = device.nickname
         self.nickname: str | None = (
-            device.nickname if device.nickname is not UNSET else None
+            nickname_val if not isinstance(nickname_val, Unset) else None
         )
-        self.mac: str | None = device.mac if device.mac is not UNSET else None
+
+        mac_val = device.mac
+        self.mac: str | None = mac_val if not isinstance(mac_val, Unset) else None
+
+        product_model_val = device.product_model
         self.product_model: str | None = (
-            device.product_model if device.product_model is not UNSET else None
+            product_model_val if not isinstance(product_model_val, Unset) else None
         )
+
+        product_type_val = device.product_type
         self.product_type: str | None = (
-            device.product_type if device.product_type is not UNSET else None
+            product_type_val if not isinstance(product_type_val, Unset) else None
         )
+
+        firmware_ver_val = device.firmware_ver
         self.firmware_ver: str | None = (
-            device.firmware_ver if device.firmware_ver is not UNSET else None
+            firmware_ver_val if not isinstance(firmware_ver_val, Unset) else None
         )
+
+        hardware_ver_val = device.hardware_ver
         self.hardware_ver: str | None = (
-            device.hardware_ver if device.hardware_ver is not UNSET else None
+            hardware_ver_val if not isinstance(hardware_ver_val, Unset) else None
         )
+
+        parent_device_mac_val = device.parent_device_mac
         self.parent_device_mac: str | None = (
-            device.parent_device_mac if device.parent_device_mac is not UNSET else None
+            parent_device_mac_val
+            if not isinstance(parent_device_mac_val, Unset)
+            else None
         )
+
+        conn_state_val = device.conn_state
         self.available: bool = (
-            device.conn_state == 1 if device.conn_state is not UNSET else False
+            conn_state_val == 1 if not isinstance(conn_state_val, Unset) else False
         )
+
+        push_switch_val = device.push_switch
         self.push_notifications_enabled: bool = (
-            device.push_switch != 2 if device.push_switch is not UNSET else True
+            push_switch_val != 2 if not isinstance(push_switch_val, Unset) else True
         )
 
     def _get_context(self) -> WyzeApiContext:
@@ -305,8 +324,10 @@ class WyzeDevice(MainApiMixin):
             self._context = self._client.get_context()
             return self._context
         raise RuntimeError(
-            "Device not connected to API client. "
-            "Use devices from Wyzeapy.list_devices() for control methods."
+            (
+                "Device not connected to API client. "
+                "Use devices from Wyzeapy.list_devices() for control methods."
+            )
         )
 
     @property
@@ -332,6 +353,7 @@ class WyzeDevice(MainApiMixin):
         """Access the underlying Device model."""
         return self._device
 
+    @override
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(nickname={self.nickname!r}, mac={self.mac!r}, type={self.type.value})"
 

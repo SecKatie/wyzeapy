@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import time
+from typing import TYPE_CHECKING
 
 from ..models import HMSMode, HMSStatus
 from ..utils import olive_create_signature
@@ -17,6 +18,9 @@ from ..wyze_api_client.models.hms_profile_active_request_item_active import (
     HMSProfileActiveRequestItemActive,
 )
 from ..wyze_api_client.types import Unset
+
+if TYPE_CHECKING:
+    from ..wyzeapy import Wyzeapy
 
 
 class WyzeHMS:
@@ -37,7 +41,7 @@ class WyzeHMS:
     """
 
     def __init__(self, client: "Wyzeapy"):
-        self._client = client
+        self._client: "Wyzeapy" = client
 
     async def get_status(self, hms_id: str) -> HMSStatus:
         """
@@ -116,11 +120,43 @@ class WyzeHMS:
             ]
 
         # Create signature for the body - we know these are set since we just created them
+        if mode == HMSMode.DISARMED:
+            # Disarmed means setting active=0 (disabled)
+            body = [
+                HMSProfileActiveRequestItem(
+                    state=HMSProfileActiveRequestItemState.HOME,
+                    active=HMSProfileActiveRequestItemActive.VALUE_0,
+                ),
+            ]
+        else:
+            # Home or Away mode with active=1 (enabled)
+            state = (
+                HMSProfileActiveRequestItemState.HOME
+                if mode == HMSMode.HOME
+                else HMSProfileActiveRequestItemState.AWAY
+            )
+            body = [
+                HMSProfileActiveRequestItem(
+                    state=state,
+                    active=HMSProfileActiveRequestItemActive.VALUE_1,
+                ),
+            ]
+
+        # Create signature for body - we know these are set since we just created them
+        # Extract state value from enum (these are not Unset since we just created them)
+        state_str = "home"
+        active_int = 1
         state_val = body[0].state
         active_val = body[0].active
-        # Type narrowing: hasattr check ensures we only access .value on enum types
-        state_str = state_val.value if hasattr(state_val, "value") else str(state_val)
-        active_int = active_val.value if hasattr(active_val, "value") else 1
+
+        if isinstance(state_val, HMSProfileActiveRequestItemState):
+            state_str = state_val.value
+        elif not isinstance(state_val, Unset):
+            state_str = str(state_val)
+
+        if isinstance(active_val, HMSProfileActiveRequestItemActive):
+            active_int = active_val.value
+
         body_dict = {
             "state": state_str,
             "active": active_int,

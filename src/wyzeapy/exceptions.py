@@ -1,7 +1,5 @@
 """Wyzeapy exceptions."""
 
-from typing import Any
-
 
 class WyzeapyError(Exception):
     """Base exception for all Wyzeapy errors."""
@@ -23,7 +21,9 @@ class TwoFactorAuthRequired(AuthenticationError):
     :type auth_type: str
     """
 
-    def __init__(self, auth_type: str):
+    auth_type: str
+
+    def __init__(self, auth_type: str) -> None:
         self.auth_type = auth_type
         super().__init__(f"Two-factor authentication ({auth_type}) required")
 
@@ -70,7 +70,13 @@ class ActionFailedError(DeviceError):
     :type response: Any
     """
 
-    def __init__(self, action: str, device_mac: str, response: Any | None = None):
+    action: str
+    device_mac: str
+    response: object | None
+
+    def __init__(
+        self, action: str, device_mac: str, response: object | None = None
+    ) -> None:
         self.action = action
         self.device_mac = device_mac
         self.response = response
@@ -87,7 +93,10 @@ class ApiError(WyzeapyError):
     :type message: str
     """
 
-    def __init__(self, code: str, message: str = ""):
+    code: str
+    message: str
+
+    def __init__(self, code: str, message: str = "") -> None:
         self.code = code
         self.message = message
         super().__init__(
@@ -109,7 +118,10 @@ class ApiRequestError(WyzeapyError):
     :type details: str
     """
 
-    def __init__(self, operation: str, details: str = ""):
+    operation: str
+    details: str
+
+    def __init__(self, operation: str, details: str = "") -> None:
         self.operation = operation
         self.details = details
         msg = f"API request failed for '{operation}'"

@@ -10,20 +10,10 @@ import asyncio
 import time
 import uuid
 from collections.abc import Awaitable, Callable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from .wyze_api_client.api.user import get_user_profile
 
-from .devices import (
-    create_device,
-    WyzeDevice,
-    WyzeCamera,
-    WyzeLight,
-    WyzeLock,
-    WyzePlug,
-    WyzeThermostat,
-    WyzeSensor,
-)
 from .models import (
     Token,
     WyzeUser,
@@ -38,6 +28,17 @@ from .exceptions import (
     NotAuthenticatedError,
     ApiRequestError,
 )
+
+if TYPE_CHECKING:
+    from .devices import (
+        WyzeDevice,
+        WyzeCamera,
+        WyzeLight,
+        WyzeLock,
+        WyzePlug,
+        WyzeThermostat,
+        WyzeSensor,
+    )
 from .utils import hash_password, ford_create_signature, olive_create_signature
 from .const import (
     AUTH_SERVER,
@@ -506,6 +507,8 @@ class Wyzeapy:
             # Get only locks
             locks = await wyze.list_devices(WyzeLock)
         """
+        from .devices import create_device
+
         await self._ensure_token_valid()
 
         client = self._get_main_client()
@@ -537,6 +540,8 @@ class Wyzeapy:
         :returns: List of WyzeCamera objects.
         :rtype: list[WyzeCamera]
         """
+        from .devices import WyzeCamera
+
         devices = await self.list_devices(WyzeCamera)
         return [d for d in devices if isinstance(d, WyzeCamera)]
 
@@ -547,6 +552,8 @@ class Wyzeapy:
         :returns: List of WyzeLight objects.
         :rtype: list[WyzeLight]
         """
+        from .devices import WyzeLight
+
         devices = await self.list_devices(WyzeLight)
         return [d for d in devices if isinstance(d, WyzeLight)]
 
@@ -557,6 +564,8 @@ class Wyzeapy:
         :returns: List of WyzeLock objects.
         :rtype: list[WyzeLock]
         """
+        from .devices import WyzeLock
+
         devices = await self.list_devices(WyzeLock)
         return [d for d in devices if isinstance(d, WyzeLock)]
 
@@ -567,6 +576,8 @@ class Wyzeapy:
         :returns: List of WyzePlug objects.
         :rtype: list[WyzePlug]
         """
+        from .devices import WyzePlug
+
         devices = await self.list_devices(WyzePlug)
         return [d for d in devices if isinstance(d, WyzePlug)]
 
@@ -577,6 +588,8 @@ class Wyzeapy:
         :returns: List of WyzeThermostat objects.
         :rtype: list[WyzeThermostat]
         """
+        from .devices import WyzeThermostat
+
         devices = await self.list_devices(WyzeThermostat)
         return [d for d in devices if isinstance(d, WyzeThermostat)]
 
@@ -587,6 +600,8 @@ class Wyzeapy:
         :returns: List of WyzeSensor objects.
         :rtype: list[WyzeSensor]
         """
+        from .devices import WyzeSensor
+
         devices = await self.list_devices(WyzeSensor)
         return [d for d in devices if isinstance(d, WyzeSensor)]
 

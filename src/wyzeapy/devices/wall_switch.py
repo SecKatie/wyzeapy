@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Optional
-
 from .base import WyzeDevice, SwitchableDeviceMixin
 
 
@@ -16,6 +14,6 @@ class WyzeWallSwitch(WyzeDevice, SwitchableDeviceMixin):
         return self.device_params.get("switch-power", "off") == "on"
 
     @property
-    def iot_state(self) -> Optional[str]:
+    def iot_state(self) -> str | None:
         """IoT connection state."""
         return self.device_params.get("iot_state")

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Dict, Optional, Type
+from typing import TYPE_CHECKING, Type
 
 from ..wyze_api_client.models import Device
 from ..wyze_api_client.types import UNSET
@@ -52,7 +52,7 @@ __all__ = [
 ]
 
 # Mapping from product type to device class
-_DEVICE_TYPE_MAP: Dict[str, Type[WyzeDevice]] = {
+_DEVICE_TYPE_MAP: dict[str, Type[WyzeDevice]] = {
     DeviceType.CAMERA.value: WyzeCamera,
     DeviceType.LOCK.value: WyzeLock,
     DeviceType.GATEWAY.value: WyzeGateway,
@@ -72,7 +72,7 @@ _DEVICE_TYPE_MAP: Dict[str, Type[WyzeDevice]] = {
 }
 
 
-def create_device(device: Device, client: Optional[Wyzeapy] = None) -> WyzeDevice:
+def create_device(device: Device, client: Wyzeapy | None = None) -> WyzeDevice:
     """
     Create the appropriate WyzeDevice subclass based on product type.
 

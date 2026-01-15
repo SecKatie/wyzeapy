@@ -59,5 +59,6 @@ exclude = [
 
 [dependency-groups]
 dev = [
+    "basedpyright>=1.37.1",
     "twine>=6.2.0",
 ]

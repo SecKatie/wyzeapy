@@ -3,7 +3,7 @@
 import hashlib
 import hmac
 import urllib.parse
-from typing import Any, Dict, TypeVar, Union, overload
+from typing import Any, TypeVar, overload
 
 from .wyze_api_client.types import UNSET, Unset
 from .const import (
@@ -81,18 +81,13 @@ def ford_create_signature(url_path: str, request_method: str, payload: dict) -> 
     return hashlib.md5(urlencoded.encode()).hexdigest()
 
 
-def olive_create_signature(
-    payload: Union[Dict[Any, Any], str], access_token: str
-) -> str:
+def olive_create_signature(payload: dict[str, Any] | str, access_token: str) -> str:
     """
     Create signature for olive (platform service) API requests using HMAC-MD5.
 
     :param payload: The request payload as a dict or raw string.
-    :type payload: Union[Dict[Any, Any], str]
     :param access_token: The access token string for signing.
-    :type access_token: str
     :returns: The computed signature as a hex string.
-    :rtype: str
     """
     if isinstance(payload, dict):
         body = ""

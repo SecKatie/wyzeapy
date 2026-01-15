@@ -1,6 +1,6 @@
 [project]
 name = "wyzeapy"
-version = "0.6.0a1"
+version = "0.6.0a2"
 description = "A library for interacting with Wyze devices"
 authors = [{ name = "Katie Mulliken", email = "katie@mulliken.net" }]
 license = { text = "GPL-3.0-only" }

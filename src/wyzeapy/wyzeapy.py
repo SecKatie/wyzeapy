@@ -114,7 +114,6 @@ class Wyzeapy:
         self._token: Token | None = None
         self._auth_client: Client | None = None
         self._main_client: Client | None = None
-        self._devices: list[WyzeDevice] | None = None
         self._hms: WyzeHMS | None = None
 
     @property
@@ -414,18 +413,6 @@ class Wyzeapy:
         }
 
     @property
-    def devices(self) -> list[WyzeDevice]:
-        """
-        Get cached devices. Returns empty list if not yet fetched.
-
-        Use :meth:`list_devices` to fetch devices from the API.
-
-        :returns: Cached list of WyzeDevice objects.
-        :rtype: list[WyzeDevice]
-        """
-        return self._devices or []
-
-    @property
     def hms(self) -> WyzeHMS:
         """
         Access the Home Monitoring Service (HMS) API.
@@ -443,22 +430,13 @@ class Wyzeapy:
             self._hms = WyzeHMS(self)
         return self._hms
 
-    async def list_devices(self, *, refresh: bool = False) -> list[WyzeDevice]:
+    async def list_devices(self) -> list[WyzeDevice]:
         """
         Get all devices associated with the account.
 
-        Devices are cached after the first fetch. Subsequent calls return
-        the cached list unless ``refresh=True`` is specified.
-
-        :param refresh: If True, fetch fresh data from the API instead of
-                        returning cached devices.
-        :type refresh: bool
         :returns: List of Device objects with control methods available
         :rtype: list[WyzeDevice]
         """
-        if self._devices is not None and not refresh:
-            return self._devices
-
         await self._ensure_token_valid()
 
         client = self._get_main_client()
@@ -469,13 +447,11 @@ class Wyzeapy:
         )
 
         if response is None or isinstance(response.data, Unset):
-            self._devices = []
-            return self._devices
+            return []
 
-        self._devices = [
+        return [
             create_device(device, self) for device in response.data.device_list or []
         ]
-        return self._devices
 
     async def get_user(self) -> WyzeUser:
         """

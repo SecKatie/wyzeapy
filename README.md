@@ -51,9 +51,20 @@ Note: Visit the [Wyze developer console](https://developer-api-console.wyze.com/
 
 ## Thanks to:
 
-- [@shauntarves](https://github.com/shauntarves): for contributing the App ID and Signing Secret
-- [@yoinx](https://github.com/yoinx): for considerable contributions to the project
+ - [@shauntarves](https://github.com/shauntarves): for contributing the App ID and Signing Secret
+ - [@yoinx](https://github.com/yoinx): for considerable contributions to the project
 
+## TODO (High Priority Improvements)
+
+- [x] Add type filtering to `list_devices()` - eliminate common boilerplate for getting specific device types
+- [ ] Improve error messages with recovery guidance - provide actionable hints for authentication and device control failures
+- [ ] Create comprehensive quick start examples - add examples for device control, thermostat, camera events, HMS, and irrigation
+- [x] Add device discovery convenience methods (`wyze.get_lights()`, `wyze.get_locks()`, etc.) - matches mental models from other automation libraries
+- [x] Create `docs/DEVELOPING.md` - documentation on how to add new device types, when to use MainApiMixin vs custom API calls, how to regenerate API client
+- [ ] Add device test utilities/fixtures - create mock Device factories and mock context fixture for testing without real devices
+- [x] Add runtime validation for device type mapping - warn when unknown product types are encountered instead of silently falling back to base `WyzeDevice`
+- [x] Create abstraction for Unset checks - add utility function to reduce repetitive `isinstance(value, Unset)` checks across 12 files
+- [ ] Improve test coverage for device control methods - add unit tests that mock the generated client instead of requiring real devices and credentials
 
 ## License
 

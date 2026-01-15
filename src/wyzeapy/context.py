@@ -28,14 +28,14 @@ class WyzeApiContext:
     :type ensure_token_valid: Callable[[], Awaitable[None]]
     :param get_main_client: Function to get main API client.
     :type get_main_client: Callable[[], Client]
-    :param create_platform_client: Function to create platform API client.
-    :type create_platform_client: Callable[[], AuthenticatedClient]
-    :param create_app_client: Function to create app API client.
-    :type create_app_client: Callable[[], AuthenticatedClient]
-    :param create_lock_client: Function to create lock API client.
-    :type create_lock_client: Callable[[], Client]
-    :param create_devicemgmt_client: Function to create device management API client.
-    :type create_devicemgmt_client: Callable[[], AuthenticatedClient]
+    :param get_platform_client: Function to get platform API client.
+    :type get_platform_client: Callable[[], AuthenticatedClient]
+    :param get_app_client: Function to get app API client.
+    :type get_app_client: Callable[[], AuthenticatedClient]
+    :param get_lock_client: Function to get lock API client.
+    :type get_lock_client: Callable[[], Client]
+    :param get_devicemgmt_client: Function to get device management API client.
+    :type get_devicemgmt_client: Callable[[], AuthenticatedClient]
     :param olive_create_signature: Function to create olive API signatures.
     :type olive_create_signature: Callable[[dict[str, Any] | str, str], str]
     :param ford_create_signature: Function to create lock API signatures.
@@ -53,10 +53,10 @@ class WyzeApiContext:
 
     # HTTP client access
     get_main_client: Callable[[], Client]
-    create_platform_client: Callable[[], AuthenticatedClient]
-    create_app_client: Callable[[], AuthenticatedClient]
-    create_lock_client: Callable[[], Client]
-    create_devicemgmt_client: Callable[[], AuthenticatedClient]
+    get_platform_client: Callable[[], AuthenticatedClient]
+    get_app_client: Callable[[], AuthenticatedClient]
+    get_lock_client: Callable[[], Client]
+    get_devicemgmt_client: Callable[[], AuthenticatedClient]
 
     # Signature utilities
     olive_create_signature: Callable[[dict[str, Any] | str, str], str]

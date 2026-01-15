@@ -22,6 +22,7 @@ from ..wyze_api_client.api.devices import (
 )
 from ..wyze_api_client.types import Unset
 from ..exceptions import ActionFailedError, ApiRequestError
+from ..utils import or_none
 
 if TYPE_CHECKING:
     from ..wyzeapy import Wyzeapy
@@ -74,7 +75,7 @@ class DeviceType(Enum):
 class MainApiMixin:
     """Mixin for devices using the main API (run_action, set_property)."""
 
-    async def _run_action(self: _HasContext, action: RunActionRequestActionKey) -> None:
+    async def run_action(self: _HasContext, action: RunActionRequestActionKey) -> None:
         """
         Execute an action on this device.
 
@@ -271,50 +272,19 @@ class WyzeDevice(MainApiMixin):
         self._client: "Wyzeapy | None" = client
         self._context: WyzeApiContext | None = None
 
-        nickname_val = device.nickname
-        self.nickname: str | None = (
-            nickname_val if not isinstance(nickname_val, Unset) else None
-        )
+        self.nickname = or_none(device.nickname)
+        self.mac = or_none(device.mac)
+        self.product_model = or_none(device.product_model)
+        self.product_type = or_none(device.product_type)
+        self.firmware_ver = or_none(device.firmware_ver)
+        self.hardware_ver = or_none(device.hardware_ver)
+        self.parent_device_mac = or_none(device.parent_device_mac)
 
-        mac_val = device.mac
-        self.mac: str | None = mac_val if not isinstance(mac_val, Unset) else None
+        conn_state = or_none(device.conn_state)
+        self.available = conn_state == 1 if conn_state is not None else False
 
-        product_model_val = device.product_model
-        self.product_model: str | None = (
-            product_model_val if not isinstance(product_model_val, Unset) else None
-        )
-
-        product_type_val = device.product_type
-        self.product_type: str | None = (
-            product_type_val if not isinstance(product_type_val, Unset) else None
-        )
-
-        firmware_ver_val = device.firmware_ver
-        self.firmware_ver: str | None = (
-            firmware_ver_val if not isinstance(firmware_ver_val, Unset) else None
-        )
-
-        hardware_ver_val = device.hardware_ver
-        self.hardware_ver: str | None = (
-            hardware_ver_val if not isinstance(hardware_ver_val, Unset) else None
-        )
-
-        parent_device_mac_val = device.parent_device_mac
-        self.parent_device_mac: str | None = (
-            parent_device_mac_val
-            if not isinstance(parent_device_mac_val, Unset)
-            else None
-        )
-
-        conn_state_val = device.conn_state
-        self.available: bool = (
-            conn_state_val == 1 if not isinstance(conn_state_val, Unset) else False
-        )
-
-        push_switch_val = device.push_switch
-        self.push_notifications_enabled: bool = (
-            push_switch_val != 2 if not isinstance(push_switch_val, Unset) else True
-        )
+        push_switch = or_none(device.push_switch)
+        self.push_notifications_enabled = push_switch != 2 if push_switch is not None else True
 
     def _get_context(self) -> WyzeApiContext:
         """Get API context for making API calls."""

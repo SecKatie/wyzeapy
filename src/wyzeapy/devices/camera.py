@@ -78,7 +78,7 @@ class WyzeCamera(WyzeDevice, WiFiDeviceMixin, SwitchableDeviceMixin):
 
         :raises ActionFailedError: If the action fails.
         """
-        await self._run_action(RunActionRequestActionKey.SIREN_ON)
+        await self.run_action(RunActionRequestActionKey.SIREN_ON)
 
     async def siren_off(self) -> None:
         """
@@ -86,7 +86,7 @@ class WyzeCamera(WyzeDevice, WiFiDeviceMixin, SwitchableDeviceMixin):
 
         :raises ActionFailedError: If the action fails.
         """
-        await self._run_action(RunActionRequestActionKey.SIREN_OFF)
+        await self.run_action(RunActionRequestActionKey.SIREN_OFF)
 
     async def floodlight_on(self) -> None:
         """

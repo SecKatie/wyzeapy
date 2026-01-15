@@ -70,7 +70,7 @@ class WyzeIrrigation(WyzeDevice):
 
         return [
             IrrigationZone.from_api_response(
-                zone.to_dict() if hasattr(zone, "to_dict") else zone
+                data=zone.to_dict() if hasattr(zone, "to_dict") else zone
             )
             for zone in zones_data
         ]

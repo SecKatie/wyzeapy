@@ -6,7 +6,7 @@ import logging
 from typing import TYPE_CHECKING
 
 from ..wyze_api_client.models import Device
-from ..wyze_api_client.types import UNSET
+from ..utils import or_none
 
 _logger = logging.getLogger(__name__)
 
@@ -83,21 +83,20 @@ def create_device(device: Device, client: "Wyzeapy | None" = None) -> WyzeDevice
     Returns:
         A WyzeDevice subclass instance
     """
-    product_type = device.product_type if device.product_type is not UNSET else None
+    product_type = or_none(device.product_type)
 
     if product_type and product_type in _DEVICE_TYPE_MAP:
         return _DEVICE_TYPE_MAP[product_type](device, client)
 
     if product_type:
-        nickname = device.nickname if device.nickname is not UNSET else "unknown"
         _logger.warning(
             (
                 "Unknown device type '%s' for device '%s' (mac=%s). "
                 "Falling back to base WyzeDevice. Consider reporting this device type."
             ),
             product_type,
-            nickname,
-            device.mac if device.mac is not UNSET else "unknown",
+            or_none(device.nickname) or "unknown",
+            or_none(device.mac) or "unknown",
         )
 
     return WyzeDevice(device, client)

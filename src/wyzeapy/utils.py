@@ -3,7 +3,7 @@
 import hashlib
 import hmac
 import urllib.parse
-from typing import Any, TypeVar, overload
+from typing import Any, TypeVar
 
 from .wyze_api_client.types import Unset
 from .const import (
@@ -17,13 +17,14 @@ from .const import (
     DEVICEMGMT_SERVICE_URL,
 )
 
+T = TypeVar("T")
+
 # Re-export for backwards compatibility
 __all__ = [
     "hash_password",
     "ford_create_signature",
     "olive_create_signature",
-    "is_set",
-    "get_or_default",
+    "or_none",
     "FORD_APP_KEY",
     "FORD_APP_SECRET",
     "OLIVE_SIGNING_SECRET",
@@ -35,32 +36,9 @@ __all__ = [
 ]
 
 
-def is_set(value: object | Unset) -> bool:
-    """Check if a value is set (not Unset)."""
-    return not isinstance(value, Unset)
-
-
-@overload
-def get_or_default(value: object | Unset, default: object) -> object: ...
-
-
-@overload
-def get_or_default(value: object | Unset, default: None = None) -> object | None: ...
-
-
-def get_or_default(
-    value: object | Unset, default: object | None = None
-) -> object | None:
-    """
-    Get the value if set, otherwise return the default.
-
-    :param value: A value that may be Unset.
-    :param default: Default value to return if value is Unset.
-    :returns: The value if set, otherwise the default.
-    """
-    if isinstance(value, Unset):
-        return default
-    return value
+def or_none(value: T | Unset) -> T | None:
+    """Return the value if set, or None if Unset."""
+    return None if isinstance(value, Unset) else value
 
 
 def hash_password(password: str) -> str:

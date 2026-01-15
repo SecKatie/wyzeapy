@@ -137,6 +137,19 @@ class Wyzeapy:
         This is a convenience method that creates a client and logs in.
         Note: You should call ``close()`` when done, or use the async context manager instead.
 
+        :param email: Wyze account email.
+        :type email: str
+        :param password: Wyze account password.
+        :type password: str
+        :param key_id: Wyze API key ID.
+        :type key_id: str
+        :param api_key: Wyze API key.
+        :type api_key: str
+        :param tfa_callback: Optional callback for 2FA authentication.
+        :type tfa_callback: TwoFactorCallback | None
+        :returns: Authenticated Wyzeapy client instance.
+        :rtype: Wyzeapy
+
         Example::
 
             wyze = await Wyzeapy.create(email, password, key_id, api_key)
@@ -214,6 +227,9 @@ class Wyzeapy:
 
         Returns a lightweight context object that provides device classes
         with everything they need to make API calls.
+
+        :returns: WyzeApiContext object for device API access.
+        :rtype: WyzeApiContext
         """
         return WyzeApiContext(
             phone_id=self._phone_id,
@@ -402,7 +418,10 @@ class Wyzeapy:
         """
         Get cached devices. Returns empty list if not yet fetched.
 
-        Use `list_devices()` to fetch devices from the API.
+        Use :meth:`list_devices` to fetch devices from the API.
+
+        :returns: Cached list of WyzeDevice objects.
+        :rtype: list[WyzeDevice]
         """
         return self._devices or []
 
@@ -410,6 +429,9 @@ class Wyzeapy:
     def hms(self) -> WyzeHMS:
         """
         Access the Home Monitoring Service (HMS) API.
+
+        :returns: WyzeHMS instance for HMS operations.
+        :rtype: WyzeHMS
 
         Example::
 
@@ -426,14 +448,13 @@ class Wyzeapy:
         Get all devices associated with the account.
 
         Devices are cached after the first fetch. Subsequent calls return
-        the cached list unless `refresh=True` is specified.
+        the cached list unless ``refresh=True`` is specified.
 
-        Args:
-            refresh: If True, fetch fresh data from the API instead of
-                    returning cached devices.
-
-        Returns:
-            List of Device objects with control methods available
+        :param refresh: If True, fetch fresh data from the API instead of
+                        returning cached devices.
+        :type refresh: bool
+        :returns: List of Device objects with control methods available
+        :rtype: list[WyzeDevice]
         """
         if self._devices is not None and not refresh:
             return self._devices
@@ -460,8 +481,8 @@ class Wyzeapy:
         """
         Get the current user's profile.
 
-        Returns:
-            WyzeUser object with profile information
+        :returns: WyzeUser object with profile information
+        :rtype: WyzeUser
         """
         await self._ensure_token_valid()
 
@@ -504,11 +525,10 @@ class Wyzeapy:
         This endpoint returns all devices in the home with their favorite status,
         device category, and other metadata.
 
-        Args:
-            home_id: The home ID to get favorites for.
-
-        Returns:
-            HomeFavorites object containing the device list and home info.
+        :param home_id: The home ID to get favorites for.
+        :type home_id: str
+        :returns: HomeFavorites object containing the device list and home info.
+        :rtype: HomeFavorites
 
         Example::
 
@@ -559,4 +579,3 @@ class Wyzeapy:
             return HomeFavorites.from_api_response(data_dict)
         finally:
             await app_client.get_async_httpx_client().aclose()
-

@@ -14,7 +14,12 @@ class AuthenticationError(WyzeapyError):
 
 
 class TwoFactorAuthRequired(AuthenticationError):
-    """Raised when 2FA is required but no callback provided."""
+    """
+    Raised when 2FA is required but no callback provided.
+
+    :param auth_type: Type of 2FA required (e.g., \"TOTP\" or \"SMS\").
+    :type auth_type: str
+    """
 
     def __init__(self, auth_type: str):
         self.auth_type = auth_type
@@ -52,7 +57,14 @@ class ActionNotSupportedError(DeviceError):
 
 
 class ApiError(WyzeapyError):
-    """Raised when the API returns an error."""
+    """
+    Raised when the API returns an error.
+
+    :param code: API error code.
+    :type code: str
+    :param message: Optional error message.
+    :type message: str
+    """
 
     def __init__(self, code: str, message: str = ""):
         self.code = code

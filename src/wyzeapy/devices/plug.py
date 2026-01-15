@@ -29,12 +29,12 @@ class WyzePlug(WyzeDevice, SwitchableDeviceMixin):
         """
         Get power usage history for this plug.
 
-        Args:
-            start_time: Start timestamp in milliseconds.
-            end_time: End timestamp in milliseconds.
-
-        Returns:
-            List of PlugUsageRecord objects with date and usage data.
+        :param start_time: Start timestamp in milliseconds.
+        :type start_time: int
+        :param end_time: End timestamp in milliseconds.
+        :type end_time: int
+        :returns: List of PlugUsageRecord objects with date and usage data.
+        :rtype: list[PlugUsageRecord]
         """
         from ..models import PlugUsageRecord
 

@@ -47,11 +47,10 @@ class WyzeHMS:
         """
         Get current HMS status.
 
-        Args:
-            hms_id: The HMS system ID.
-
-        Returns:
-            HMSStatus object with current mode and raw API response.
+        :param hms_id: The HMS system ID.
+        :type hms_id: str
+        :returns: HMSStatus object with current mode and raw API response.
+        :rtype: HMSStatus
         """
         await self._client._ensure_token_valid()
 
@@ -96,12 +95,12 @@ class WyzeHMS:
         """
         Set HMS mode.
 
-        Args:
-            hms_id: The HMS system ID.
-            mode: The mode to set (HOME, AWAY, or DISARMED).
-
-        Returns:
-            True if successful, False otherwise.
+        :param hms_id: The HMS system ID.
+        :type hms_id: str
+        :param mode: The mode to set (HOME, AWAY, or DISARMED).
+        :type mode: HMSMode
+        :returns: True if successful, False otherwise.
+        :rtype: bool
         """
         await self._client._ensure_token_valid()
 
@@ -168,10 +167,9 @@ class WyzeHMS:
         """
         Disarm HMS (convenience method).
 
-        Args:
-            hms_id: The HMS system ID.
-
-        Returns:
-            True if successful, False otherwise.
+        :param hms_id: The HMS system ID.
+        :type hms_id: str
+        :returns: True if successful, False otherwise.
+        :rtype: bool
         """
         return await self.set_mode(hms_id, HMSMode.DISARMED)

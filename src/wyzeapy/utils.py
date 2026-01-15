@@ -56,12 +56,12 @@ def olive_create_signature(
     """
     Create signature for olive (platform service) API requests using HMAC-MD5.
 
-    Args:
-        payload: The request payload as a dict or raw string.
-        access_token: The access token string for signing.
-
-    Returns:
-        The computed signature as a hex string.
+    :param payload: The request payload as a dict or raw string.
+    :type payload: Union[Dict[Any, Any], str]
+    :param access_token: The access token string for signing.
+    :type access_token: str
+    :returns: The computed signature as a hex string.
+    :rtype: str
     """
     if isinstance(payload, dict):
         body = ""

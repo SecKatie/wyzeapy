@@ -17,7 +17,6 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
     "sphinx.ext.viewcode",
-    "sphinx.ext.napoleon",
     "sphinx_autodoc_typehints",
 ]
 
@@ -34,11 +33,6 @@ autosummary_generate = True
 
 # Don't show full module path in class/function names
 add_module_names = False
-
-# Napoleon settings (for Google/NumPy style docstrings)
-napoleon_google_docstring = True
-napoleon_numpy_docstring = True
-napoleon_include_init_with_doc = True
 
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]

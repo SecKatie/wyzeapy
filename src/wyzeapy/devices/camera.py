@@ -83,8 +83,8 @@ class WyzeCamera(WyzeDevice, WiFiDeviceMixin, SwitchableDeviceMixin):
         """
         Turn on camera floodlight.
 
-        Returns:
-            True if successful, False otherwise.
+        :returns: True if successful, False otherwise.
+        :rtype: bool
         """
         return await self._set_floodlight(enabled=True)
 
@@ -92,8 +92,8 @@ class WyzeCamera(WyzeDevice, WiFiDeviceMixin, SwitchableDeviceMixin):
         """
         Turn off camera floodlight.
 
-        Returns:
-            True if successful, False otherwise.
+        :returns: True if successful, False otherwise.
+        :rtype: bool
         """
         return await self._set_floodlight(enabled=False)
 
@@ -119,19 +119,19 @@ class WyzeCamera(WyzeDevice, WiFiDeviceMixin, SwitchableDeviceMixin):
 
     async def motion_detection_on(self) -> bool:
         """
-        Enable motion detection on the camera.
+        Enable motion detection on camera.
 
-        Returns:
-            True if successful, False otherwise.
+        :returns: True if successful, False otherwise.
+        :rtype: bool
         """
         return await self._set_motion_detection(enabled=True)
 
     async def motion_detection_off(self) -> bool:
         """
-        Disable motion detection on the camera.
+        Disable motion detection on camera.
 
-        Returns:
-            True if successful, False otherwise.
+        :returns: True if successful, False otherwise.
+        :rtype: bool
         """
         return await self._set_motion_detection(enabled=False)
 
@@ -147,7 +147,9 @@ class WyzeCamera(WyzeDevice, WiFiDeviceMixin, SwitchableDeviceMixin):
         else:
             # For older cameras, set both properties
             result1 = await self._set_property(PropertyID.MOTION_DETECTION, value)
-            result2 = await self._set_property(PropertyID.MOTION_DETECTION_TOGGLE, value)
+            result2 = await self._set_property(
+                PropertyID.MOTION_DETECTION_TOGGLE, value
+            )
             return result1 and result2
 
     async def _run_devicemgmt_action(
@@ -202,13 +204,14 @@ class WyzeCamera(WyzeDevice, WiFiDeviceMixin, SwitchableDeviceMixin):
         """
         Get recent events for this camera.
 
-        Args:
-            count: Maximum number of events to retrieve (default 20).
-            begin_time: Start timestamp in milliseconds (optional).
-            end_time: End timestamp in milliseconds (optional).
-
-        Returns:
-            List of CameraEvent objects.
+        :param count: Maximum number of events to retrieve (default 20).
+        :type count: int
+        :param begin_time: Start timestamp in milliseconds (optional).
+        :type begin_time: Optional[int]
+        :param end_time: End timestamp in milliseconds (optional).
+        :type end_time: Optional[int]
+        :returns: List of CameraEvent objects.
+        :rtype: list[CameraEvent]
         """
         from ..models import CameraEvent
 
@@ -242,4 +245,3 @@ class WyzeCamera(WyzeDevice, WiFiDeviceMixin, SwitchableDeviceMixin):
             CameraEvent.from_api_response(event.to_dict())
             for event in response.data.event_list
         ]
-

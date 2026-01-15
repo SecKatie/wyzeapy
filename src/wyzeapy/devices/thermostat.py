@@ -6,8 +6,14 @@ from typing import TYPE_CHECKING, Optional
 
 from .base import WyzeDevice
 from ..const import OLIVE_APP_ID, APP_INFO
-from ..wyze_api_client.models import SetThermostatIotPropBody, SetThermostatIotPropBodyProps
-from ..wyze_api_client.api.thermostat import get_thermostat_iot_prop, set_thermostat_iot_prop
+from ..wyze_api_client.models import (
+    SetThermostatIotPropBody,
+    SetThermostatIotPropBodyProps,
+)
+from ..wyze_api_client.api.thermostat import (
+    get_thermostat_iot_prop,
+    set_thermostat_iot_prop,
+)
 
 if TYPE_CHECKING:
     from ..models import ThermostatState
@@ -55,8 +61,8 @@ class WyzeThermostat(WyzeDevice):
         """
         Get current thermostat state from the API.
 
-        Returns:
-            ThermostatState object with current temperature, setpoints, and mode.
+        :returns: ThermostatState object with current temperature, setpoints, and mode.
+        :rtype: ThermostatState
         """
         from ..models import ThermostatState
 
@@ -158,48 +164,44 @@ class WyzeThermostat(WyzeDevice):
 
     async def set_cool_setpoint(self, temperature: int) -> bool:
         """
-        Set the cooling setpoint temperature.
+        Set cooling setpoint temperature.
 
-        Args:
-            temperature: The target cooling temperature.
-
-        Returns:
-            True if successful, False otherwise.
+        :param temperature: The target cooling temperature.
+        :type temperature: int
+        :returns: True if successful, False otherwise.
+        :rtype: bool
         """
         return await self._set_properties(cool_setpoint=temperature)
 
     async def set_heat_setpoint(self, temperature: int) -> bool:
         """
-        Set the heating setpoint temperature.
+        Set heating setpoint temperature.
 
-        Args:
-            temperature: The target heating temperature.
-
-        Returns:
-            True if successful, False otherwise.
+        :param temperature: The target heating temperature.
+        :type temperature: int
+        :returns: True if successful, False otherwise.
+        :rtype: bool
         """
         return await self._set_properties(heat_setpoint=temperature)
 
     async def set_hvac_mode(self, mode: str) -> bool:
         """
-        Set the HVAC mode.
+        Set HVAC mode.
 
-        Args:
-            mode: The mode ('off', 'heat', 'cool', 'auto').
-
-        Returns:
-            True if successful, False otherwise.
+        :param mode: The mode ('off', 'heat', 'cool', 'auto').
+        :type mode: str
+        :returns: True if successful, False otherwise.
+        :rtype: bool
         """
         return await self._set_properties(hvac_mode=mode)
 
     async def set_fan_mode(self, mode: str) -> bool:
         """
-        Set the fan mode.
+        Set fan mode.
 
-        Args:
-            mode: The mode ('auto', 'on', 'cycle').
-
-        Returns:
-            True if successful, False otherwise.
+        :param mode: The mode ('auto', 'on', 'cycle').
+        :type mode: str
+        :returns: True if successful, False otherwise.
+        :rtype: bool
         """
         return await self._set_properties(fan_mode=mode)

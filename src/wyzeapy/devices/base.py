@@ -14,7 +14,12 @@ from ..wyze_api_client.models import (
     GetDeviceInfoBody,
     GetPropertyListRequest,
 )
-from ..wyze_api_client.api.devices import run_action, set_property, get_device_info, get_property_list
+from ..wyze_api_client.api.devices import (
+    run_action,
+    set_property,
+    get_device_info,
+    get_property_list,
+)
 from ..wyze_api_client.types import UNSET, Unset
 
 if TYPE_CHECKING:
@@ -286,15 +291,13 @@ class WyzeDevice(MainApiMixin):
         """
         Get detailed device information from the API.
 
-        Fetches the latest device info and returns the raw data dictionary.
+        Fetches latest device info and returns raw data dictionary.
         This can be used to get updated device state that may not be captured
         in the initial device list.
 
-        Returns:
-            Dictionary containing detailed device information.
-
-        Raises:
-            RuntimeError: If the device is not connected to an API client.
+        :returns: Dictionary containing detailed device information.
+        :rtype: Dict[str, Any]
+        :raises RuntimeError: If device is not connected to an API client.
         """
         return await self._get_device_info()
 
@@ -304,17 +307,14 @@ class WyzeDevice(MainApiMixin):
         """
         Get property values for this device.
 
-        Fetches the current property values from the API. Properties represent
+        Fetches current property values from the API. Properties represent
         device state like power status, brightness, color, etc.
 
-        Args:
-            property_ids: Optional list of specific property IDs to fetch.
-                         If None, fetches all properties for the device.
-
-        Returns:
-            Dictionary mapping property ID to property value.
-
-        Raises:
-            RuntimeError: If the device is not connected to an API client.
+        :param property_ids: Optional list of specific property IDs to fetch.
+                          If None, fetches all properties for the device.
+        :type property_ids: Optional[List[str]]
+        :returns: Dictionary mapping property ID to property value.
+        :rtype: Dict[str, str]
+        :raises RuntimeError: If device is not connected to an API client.
         """
         return await self._get_device_properties(property_ids)

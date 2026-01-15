@@ -28,3 +28,15 @@ test-integration:
 # Generate documentation from docstrings
 docs:
     uv run sphinx-build -b html docs docs/_build
+
+# Clean documentation build directory
+clean-docs:
+    rm -rf docs/_build
+
+# Rebuild documentation from scratch
+docs-clean:
+    just clean-docs
+    just docs
+
+docs-open: docs
+    xdg-open docs/_build/index.html

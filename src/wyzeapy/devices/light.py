@@ -35,11 +35,10 @@ class WyzeLight(WyzeDevice, WiFiDeviceMixin, SwitchableDeviceMixin):
         """
         Set brightness level.
 
-        Args:
-            brightness: Brightness level (0-100)
-
-        Returns:
-            True if successful
+        :param brightness: Brightness level (0-100)
+        :type brightness: int
+        :returns: True if successful
+        :rtype: bool
         """
         brightness = max(0, min(100, brightness))
         return await self._set_property(PropertyID.BRIGHTNESS, str(brightness))
@@ -48,11 +47,10 @@ class WyzeLight(WyzeDevice, WiFiDeviceMixin, SwitchableDeviceMixin):
         """
         Set color temperature.
 
-        Args:
-            color_temp: Color temperature in Kelvin (typically 2700-6500)
-
-        Returns:
-            True if successful
+        :param color_temp: Color temperature in Kelvin (typically 2700-6500)
+        :type color_temp: int
+        :returns: True if successful
+        :rtype: bool
         """
         return await self._set_property(PropertyID.COLOR_TEMP, str(color_temp))
 
@@ -60,12 +58,10 @@ class WyzeLight(WyzeDevice, WiFiDeviceMixin, SwitchableDeviceMixin):
         """
         Set color (for color bulbs).
 
-        Args:
-            color: Color as hex string (e.g., "FF0000" for red)
-
-        Returns:
-            True if successful
+        :param color: Color as hex string (e.g., \"FF0000\" for red)
+        :type color: str
+        :returns: True if successful
+        :rtype: bool
         """
-        # Set color mode to color (1) first, then set color
         await self._set_property(PropertyID.COLOR_MODE, "1")
         return await self._set_property(PropertyID.COLOR, color)

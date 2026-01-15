@@ -24,6 +24,14 @@ class Token:
 
     @property
     def should_refresh(self) -> bool:
+        """
+        Check if the token needs to be refreshed.
+
+        Tokens should be refreshed after 23 hours (82800 seconds).
+
+        :returns: True if the token should be refreshed.
+        :rtype: bool
+        """
         return time.time() >= (self.created_at + self.REFRESH_INTERVAL)
 
 
@@ -63,7 +71,14 @@ class WyzeUser:
 
     @classmethod
     def from_response(cls, data: dict[str, Any]) -> "WyzeUser":
-        """Create WyzeUser from API response data."""
+        """
+        Create WyzeUser from API response data.
+
+        :param data: API response data dictionary.
+        :type data: dict[str, Any]
+        :returns: WyzeUser instance populated with response data.
+        :rtype: WyzeUser
+        """
         return cls(
             notifications_enabled=data.get("notification", False),
             user_id=data.get("user_id"),
@@ -89,7 +104,26 @@ class WyzeUser:
 
 @dataclass
 class CameraEvent:
-    """A camera event (motion, sound, etc.)."""
+    """
+    A camera event (motion, sound, etc.).
+
+    :param event_id: Unique identifier for the event.
+    :type event_id: str
+    :param device_mac: MAC address of the device that generated the event.
+    :type device_mac: str
+    :param device_model: Model of the device that generated the event.
+    :type device_model: str
+    :param event_ts: Event timestamp in milliseconds.
+    :type event_ts: int
+    :param event_category: Category of the event.
+    :type event_category: int
+    :param event_value: Value associated with the event.
+    :type event_value: str
+    :param file_urls: List of URLs to event files (images/videos).
+    :type file_urls: list[str]
+    :param raw: Raw API response data.
+    :type raw: dict[str, Any]
+    """
 
     event_id: str
     device_mac: str
@@ -102,6 +136,14 @@ class CameraEvent:
 
     @classmethod
     def from_api_response(cls, data: dict[str, Any]) -> CameraEvent:
+        """
+        Create CameraEvent from API response data.
+
+        :param data: API response data dictionary.
+        :type data: dict[str, Any]
+        :returns: CameraEvent instance populated with response data.
+        :rtype: CameraEvent
+        """
         file_urls = []
         file_list = data.get("file_list", [])
         if file_list:
@@ -123,7 +165,16 @@ class CameraEvent:
 
 @dataclass
 class PlugUsageRecord:
-    """Power usage record for a smart plug."""
+    """
+    Power usage record for a smart plug.
+
+    :param date: Date string (format varies by API).
+    :type date: str
+    :param usage: Usage in watt-hours.
+    :type usage: float
+    :param raw: Raw API response data.
+    :type raw: dict[str, Any]
+    """
 
     date: str  # Date string (format varies by API)
     usage: float  # Usage in watt-hours
@@ -131,6 +182,14 @@ class PlugUsageRecord:
 
     @classmethod
     def from_api_response(cls, data: dict[str, Any]) -> PlugUsageRecord:
+        """
+        Create PlugUsageRecord from API response data.
+
+        :param data: API response data dictionary.
+        :type data: dict[str, Any]
+        :returns: PlugUsageRecord instance populated with response data.
+        :rtype: PlugUsageRecord
+        """
         return cls(
             date=data.get("date", ""),
             usage=data.get("usage", 0.0),
@@ -148,13 +207,28 @@ class HMSMode(Enum):
 
 @dataclass
 class HMSStatus:
-    """Home Monitoring Service status."""
+    """
+    Home Monitoring Service status.
+
+    :param mode: Current HMS mode.
+    :type mode: HMSMode | None
+    :param raw: Raw API response data.
+    :type raw: dict[str, Any]
+    """
 
     mode: HMSMode | None
     raw: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
     def from_api_response(cls, data: dict[str, Any]) -> HMSStatus:
+        """
+        Create HMSStatus from API response data.
+
+        :param data: API response data dictionary.
+        :type data: dict[str, Any]
+        :returns: HMSStatus instance populated with response data.
+        :rtype: HMSStatus
+        """
         mode_str = data.get("message", "")
         mode = None
         if mode_str:
@@ -167,7 +241,20 @@ class HMSStatus:
 
 @dataclass
 class LockInfo:
-    """Detailed lock information."""
+    """
+    Detailed lock information.
+
+    :param uuid: Unique identifier for the lock.
+    :type uuid: str
+    :param is_online: Whether the lock is online.
+    :type is_online: bool
+    :param is_locked: Whether the lock is currently locked.
+    :type is_locked: bool
+    :param door_open: Whether the door is open.
+    :type door_open: bool
+    :param raw: Raw API response data.
+    :type raw: dict[str, Any]
+    """
 
     uuid: str
     is_online: bool
@@ -177,6 +264,14 @@ class LockInfo:
 
     @classmethod
     def from_api_response(cls, data: dict[str, Any]) -> LockInfo:
+        """
+        Create LockInfo from API response data.
+
+        :param data: API response data dictionary.
+        :type data: dict[str, Any]
+        :returns: LockInfo instance populated with response data.
+        :rtype: LockInfo
+        """
         device = data.get("device", {})
         locker_status = device.get("locker_status", {})
 
@@ -216,7 +311,28 @@ class ThermostatWorkingState(Enum):
 
 @dataclass
 class ThermostatState:
-    """Current thermostat state."""
+    """
+    Current thermostat state.
+
+    :param temperature: Current temperature.
+    :type temperature: float | None
+    :param humidity: Current humidity percentage.
+    :type humidity: float | None
+    :param cool_setpoint: Cooling setpoint.
+    :type cool_setpoint: float | None
+    :param heat_setpoint: Heating setpoint.
+    :type heat_setpoint: float | None
+    :param mode: Thermostat operating mode.
+    :type mode: ThermostatMode | None
+    :param fan_mode: Thermostat fan mode.
+    :type fan_mode: ThermostatFanMode | None
+    :param working_state: Current working state.
+    :type working_state: ThermostatWorkingState | None
+    :param temp_unit: Temperature unit (\"F\" or \"C\").
+    :type temp_unit: str
+    :param raw: Raw API response data.
+    :type raw: dict[str, Any]
+    """
 
     temperature: float | None  # Current temperature
     humidity: float | None  # Current humidity percentage
@@ -230,6 +346,14 @@ class ThermostatState:
 
     @classmethod
     def from_api_response(cls, data: dict[str, Any]) -> ThermostatState:
+        """
+        Create ThermostatState from API response data.
+
+        :param data: API response data dictionary.
+        :type data: dict[str, Any]
+        :returns: ThermostatState instance populated with response data.
+        :rtype: ThermostatState
+        """
         props = data.get("props", {})
 
         def parse_float(val: Any) -> float | None:
@@ -255,7 +379,9 @@ class ThermostatState:
             heat_setpoint=parse_float(props.get("heat_sp")),
             mode=parse_enum(props.get("mode_sys"), ThermostatMode),
             fan_mode=parse_enum(props.get("fan_mode"), ThermostatFanMode),
-            working_state=parse_enum(props.get("working_state"), ThermostatWorkingState),
+            working_state=parse_enum(
+                props.get("working_state"), ThermostatWorkingState
+            ),
             temp_unit=props.get("temp_unit", "F"),
             raw=data,
         )
@@ -263,7 +389,20 @@ class ThermostatState:
 
 @dataclass
 class IrrigationZone:
-    """Irrigation zone configuration."""
+    """
+    Irrigation zone configuration.
+
+    :param zone_id: Unique identifier for the zone.
+    :type zone_id: int
+    :param name: Name of the zone.
+    :type name: str
+    :param enabled: Whether the zone is enabled.
+    :type enabled: bool
+    :param duration_minutes: Default watering duration in minutes.
+    :type duration_minutes: int
+    :param raw: Raw API response data.
+    :type raw: dict[str, Any]
+    """
 
     zone_id: int
     name: str
@@ -273,6 +412,14 @@ class IrrigationZone:
 
     @classmethod
     def from_api_response(cls, data: dict[str, Any]) -> IrrigationZone:
+        """
+        Create IrrigationZone from API response data.
+
+        :param data: API response data dictionary.
+        :type data: dict[str, Any]
+        :returns: IrrigationZone instance populated with response data.
+        :rtype: IrrigationZone
+        """
         return cls(
             zone_id=data.get("zone_id", 0),
             name=data.get("name", ""),
@@ -284,7 +431,32 @@ class IrrigationZone:
 
 @dataclass
 class HomeDevice:
-    """Device information from home favorites API."""
+    """
+    Device information from home favorites API.
+
+    :param device_id: Unique device identifier.
+    :type device_id: str
+    :param nickname: Device nickname.
+    :type nickname: str
+    :param device_model: Device model string.
+    :type device_model: str
+    :param device_category: Device category.
+    :type device_category: str
+    :param is_favorite: Whether device is favorited.
+    :type is_favorite: bool
+    :param firmware_version: Firmware version.
+    :type firmware_version: str | None
+    :param hardware_version: Hardware version.
+    :type hardware_version: str | None
+    :param thumbnail_url: Thumbnail image URL.
+    :type thumbnail_url: str | None
+    :param favorite_order: Order in favorites list.
+    :type favorite_order: int
+    :param device_order: Order in device list.
+    :type device_order: int
+    :param raw: Raw API response data.
+    :type raw: dict[str, Any]
+    """
 
     device_id: str
     nickname: str
@@ -300,6 +472,14 @@ class HomeDevice:
 
     @classmethod
     def from_api_response(cls, data: dict[str, Any]) -> "HomeDevice":
+        """
+        Create HomeDevice from API response data.
+
+        :param data: API response data dictionary.
+        :type data: dict[str, Any]
+        :returns: HomeDevice instance populated with response data.
+        :rtype: HomeDevice
+        """
         device_param = data.get("device_param", {})
         thumbnail = device_param.get("thumbnail", {})
 
@@ -320,7 +500,18 @@ class HomeDevice:
 
 @dataclass
 class HomeFavorites:
-    """Home favorites response containing device list."""
+    """
+    Home favorites response containing device list.
+
+    :param home_id: Home identifier.
+    :type home_id: str
+    :param home_name: Home name.
+    :type home_name: str
+    :param devices: List of devices in the home.
+    :type devices: list[HomeDevice]
+    :param raw: Raw API response data.
+    :type raw: dict[str, Any]
+    """
 
     home_id: str
     home_name: str
@@ -329,6 +520,14 @@ class HomeFavorites:
 
     @classmethod
     def from_api_response(cls, data: dict[str, Any]) -> "HomeFavorites":
+        """
+        Create HomeFavorites from API response data.
+
+        :param data: API response data dictionary.
+        :type data: dict[str, Any]
+        :returns: HomeFavorites instance populated with response data.
+        :rtype: HomeFavorites
+        """
         device_list = data.get("device_list", [])
         devices = [HomeDevice.from_api_response(d) for d in device_list]
 
@@ -341,7 +540,10 @@ class HomeFavorites:
 
     @property
     def favorite_devices(self) -> list[HomeDevice]:
-        """Get only devices marked as favorites."""
+        """
+        Get only devices marked as favorites.
+
+        :returns: List of favorited devices.
+        :rtype: list[HomeDevice]
+        """
         return [d for d in self.devices if d.is_favorite]
-
-

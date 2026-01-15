@@ -79,11 +79,10 @@ class WyzeLock(WyzeDevice):
         """
         Get detailed lock information as a typed LockInfo object.
 
-        Args:
-            with_keypad: Whether to include keypad information.
-
-        Returns:
-            LockInfo object with lock status, door state, and online status.
+        :param with_keypad: Whether to include keypad information.
+        :type with_keypad: bool
+        :returns: LockInfo object with lock status, door state, and online status.
+        :rtype: LockInfo
         """
         from ..models import LockInfo
 
@@ -121,7 +120,9 @@ class WyzeLock(WyzeDevice):
             )
 
             if response is None:
-                return LockInfo(uuid="", is_online=False, is_locked=False, door_open=False, raw={})
+                return LockInfo(
+                    uuid="", is_online=False, is_locked=False, door_open=False, raw={}
+                )
 
             raw_data = response.to_dict() if hasattr(response, "to_dict") else {}
             return LockInfo.from_api_response(raw_data)

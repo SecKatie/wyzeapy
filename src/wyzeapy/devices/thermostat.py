@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from .base import WyzeDevice
 from ..const import OLIVE_APP_ID, APP_INFO
-from ..exceptions import ActionFailedError
+from ..exceptions import ActionFailedError, ApiRequestError
 from ..wyze_api_client.models import (
     SetThermostatIotPropBody,
     SetThermostatIotPropBodyProps,
@@ -24,37 +24,37 @@ class WyzeThermostat(WyzeDevice):
     """Wyze Thermostat device."""
 
     @property
-    def temperature(self) -> Optional[float]:
+    def temperature(self) -> float | None:
         """Current temperature."""
         return self.device_params.get("temperature")
 
     @property
-    def humidity(self) -> Optional[int]:
+    def humidity(self) -> int | None:
         """Current humidity percentage."""
         return self.device_params.get("humidity")
 
     @property
-    def cool_setpoint(self) -> Optional[float]:
+    def cool_setpoint(self) -> float | None:
         """Cooling setpoint temperature."""
         return self.device_params.get("cool_sp")
 
     @property
-    def heat_setpoint(self) -> Optional[float]:
+    def heat_setpoint(self) -> float | None:
         """Heating setpoint temperature."""
         return self.device_params.get("heat_sp")
 
     @property
-    def hvac_mode(self) -> Optional[str]:
+    def hvac_mode(self) -> str | None:
         """HVAC mode (auto, heat, cool, off)."""
         return self.device_params.get("mode_sys")
 
     @property
-    def fan_mode(self) -> Optional[str]:
+    def fan_mode(self) -> str | None:
         """Fan mode (auto, on, off)."""
         return self.device_params.get("fan_mode")
 
     @property
-    def working_state(self) -> Optional[str]:
+    def working_state(self) -> str | None:
         """Current working state (idle, heating, cooling)."""
         return self.device_params.get("working_state")
 
@@ -92,16 +92,7 @@ class WyzeThermostat(WyzeDevice):
         )
 
         if response is None:
-            return ThermostatState(
-                temperature=None,
-                humidity=None,
-                cool_setpoint=None,
-                heat_setpoint=None,
-                mode=None,
-                fan_mode=None,
-                working_state=None,
-                raw={},
-            )
+            raise ApiRequestError("get_thermostat_state", f"device_mac={self.mac}")
 
         raw_data = response.to_dict() if hasattr(response, "to_dict") else {}
         return ThermostatState.from_api_response(raw_data)
@@ -109,10 +100,10 @@ class WyzeThermostat(WyzeDevice):
     async def _set_properties(
         self,
         *,
-        cool_setpoint: Optional[int] = None,
-        heat_setpoint: Optional[int] = None,
-        fan_mode: Optional[str] = None,
-        hvac_mode: Optional[str] = None,
+        cool_setpoint: int | None = None,
+        heat_setpoint: int | None = None,
+        fan_mode: str | None = None,
+        hvac_mode: str | None = None,
     ) -> None:
         """Set thermostat properties."""
         ctx = self._get_context()
@@ -164,7 +155,6 @@ class WyzeThermostat(WyzeDevice):
         Set cooling setpoint temperature.
 
         :param temperature: The target cooling temperature.
-        :type temperature: int
         :raises ActionFailedError: If setting the temperature fails.
         """
         await self._set_properties(cool_setpoint=temperature)
@@ -174,7 +164,6 @@ class WyzeThermostat(WyzeDevice):
         Set heating setpoint temperature.
 
         :param temperature: The target heating temperature.
-        :type temperature: int
         :raises ActionFailedError: If setting the temperature fails.
         """
         await self._set_properties(heat_setpoint=temperature)
@@ -184,7 +173,6 @@ class WyzeThermostat(WyzeDevice):
         Set HVAC mode.
 
         :param mode: The mode ('off', 'heat', 'cool', 'auto').
-        :type mode: str
         :raises ActionFailedError: If setting the mode fails.
         """
         await self._set_properties(hvac_mode=mode)
@@ -194,7 +182,6 @@ class WyzeThermostat(WyzeDevice):
         Set fan mode.
 
         :param mode: The mode ('auto', 'on', 'cycle').
-        :type mode: str
         :raises ActionFailedError: If setting the mode fails.
         """
         await self._set_properties(fan_mode=mode)

@@ -1,5 +1,7 @@
 """Wyzeapy exceptions."""
 
+from typing import Any
+
 
 class WyzeapyError(Exception):
     """Base exception for all Wyzeapy errors."""
@@ -68,7 +70,7 @@ class ActionFailedError(DeviceError):
     :type response: Any
     """
 
-    def __init__(self, action: str, device_mac: str, response: object = None):
+    def __init__(self, action: str, device_mac: str, response: Any | None = None):
         self.action = action
         self.device_mac = device_mac
         self.response = response
@@ -91,3 +93,26 @@ class ApiError(WyzeapyError):
         super().__init__(
             f"API error {code}: {message}" if message else f"API error {code}"
         )
+
+
+class ApiRequestError(WyzeapyError):
+    """
+    Raised when an API request fails to return a response.
+
+    This is distinct from ApiError which indicates the API returned an error.
+    ApiRequestError indicates the request itself failed (network error, timeout,
+    malformed response, etc.).
+
+    :param operation: The operation that was being performed.
+    :type operation: str
+    :param details: Optional additional details about the failure.
+    :type details: str
+    """
+
+    def __init__(self, operation: str, details: str = ""):
+        self.operation = operation
+        self.details = details
+        msg = f"API request failed for '{operation}'"
+        if details:
+            msg += f": {details}"
+        super().__init__(msg)

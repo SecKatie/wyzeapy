@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 from .base import WyzeDevice, WiFiDeviceMixin, SwitchableDeviceMixin
 from ..const import (
@@ -23,7 +23,7 @@ from ..wyze_api_client.models import (
 )
 from ..wyze_api_client.api.camera import get_event_list, device_mgmt_run_action
 from ..wyze_api_client.types import Unset
-from ..exceptions import ActionFailedError
+from ..exceptions import ActionFailedError, ApiRequestError
 
 if TYPE_CHECKING:
     from ..models import CameraEvent
@@ -202,20 +202,16 @@ class WyzeCamera(WyzeDevice, WiFiDeviceMixin, SwitchableDeviceMixin):
     async def get_events(
         self,
         count: int = 20,
-        begin_time: Optional[int] = None,
-        end_time: Optional[int] = None,
+        begin_time: int | None = None,
+        end_time: int | None = None,
     ) -> list[CameraEvent]:
         """
         Get recent events for this camera.
 
         :param count: Maximum number of events to retrieve (default 20).
-        :type count: int
         :param begin_time: Start timestamp in milliseconds (optional).
-        :type begin_time: Optional[int]
         :param end_time: End timestamp in milliseconds (optional).
-        :type end_time: Optional[int]
         :returns: List of CameraEvent objects.
-        :rtype: list[CameraEvent]
         """
         from ..models import CameraEvent
 
@@ -239,7 +235,10 @@ class WyzeCamera(WyzeDevice, WiFiDeviceMixin, SwitchableDeviceMixin):
             body=GetEventListBody(**request_kwargs),
         )
 
-        if response is None or isinstance(response.data, Unset):
+        if response is None:
+            raise ApiRequestError("get_camera_events", f"device_mac={self.mac}")
+
+        if isinstance(response.data, Unset):
             return []
 
         if isinstance(response.data.event_list, Unset):

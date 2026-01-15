@@ -43,6 +43,7 @@ from .exceptions import (
     ActionNotSupportedError,
     ActionFailedError,
     ApiError,
+    ApiRequestError,
 )
 
 __all__ = [
@@ -90,4 +91,5 @@ __all__ = [
     "ActionNotSupportedError",
     "ActionFailedError",
     "ApiError",
+    "ApiRequestError",
 ]

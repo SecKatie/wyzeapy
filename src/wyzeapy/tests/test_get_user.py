@@ -9,6 +9,9 @@ Set environment variables:
     WYZE_PASSWORD - Your Wyze account password
     WYZE_KEY_ID - API key ID
     WYZE_API_KEY - API key
+
+Note: This file uses 'run_' prefix instead of 'test_' to avoid
+pytest auto-discovery. Run it manually as a script.
 """
 
 import asyncio
@@ -17,7 +20,7 @@ import os
 import sys
 
 
-async def test_get_user():
+async def run_get_user_test():
     """Test get_user and print raw response data."""
     from wyzeapy import Wyzeapy
 
@@ -95,4 +98,4 @@ async def test_get_user():
 
 
 if __name__ == "__main__":
-    asyncio.run(test_get_user())
+    asyncio.run(run_get_user_test())

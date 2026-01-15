@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from .base import WyzeDevice
 from ..const import OLIVE_APP_ID, APP_INFO
-from ..exceptions import ActionFailedError
+from ..exceptions import ActionFailedError, ApiRequestError
 from ..wyze_api_client.models import (
     IrrigationQuickRunRequest,
     IrrigationQuickRunRequestZoneRunsItem,
@@ -58,7 +58,10 @@ class WyzeIrrigation(WyzeDevice):
             signature2=signature,
         )
 
-        if response is None or isinstance(response.data, Unset):
+        if response is None:
+            raise ApiRequestError("get_irrigation_zones", f"device_id={device_id}")
+
+        if isinstance(response.data, Unset):
             return []
 
         zones_data = getattr(response.data, "zones", [])

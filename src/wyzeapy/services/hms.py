@@ -3,12 +3,11 @@
 from __future__ import annotations
 
 import time
-from typing import TYPE_CHECKING
 
 from ..models import HMSMode, HMSStatus
 from ..utils import olive_create_signature
 from ..const import OLIVE_APP_ID, APP_INFO
-from ..exceptions import ActionFailedError
+from ..exceptions import ActionFailedError, ApiRequestError
 from ..wyze_api_client.api.hms import get_hms_status, set_hms_mode
 from ..wyze_api_client.models import HMSProfileActiveRequestItem
 from ..wyze_api_client.models.hms_profile_active_request_item_state import (
@@ -18,9 +17,6 @@ from ..wyze_api_client.models.hms_profile_active_request_item_active import (
     HMSProfileActiveRequestItemActive,
 )
 from ..wyze_api_client.types import Unset
-
-if TYPE_CHECKING:
-    from ..wyzeapy import Wyzeapy
 
 
 class WyzeHMS:
@@ -72,7 +68,7 @@ class WyzeHMS:
         )
 
         if response is None:
-            return HMSStatus(mode=None, raw={})
+            raise ApiRequestError("get_hms_status", f"hms_id={hms_id}")
 
         raw_data = response.to_dict() if hasattr(response, "to_dict") else {}
 

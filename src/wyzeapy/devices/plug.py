@@ -8,6 +8,7 @@ from .base import WyzeDevice, SwitchableDeviceMixin
 from ..wyze_api_client.models import PlugUsageRequest
 from ..wyze_api_client.api.switch import get_plug_usage_history
 from ..wyze_api_client.types import Unset
+from ..exceptions import ApiRequestError
 
 if TYPE_CHECKING:
     from ..models import PlugUsageRecord
@@ -53,7 +54,10 @@ class WyzePlug(WyzeDevice, SwitchableDeviceMixin):
             ),
         )
 
-        if response is None or isinstance(response.data, Unset):
+        if response is None:
+            raise ApiRequestError("get_plug_usage_history", f"device_mac={self.mac}")
+
+        if isinstance(response.data, Unset):
             return []
 
         if isinstance(response.data.usage_record_list, Unset):

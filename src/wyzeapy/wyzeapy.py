@@ -36,6 +36,7 @@ from .exceptions import (
     TwoFactorAuthRequired,
     TokenRefreshError,
     NotAuthenticatedError,
+    ApiRequestError,
 )
 from .utils import hash_password, ford_create_signature, olive_create_signature
 from .const import (
@@ -514,7 +515,10 @@ class Wyzeapy:
             body=CommonRequestParams(**self._common_params()),
         )
 
-        if response is None or isinstance(response.data, Unset):
+        if response is None:
+            raise ApiRequestError("list_devices")
+
+        if isinstance(response.data, Unset):
             return []
 
         devices = [
@@ -611,7 +615,10 @@ class Wyzeapy:
             signature2=signature,
         )
 
-        if response is None or isinstance(response.data, Unset):
+        if response is None:
+            raise ApiRequestError("get_user")
+
+        if isinstance(response.data, Unset):
             return WyzeUser()
 
         data_dict = response.data.to_dict()
@@ -663,7 +670,10 @@ class Wyzeapy:
             signature2=signature,
         )
 
-        if response is None or isinstance(response.data, Unset):
+        if response is None:
+            raise ApiRequestError("get_home_favorites", f"home_id={home_id}")
+
+        if isinstance(response.data, Unset):
             return HomeFavorites(home_id="", home_name="", devices=[], raw={})
 
         data_dict = response.data.to_dict()

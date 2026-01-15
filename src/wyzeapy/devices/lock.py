@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from .base import WyzeDevice
 from ..const import FORD_APP_KEY
-from ..exceptions import ActionFailedError
+from ..exceptions import ActionFailedError, ApiRequestError
 from ..wyze_api_client.models import LockControlRequest, LockControlRequestAction
 from ..wyze_api_client.api.lock import lock_control, get_lock_info
 
@@ -126,9 +126,7 @@ class WyzeLock(WyzeDevice):
         )
 
         if response is None:
-            return LockInfo(
-                uuid="", is_online=False, is_locked=False, door_open=False, raw={}
-            )
+            raise ApiRequestError("get_lock_info", f"uuid={device_uuid}")
 
         raw_data = response.to_dict() if hasattr(response, "to_dict") else {}
         return LockInfo.from_api_response(raw_data)

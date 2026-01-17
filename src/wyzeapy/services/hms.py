@@ -115,29 +115,6 @@ class WyzeHMS:
                 ),
             ]
 
-        # Create signature for the body - we know these are set since we just created them
-        if mode == HMSMode.DISARMED:
-            # Disarmed means setting active=0 (disabled)
-            body = [
-                HMSProfileActiveRequestItem(
-                    state=HMSProfileActiveRequestItemState.HOME,
-                    active=HMSProfileActiveRequestItemActive.VALUE_0,
-                ),
-            ]
-        else:
-            # Home or Away mode with active=1 (enabled)
-            state = (
-                HMSProfileActiveRequestItemState.HOME
-                if mode == HMSMode.HOME
-                else HMSProfileActiveRequestItemState.AWAY
-            )
-            body = [
-                HMSProfileActiveRequestItem(
-                    state=state,
-                    active=HMSProfileActiveRequestItemActive.VALUE_1,
-                ),
-            ]
-
         # Create signature for body - we know these are set since we just created them
         # Extract state value from enum (these are not Unset since we just created them)
         state_str = "home"

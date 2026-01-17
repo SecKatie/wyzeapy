@@ -4,7 +4,7 @@ version = "0.6.0a2"
 description = "A library for interacting with Wyze devices"
 authors = [{ name = "Katie Mulliken", email = "katie@mulliken.net" }]
 license = { text = "GPL-3.0-only" }
-requires-python = ">=3.13.2"
+requires-python = ">=3.11"
 readme = "README.md"
 keywords = ["wyze", "smart-home", "api", "async", "iot"]
 classifiers = [
@@ -13,6 +13,8 @@ classifiers = [
     "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3 :: Only",
     "Topic :: Home Automation",

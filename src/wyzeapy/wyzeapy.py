@@ -27,6 +27,7 @@ from .exceptions import (
     TokenRefreshError,
     NotAuthenticatedError,
     ApiRequestError,
+    ApiError,
 )
 
 if TYPE_CHECKING:
@@ -73,7 +74,7 @@ from .wyze_api_client.models import (
     RefreshTokenRequest,
     GetHomeFavoritesRequest,
 )
-from .wyze_api_client.types import Unset
+from .wyze_api_client.types import UNSET, Unset
 
 
 # Type alias for 2FA callback: receives auth_type ("TOTP" or "SMS"), returns verification code
@@ -132,6 +133,7 @@ class Wyzeapy:
         self._lock_client: Client | None = None
         self._devicemgmt_client: AuthenticatedClient | None = None
         self._hms: WyzeHMS | None = None
+        self._device_cache: list["WyzeDevice"] | None = None
 
     @property
     def phone_id(self) -> str:
@@ -516,13 +518,18 @@ class Wyzeapy:
         return self._hms
 
     async def list_devices(
-        self, device_type: type[WyzeDevice] | None = None
+        self,
+        device_type: type[WyzeDevice] | None = None,
+        *,
+        refresh: bool = False,
     ) -> list[WyzeDevice]:
         """
         Get devices associated with the account, optionally filtered by type.
 
         :param device_type: Optional device class to filter by (e.g., WyzeLight, WyzeLock).
         :type device_type: type[WyzeDevice] | None
+        :param refresh: When True, bypass the cache and fetch from the API.
+        :type refresh: bool
         :returns: List of Device objects with control methods available.
         :rtype: list[WyzeDevice]
 
@@ -539,7 +546,13 @@ class Wyzeapy:
         """
         from .devices import create_device
 
-        client = await self._get_main_client_authed()
+        await self._ensure_token_valid()
+        if not refresh and self._device_cache is not None:
+            if device_type is None:
+                return self._device_cache
+            return [d for d in self._device_cache if isinstance(d, device_type)]
+
+        client = self._get_main_client()
 
         response = await get_object_list.asyncio(
             client=client,
@@ -549,12 +562,20 @@ class Wyzeapy:
         if response is None:
             raise ApiRequestError("list_devices")
 
+        response_code = getattr(response, "code", UNSET)
+        response_msg = getattr(response, "msg", UNSET)
+        if not isinstance(response_code, Unset) and response_code != "1":
+            message = "" if isinstance(response_msg, Unset) else str(response_msg)
+            raise ApiError(str(response_code), message)
+
         if isinstance(response.data, Unset):
+            self._device_cache = []
             return []
 
         devices = [
             create_device(device, self) for device in response.data.device_list or []
         ]
+        self._device_cache = devices
 
         if device_type is not None:
             devices = [d for d in devices if isinstance(d, device_type)]
@@ -711,6 +732,12 @@ class Wyzeapy:
 
         if response is None:
             raise ApiRequestError("get_home_favorites", f"home_id={home_id}")
+
+        response_code = getattr(response, "code", UNSET)
+        response_msg = getattr(response, "msg", UNSET)
+        if not isinstance(response_code, Unset) and response_code != "1":
+            message = "" if isinstance(response_msg, Unset) else str(response_msg)
+            raise ApiError(str(response_code), message)
 
         if isinstance(response.data, Unset):
             return HomeFavorites(home_id="", home_name="", devices=[], raw={})

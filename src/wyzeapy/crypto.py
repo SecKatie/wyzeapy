@@ -8,7 +8,7 @@ import hmac
 import urllib.parse
 from typing import Dict, Union, Any
 
-from .const import FORD_APP_SECRET, OLIVE_SIGNING_SECRET
+from .const import WEB_SIGNING_SECRET, FORD_APP_SECRET, OLIVE_SIGNING_SECRET
 
 """
 Cryptographic helper functions for creating API request signatures.
@@ -66,3 +66,32 @@ def ford_create_signature(
     string_buf += FORD_APP_SECRET
     urlencoded = urllib.parse.quote_plus(string_buf)
     return hashlib.md5(urlencoded.encode()).hexdigest()
+
+
+def web_create_signature(
+    payload: Union[Dict[Any, Any], str], access_token: str
+) -> str:
+    """
+    Compute the app (my.wyze.com) API request signature using HMAC-MD5.
+
+    Args:
+        payload: The request payload as a dict or raw string.
+        access_token: The access token string for signing.
+
+    Returns:
+        The computed signature as a hex string.
+    """
+    if isinstance(payload, dict):
+        body = ""
+        for item in sorted(payload):
+            body += item + "=" + str(payload[item]) + "&"
+
+        body = body[:-1]
+
+    else:
+        body = payload
+
+    access_key = "{}{}".format(access_token, WEB_SIGNING_SECRET)
+
+    secret = hashlib.md5(access_key.encode()).hexdigest()
+    return hmac.new(secret.encode(), body.encode(), hashlib.md5).hexdigest()

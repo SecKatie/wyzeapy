@@ -23,9 +23,12 @@ SV = "9d74946e652647e9b6c9d59326aef104"
 CLIENT_VER = "2"
 SOURCE = "ios/WZCameraSDK"
 APP_PLATFORM = "ios"
+WEB_APP_INFO = "wyze_web_2.3.1"
 
 # Crypto secrets
 OLIVE_SIGNING_SECRET = "wyze_app_secret_key_132"  # Required for the thermostat
 OLIVE_APP_ID = "9319141212m2ik"  # Required for the thermostat
 FORD_APP_KEY = "275965684684dbdaf29a0ed9"  # Required for the locks
 FORD_APP_SECRET = "4deekof1ba311c5c33a9cb8e12787e8c"  # Required for the locks
+WEB_SIGNING_SECRET = "gbJojEBViLklgwyyDikx5ztSvKBXI5oU" # Required for camera webRTC feed info
+WEB_APP_ID = "strv_e7f78e9e7738dc50" # Required for camera webRTC feed info

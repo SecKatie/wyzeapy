@@ -24,8 +24,10 @@ from ..const import (
     SV,
     APP_PLATFORM,
     SOURCE,
+    WEB_APP_ID,
+    WEB_APP_INFO
 )
-from ..crypto import olive_create_signature
+from ..crypto import olive_create_signature, web_create_signature
 from ..payload_factory import (
     olive_create_hms_patch_payload,
     olive_create_hms_payload,
@@ -1005,5 +1007,41 @@ class BaseService:
         response_json = await self._auth_lib.get(url, headers=headers, params=payload)
 
         check_for_errors_iot(self, response_json)
+
+        return response_json
+
+    async def _get_camera_stream(self, device: Device) -> Dict[Any, Any]:
+        await self._auth_lib.refresh_if_should()
+
+        payload = {
+            "device_list": [
+                {
+                    "device_id": device.mac,
+                    "device_model": device.product_model,
+                    "provider": "webrtc",
+                    "parameters": {
+                        "use_trickle": True
+                    }
+                }
+            ],
+            "nonce": str(int(time.time() * 1000)),
+        }
+
+        signature = web_create_signature(json.dumps(payload), self._auth_lib.token.access_token)
+        headers = {
+            "Accept-Encoding": "gzip",
+            "appId": WEB_APP_ID,
+            "appInfo": WEB_APP_INFO,
+            "access_token": self._auth_lib.token.access_token,
+            "Authorization": self._auth_lib.token.access_token,
+            "signature2": signature,
+            "requestid": str(time.time() % 100000)
+        }
+
+        response_json = await self._auth_lib.post(
+            "https://app.wyzecam.com/app/v4/camera/get-streams", json=payload, headers=headers
+        )
+
+        check_for_errors_standard(self, response_json)
 
         return response_json

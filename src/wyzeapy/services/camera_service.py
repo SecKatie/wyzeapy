@@ -11,6 +11,8 @@ from typing import Any, List, Optional, Dict, Callable, Tuple
 
 from aiohttp import ClientOSError, ContentTypeError
 
+from wyzeapy.const import APP_PLATFORM
+
 from ..exceptions import UnknownApiError
 from .base_service import BaseService
 from ..types import Device, DeviceTypes, Event, PropertyIDs, DeviceMgmtToggleProps
@@ -266,3 +268,17 @@ class CameraService(BaseService):
             await self._set_property(
                 camera, PropertyIDs.MOTION_DETECTION_TOGGLE.value, "0"
             )
+
+    async def get_stream_info(self, camera: Camera):
+        data = await self._get_camera_stream(camera)
+        if "data" not in data or len(data["data"]) != 1:
+            raise UnknownApiError("Unexpected response from get_stream_info: " + str(data))
+
+        data = data["data"][0]
+        if "property" not in data:
+            raise UnknownApiError("Unexpected response from get_stream_info: " + str(data))
+        if data["property"]["iot-device::iot-state"] != 1:
+            raise UnknownApiError("Camera is offline according to get_stream_info response: " + str(data))
+        if data["property"]["iot-device::iot-power"] != 1:
+            raise UnknownApiError("Camera is off according to get_stream_info response: " + str(data))
+        return data["params"]

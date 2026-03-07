@@ -142,4 +142,3 @@ b7cd51 - bump version in setup.cfg - Katie Mulliken
 ### Features
 
 8bff85 - add logging for get, patch, and delete - Katie Mulliken
-

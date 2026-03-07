@@ -91,7 +91,7 @@
                     <h1 class="modulename">
 <a href="./../../wyzeapy.html">wyzeapy</a><wbr>.<a href="./../services.html">services</a><wbr>.lock_service    </h1>
 
-                
+
                         <input id="mod-lock_service-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 
                         <label class="view-source-button" for="mod-lock_service-view-source"><span>View Source</span></label>
@@ -135,13 +135,13 @@
 </span><span id="L-37"><a href="#L-37"><span class="linenos">37</span></a>        <span class="n">locker_status</span> <span class="o">=</span> <span class="n">lock</span><span class="o">.</span><span class="n">raw_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;locker_status&quot;</span><span class="p">)</span>
 </span><span id="L-38"><a href="#L-38"><span class="linenos">38</span></a>        <span class="c1"># Check if the door is locked</span>
 </span><span id="L-39"><a href="#L-39"><span class="linenos">39</span></a>        <span class="n">lock</span><span class="o">.</span><span class="n">unlocked</span> <span class="o">=</span> <span class="n">locker_status</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;hardlock&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span>
-</span><span id="L-40"><a href="#L-40"><span class="linenos">40</span></a>        
+</span><span id="L-40"><a href="#L-40"><span class="linenos">40</span></a>
 </span><span id="L-41"><a href="#L-41"><span class="linenos">41</span></a>        <span class="c1"># Reset unlocking and locking if needed</span>
 </span><span id="L-42"><a href="#L-42"><span class="linenos">42</span></a>        <span class="k">if</span> <span class="n">lock</span><span class="o">.</span><span class="n">unlocked</span> <span class="ow">and</span> <span class="n">lock</span><span class="o">.</span><span class="n">unlocking</span><span class="p">:</span>
 </span><span id="L-43"><a href="#L-43"><span class="linenos">43</span></a>            <span class="n">lock</span><span class="o">.</span><span class="n">unlocking</span> <span class="o">=</span> <span class="kc">False</span>
 </span><span id="L-44"><a href="#L-44"><span class="linenos">44</span></a>        <span class="k">if</span> <span class="ow">not</span> <span class="n">lock</span><span class="o">.</span><span class="n">unlocked</span> <span class="ow">and</span> <span class="n">lock</span><span class="o">.</span><span class="n">locking</span><span class="p">:</span>
 </span><span id="L-45"><a href="#L-45"><span class="linenos">45</span></a>            <span class="n">lock</span><span class="o">.</span><span class="n">locking</span> <span class="o">=</span> <span class="kc">False</span>
-</span><span id="L-46"><a href="#L-46"><span class="linenos">46</span></a>        
+</span><span id="L-46"><a href="#L-46"><span class="linenos">46</span></a>
 </span><span id="L-47"><a href="#L-47"><span class="linenos">47</span></a>        <span class="k">return</span> <span class="n">lock</span>
 </span><span id="L-48"><a href="#L-48"><span class="linenos">48</span></a>
 </span><span id="L-49"><a href="#L-49"><span class="linenos">49</span></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_locks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -164,7 +164,7 @@
                 <section id="Lock">
                             <input id="Lock-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr class">
-            
+
     <span class="def">class</span>
     <span class="name">Lock</span><wbr>(<span class="base"><a href="../types.html#Device">wyzeapy.types.Device</a></span>):
 
@@ -183,18 +183,18 @@
 </span></pre></div>
 
 
-    
+
 
                             <div id="Lock.unlocked" class="classattr">
                                 <div class="attr variable">
             <span class="name">unlocked</span>        =
 <span class="default_value">False</span>
 
-        
+
     </div>
     <a class="headerlink" href="#Lock.unlocked"></a>
-    
-    
+
+
 
                             </div>
                             <div id="Lock.locking" class="classattr">
@@ -202,11 +202,11 @@
             <span class="name">locking</span>        =
 <span class="default_value">False</span>
 
-        
+
     </div>
     <a class="headerlink" href="#Lock.locking"></a>
-    
-    
+
+
 
                             </div>
                             <div id="Lock.unlocking" class="classattr">
@@ -214,11 +214,11 @@
             <span class="name">unlocking</span>        =
 <span class="default_value">False</span>
 
-        
+
     </div>
     <a class="headerlink" href="#Lock.unlocking"></a>
-    
-    
+
+
 
                             </div>
                             <div id="Lock.door_open" class="classattr">
@@ -226,11 +226,11 @@
             <span class="name">door_open</span>        =
 <span class="default_value">False</span>
 
-        
+
     </div>
     <a class="headerlink" href="#Lock.door_open"></a>
-    
-    
+
+
 
                             </div>
                             <div id="Lock.trash_mode" class="classattr">
@@ -238,11 +238,11 @@
             <span class="name">trash_mode</span>        =
 <span class="default_value">False</span>
 
-        
+
     </div>
     <a class="headerlink" href="#Lock.trash_mode"></a>
-    
-    
+
+
 
                             </div>
                             <div id="Lock.ble_id" class="classattr">
@@ -250,11 +250,11 @@
             <span class="name">ble_id</span>        =
 <span class="default_value">None</span>
 
-        
+
     </div>
     <a class="headerlink" href="#Lock.ble_id"></a>
-    
-    
+
+
 
                             </div>
                             <div id="Lock.ble_token" class="classattr">
@@ -262,11 +262,11 @@
             <span class="name">ble_token</span>        =
 <span class="default_value">None</span>
 
-        
+
     </div>
     <a class="headerlink" href="#Lock.ble_token"></a>
-    
-    
+
+
 
                             </div>
                             <div class="inherited">
@@ -291,7 +291,7 @@
                 <section id="LockService">
                             <input id="LockService-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr class">
-            
+
     <span class="def">class</span>
     <span class="name">LockService</span><wbr>(<span class="base"><a href="base_service.html#BaseService">wyzeapy.services.base_service.BaseService</a></span>):
 
@@ -317,13 +317,13 @@
 </span><span id="LockService-38"><a href="#LockService-38"><span class="linenos">38</span></a>        <span class="n">locker_status</span> <span class="o">=</span> <span class="n">lock</span><span class="o">.</span><span class="n">raw_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;locker_status&quot;</span><span class="p">)</span>
 </span><span id="LockService-39"><a href="#LockService-39"><span class="linenos">39</span></a>        <span class="c1"># Check if the door is locked</span>
 </span><span id="LockService-40"><a href="#LockService-40"><span class="linenos">40</span></a>        <span class="n">lock</span><span class="o">.</span><span class="n">unlocked</span> <span class="o">=</span> <span class="n">locker_status</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;hardlock&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span>
-</span><span id="LockService-41"><a href="#LockService-41"><span class="linenos">41</span></a>        
+</span><span id="LockService-41"><a href="#LockService-41"><span class="linenos">41</span></a>
 </span><span id="LockService-42"><a href="#LockService-42"><span class="linenos">42</span></a>        <span class="c1"># Reset unlocking and locking if needed</span>
 </span><span id="LockService-43"><a href="#LockService-43"><span class="linenos">43</span></a>        <span class="k">if</span> <span class="n">lock</span><span class="o">.</span><span class="n">unlocked</span> <span class="ow">and</span> <span class="n">lock</span><span class="o">.</span><span class="n">unlocking</span><span class="p">:</span>
 </span><span id="LockService-44"><a href="#LockService-44"><span class="linenos">44</span></a>            <span class="n">lock</span><span class="o">.</span><span class="n">unlocking</span> <span class="o">=</span> <span class="kc">False</span>
 </span><span id="LockService-45"><a href="#LockService-45"><span class="linenos">45</span></a>        <span class="k">if</span> <span class="ow">not</span> <span class="n">lock</span><span class="o">.</span><span class="n">unlocked</span> <span class="ow">and</span> <span class="n">lock</span><span class="o">.</span><span class="n">locking</span><span class="p">:</span>
 </span><span id="LockService-46"><a href="#LockService-46"><span class="linenos">46</span></a>            <span class="n">lock</span><span class="o">.</span><span class="n">locking</span> <span class="o">=</span> <span class="kc">False</span>
-</span><span id="LockService-47"><a href="#LockService-47"><span class="linenos">47</span></a>        
+</span><span id="LockService-47"><a href="#LockService-47"><span class="linenos">47</span></a>
 </span><span id="LockService-48"><a href="#LockService-48"><span class="linenos">48</span></a>        <span class="k">return</span> <span class="n">lock</span>
 </span><span id="LockService-49"><a href="#LockService-49"><span class="linenos">49</span></a>
 </span><span id="LockService-50"><a href="#LockService-50"><span class="linenos">50</span></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_locks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -349,7 +349,7 @@
                             <div id="LockService.update" class="classattr">
                                         <input id="LockService.update-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">async def</span>
         <span class="name">update</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">lock</span><span class="p">:</span> <span class="n"><a href="#Lock">Lock</a></span></span><span class="return-annotation">):</span></span>
 
@@ -374,24 +374,24 @@
 </span><span id="LockService.update-38"><a href="#LockService.update-38"><span class="linenos">38</span></a>        <span class="n">locker_status</span> <span class="o">=</span> <span class="n">lock</span><span class="o">.</span><span class="n">raw_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;locker_status&quot;</span><span class="p">)</span>
 </span><span id="LockService.update-39"><a href="#LockService.update-39"><span class="linenos">39</span></a>        <span class="c1"># Check if the door is locked</span>
 </span><span id="LockService.update-40"><a href="#LockService.update-40"><span class="linenos">40</span></a>        <span class="n">lock</span><span class="o">.</span><span class="n">unlocked</span> <span class="o">=</span> <span class="n">locker_status</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;hardlock&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span>
-</span><span id="LockService.update-41"><a href="#LockService.update-41"><span class="linenos">41</span></a>        
+</span><span id="LockService.update-41"><a href="#LockService.update-41"><span class="linenos">41</span></a>
 </span><span id="LockService.update-42"><a href="#LockService.update-42"><span class="linenos">42</span></a>        <span class="c1"># Reset unlocking and locking if needed</span>
 </span><span id="LockService.update-43"><a href="#LockService.update-43"><span class="linenos">43</span></a>        <span class="k">if</span> <span class="n">lock</span><span class="o">.</span><span class="n">unlocked</span> <span class="ow">and</span> <span class="n">lock</span><span class="o">.</span><span class="n">unlocking</span><span class="p">:</span>
 </span><span id="LockService.update-44"><a href="#LockService.update-44"><span class="linenos">44</span></a>            <span class="n">lock</span><span class="o">.</span><span class="n">unlocking</span> <span class="o">=</span> <span class="kc">False</span>
 </span><span id="LockService.update-45"><a href="#LockService.update-45"><span class="linenos">45</span></a>        <span class="k">if</span> <span class="ow">not</span> <span class="n">lock</span><span class="o">.</span><span class="n">unlocked</span> <span class="ow">and</span> <span class="n">lock</span><span class="o">.</span><span class="n">locking</span><span class="p">:</span>
 </span><span id="LockService.update-46"><a href="#LockService.update-46"><span class="linenos">46</span></a>            <span class="n">lock</span><span class="o">.</span><span class="n">locking</span> <span class="o">=</span> <span class="kc">False</span>
-</span><span id="LockService.update-47"><a href="#LockService.update-47"><span class="linenos">47</span></a>        
+</span><span id="LockService.update-47"><a href="#LockService.update-47"><span class="linenos">47</span></a>
 </span><span id="LockService.update-48"><a href="#LockService.update-48"><span class="linenos">48</span></a>        <span class="k">return</span> <span class="n">lock</span>
 </span></pre></div>
 
 
-    
+
 
                             </div>
                             <div id="LockService.get_locks" class="classattr">
                                         <input id="LockService.get_locks-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">async def</span>
         <span class="name">get_locks</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span></span><span class="return-annotation">):</span></span>
 
@@ -409,13 +409,13 @@
 </span></pre></div>
 
 
-    
+
 
                             </div>
                             <div id="LockService.lock" class="classattr">
                                         <input id="LockService.lock-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">async def</span>
         <span class="name">lock</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">lock</span><span class="p">:</span> <span class="n"><a href="#Lock">Lock</a></span></span><span class="return-annotation">):</span></span>
 
@@ -428,13 +428,13 @@
 </span></pre></div>
 
 
-    
+
 
                             </div>
                             <div id="LockService.unlock" class="classattr">
                                         <input id="LockService.unlock-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">async def</span>
         <span class="name">unlock</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">lock</span><span class="p">:</span> <span class="n"><a href="#Lock">Lock</a></span></span><span class="return-annotation">):</span></span>
 
@@ -447,7 +447,7 @@
 </span></pre></div>
 
 
-    
+
 
                             </div>
                             <div class="inherited">

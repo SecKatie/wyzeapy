@@ -76,7 +76,7 @@
                     <h1 class="modulename">
 <a href="./../../wyzeapy.html">wyzeapy</a><wbr>.<a href="./../services.html">services</a><wbr>.base_service    </h1>
 
-                
+
                         <input id="mod-base_service-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 
                         <label class="view-source-button" for="mod-base_service-view-source"><span>View Source</span></label>
@@ -420,7 +420,7 @@
 </span><span id="L-337"><a href="#L-337"><span class="linenos">337</span></a>                                                  <span class="n">json</span><span class="o">=</span><span class="n">payload</span><span class="p">)</span>
 </span><span id="L-338"><a href="#L-338"><span class="linenos">338</span></a>
 </span><span id="L-339"><a href="#L-339"><span class="linenos">339</span></a>        <span class="n">check_for_errors_standard</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response_json</span><span class="p">)</span>
-</span><span id="L-340"><a href="#L-340"><span class="linenos">340</span></a>    
+</span><span id="L-340"><a href="#L-340"><span class="linenos">340</span></a>
 </span><span id="L-341"><a href="#L-341"><span class="linenos">341</span></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_run_action_devicemgmt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n">Device</span><span class="p">,</span> <span class="nb">type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 </span><span id="L-342"><a href="#L-342"><span class="linenos">342</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="L-343"><a href="#L-343"><span class="linenos">343</span></a><span class="sd">        Wraps the devicemgmt-service-beta.wyze.com/device-management/api/action/run_action endpoint</span>
@@ -455,7 +455,7 @@
 </span><span id="L-372"><a href="#L-372"><span class="linenos">372</span></a>                                                  <span class="n">json</span><span class="o">=</span><span class="n">payload</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">)</span>
 </span><span id="L-373"><a href="#L-373"><span class="linenos">373</span></a>
 </span><span id="L-374"><a href="#L-374"><span class="linenos">374</span></a>        <span class="n">check_for_errors_iot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response_json</span><span class="p">)</span>
-</span><span id="L-375"><a href="#L-375"><span class="linenos">375</span></a>    
+</span><span id="L-375"><a href="#L-375"><span class="linenos">375</span></a>
 </span><span id="L-376"><a href="#L-376"><span class="linenos">376</span></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_set_toggle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n">Device</span><span class="p">,</span> <span class="n">toggleType</span><span class="p">:</span> <span class="n">DeviceMgmtToggleType</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 </span><span id="L-377"><a href="#L-377"><span class="linenos">377</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="L-378"><a href="#L-378"><span class="linenos">378</span></a><span class="sd">        Wraps the ai-subscription-service-beta.wyzecam.com/v4/subscription-service/toggle-management endpoint</span>
@@ -502,9 +502,9 @@
 </span><span id="L-419"><a href="#L-419"><span class="linenos">419</span></a>
 </span><span id="L-420"><a href="#L-420"><span class="linenos">420</span></a>        <span class="n">response_json</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_auth_lib</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s2">&quot;https://ai-subscription-service-beta.wyzecam.com/v4/subscription-service/toggle-management&quot;</span><span class="p">,</span>
 </span><span id="L-421"><a href="#L-421"><span class="linenos">421</span></a>                                                  <span class="n">json</span><span class="o">=</span><span class="n">payload</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">)</span>
-</span><span id="L-422"><a href="#L-422"><span class="linenos">422</span></a>        
+</span><span id="L-422"><a href="#L-422"><span class="linenos">422</span></a>
 </span><span id="L-423"><a href="#L-423"><span class="linenos">423</span></a>        <span class="n">check_for_errors_devicemgmt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response_json</span><span class="p">)</span>
-</span><span id="L-424"><a href="#L-424"><span class="linenos">424</span></a>    
+</span><span id="L-424"><a href="#L-424"><span class="linenos">424</span></a>
 </span><span id="L-425"><a href="#L-425"><span class="linenos">425</span></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_get_iot_prop_devicemgmt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n">Device</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 </span><span id="L-426"><a href="#L-426"><span class="linenos">426</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="L-427"><a href="#L-427"><span class="linenos">427</span></a><span class="sd">        Wraps the devicemgmt-service-beta.wyze.com/device-management/api/device-property/get_iot_prop endpoint</span>
@@ -531,7 +531,7 @@
 </span><span id="L-448"><a href="#L-448"><span class="linenos">448</span></a>
 </span><span id="L-449"><a href="#L-449"><span class="linenos">449</span></a>        <span class="n">response_json</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_auth_lib</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;https://devicemgmt-service-beta.wyze.com/device-management/api/device-property/get_iot_prop&quot;</span><span class="p">,</span>
 </span><span id="L-450"><a href="#L-450"><span class="linenos">450</span></a>                                                  <span class="n">json</span><span class="o">=</span><span class="n">payload</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">)</span>
-</span><span id="L-451"><a href="#L-451"><span class="linenos">451</span></a>        
+</span><span id="L-451"><a href="#L-451"><span class="linenos">451</span></a>
 </span><span id="L-452"><a href="#L-452"><span class="linenos">452</span></a>        <span class="n">check_for_errors_iot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response_json</span><span class="p">)</span>
 </span><span id="L-453"><a href="#L-453"><span class="linenos">453</span></a>
 </span><span id="L-454"><a href="#L-454"><span class="linenos">454</span></a>        <span class="k">return</span> <span class="n">response_json</span>
@@ -878,7 +878,7 @@
                 <section id="BaseService">
                             <input id="BaseService-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr class">
-            
+
     <span class="def">class</span>
     <span class="name">BaseService</span>:
 
@@ -1198,7 +1198,7 @@
 </span><span id="BaseService-338"><a href="#BaseService-338"><span class="linenos">338</span></a>                                                  <span class="n">json</span><span class="o">=</span><span class="n">payload</span><span class="p">)</span>
 </span><span id="BaseService-339"><a href="#BaseService-339"><span class="linenos">339</span></a>
 </span><span id="BaseService-340"><a href="#BaseService-340"><span class="linenos">340</span></a>        <span class="n">check_for_errors_standard</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response_json</span><span class="p">)</span>
-</span><span id="BaseService-341"><a href="#BaseService-341"><span class="linenos">341</span></a>    
+</span><span id="BaseService-341"><a href="#BaseService-341"><span class="linenos">341</span></a>
 </span><span id="BaseService-342"><a href="#BaseService-342"><span class="linenos">342</span></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_run_action_devicemgmt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n">Device</span><span class="p">,</span> <span class="nb">type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 </span><span id="BaseService-343"><a href="#BaseService-343"><span class="linenos">343</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="BaseService-344"><a href="#BaseService-344"><span class="linenos">344</span></a><span class="sd">        Wraps the devicemgmt-service-beta.wyze.com/device-management/api/action/run_action endpoint</span>
@@ -1233,7 +1233,7 @@
 </span><span id="BaseService-373"><a href="#BaseService-373"><span class="linenos">373</span></a>                                                  <span class="n">json</span><span class="o">=</span><span class="n">payload</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">)</span>
 </span><span id="BaseService-374"><a href="#BaseService-374"><span class="linenos">374</span></a>
 </span><span id="BaseService-375"><a href="#BaseService-375"><span class="linenos">375</span></a>        <span class="n">check_for_errors_iot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response_json</span><span class="p">)</span>
-</span><span id="BaseService-376"><a href="#BaseService-376"><span class="linenos">376</span></a>    
+</span><span id="BaseService-376"><a href="#BaseService-376"><span class="linenos">376</span></a>
 </span><span id="BaseService-377"><a href="#BaseService-377"><span class="linenos">377</span></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_set_toggle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n">Device</span><span class="p">,</span> <span class="n">toggleType</span><span class="p">:</span> <span class="n">DeviceMgmtToggleType</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 </span><span id="BaseService-378"><a href="#BaseService-378"><span class="linenos">378</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="BaseService-379"><a href="#BaseService-379"><span class="linenos">379</span></a><span class="sd">        Wraps the ai-subscription-service-beta.wyzecam.com/v4/subscription-service/toggle-management endpoint</span>
@@ -1280,9 +1280,9 @@
 </span><span id="BaseService-420"><a href="#BaseService-420"><span class="linenos">420</span></a>
 </span><span id="BaseService-421"><a href="#BaseService-421"><span class="linenos">421</span></a>        <span class="n">response_json</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_auth_lib</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s2">&quot;https://ai-subscription-service-beta.wyzecam.com/v4/subscription-service/toggle-management&quot;</span><span class="p">,</span>
 </span><span id="BaseService-422"><a href="#BaseService-422"><span class="linenos">422</span></a>                                                  <span class="n">json</span><span class="o">=</span><span class="n">payload</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">)</span>
-</span><span id="BaseService-423"><a href="#BaseService-423"><span class="linenos">423</span></a>        
+</span><span id="BaseService-423"><a href="#BaseService-423"><span class="linenos">423</span></a>
 </span><span id="BaseService-424"><a href="#BaseService-424"><span class="linenos">424</span></a>        <span class="n">check_for_errors_devicemgmt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response_json</span><span class="p">)</span>
-</span><span id="BaseService-425"><a href="#BaseService-425"><span class="linenos">425</span></a>    
+</span><span id="BaseService-425"><a href="#BaseService-425"><span class="linenos">425</span></a>
 </span><span id="BaseService-426"><a href="#BaseService-426"><span class="linenos">426</span></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_get_iot_prop_devicemgmt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n">Device</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 </span><span id="BaseService-427"><a href="#BaseService-427"><span class="linenos">427</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="BaseService-428"><a href="#BaseService-428"><span class="linenos">428</span></a><span class="sd">        Wraps the devicemgmt-service-beta.wyze.com/device-management/api/device-property/get_iot_prop endpoint</span>
@@ -1309,7 +1309,7 @@
 </span><span id="BaseService-449"><a href="#BaseService-449"><span class="linenos">449</span></a>
 </span><span id="BaseService-450"><a href="#BaseService-450"><span class="linenos">450</span></a>        <span class="n">response_json</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_auth_lib</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;https://devicemgmt-service-beta.wyze.com/device-management/api/device-property/get_iot_prop&quot;</span><span class="p">,</span>
 </span><span id="BaseService-451"><a href="#BaseService-451"><span class="linenos">451</span></a>                                                  <span class="n">json</span><span class="o">=</span><span class="n">payload</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">)</span>
-</span><span id="BaseService-452"><a href="#BaseService-452"><span class="linenos">452</span></a>        
+</span><span id="BaseService-452"><a href="#BaseService-452"><span class="linenos">452</span></a>
 </span><span id="BaseService-453"><a href="#BaseService-453"><span class="linenos">453</span></a>        <span class="n">check_for_errors_iot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">response_json</span><span class="p">)</span>
 </span><span id="BaseService-454"><a href="#BaseService-454"><span class="linenos">454</span></a>
 </span><span id="BaseService-455"><a href="#BaseService-455"><span class="linenos">455</span></a>        <span class="k">return</span> <span class="n">response_json</span>
@@ -1659,7 +1659,7 @@
                             <div id="BaseService.__init__" class="classattr">
                                         <input id="BaseService.__init__-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="name">BaseService</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">auth_lib</span><span class="p">:</span> <span class="n"><a href="../wyze_auth_lib.html#WyzeAuthLib">wyzeapy.wyze_auth_lib.WyzeAuthLib</a></span></span>)</span>
 
                 <label class="view-source-button" for="BaseService.__init__-view-source"><span>View Source</span></label>
@@ -1706,7 +1706,7 @@
                             <div id="BaseService.register_updater" class="classattr">
                                         <input id="BaseService.register_updater-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">def</span>
         <span class="name">register_updater</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">device</span><span class="p">:</span> <span class="n"><a href="../types.html#Device">wyzeapy.types.Device</a></span>, </span><span class="param"><span class="n">interval</span></span><span class="return-annotation">):</span></span>
 
@@ -1746,7 +1746,7 @@ interval : int
                             <div id="BaseService.unregister_updater" class="classattr">
                                         <input id="BaseService.unregister_updater-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">def</span>
         <span class="name">unregister_updater</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">device</span><span class="p">:</span> <span class="n"><a href="../types.html#Device">wyzeapy.types.Device</a></span></span><span class="return-annotation">):</span></span>
 
@@ -1761,13 +1761,13 @@ interval : int
 </span></pre></div>
 
 
-    
+
 
                             </div>
                             <div id="BaseService.set_push_info" class="classattr">
                                         <input id="BaseService.set_push_info-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">async def</span>
         <span class="name">set_push_info</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">on</span><span class="p">:</span> <span class="nb">bool</span></span><span class="return-annotation">) -> <span class="kc">None</span>:</span></span>
 
@@ -1798,13 +1798,13 @@ interval : int
 </span></pre></div>
 
 
-    
+
 
                             </div>
                             <div id="BaseService.get_user_profile" class="classattr">
                                         <input id="BaseService.get_user_profile-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">async def</span>
         <span class="name">get_user_profile</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span></span><span class="return-annotation">) -> <span class="n">Dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>:</span></span>
 
@@ -1835,13 +1835,13 @@ interval : int
 </span></pre></div>
 
 
-    
+
 
                             </div>
                             <div id="BaseService.get_object_list" class="classattr">
                                         <input id="BaseService.get_object_list-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">async def</span>
         <span class="name">get_object_list</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span></span><span class="return-annotation">) -> <span class="n">List</span><span class="p">[</span><span class="n"><a href="../types.html#Device">wyzeapy.types.Device</a></span><span class="p">]</span>:</span></span>
 
@@ -1894,7 +1894,7 @@ interval : int
                             <div id="BaseService.get_updated_params" class="classattr">
                                         <input id="BaseService.get_updated_params-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">async def</span>
         <span class="name">get_updated_params</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">device_mac</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span></span><span class="return-annotation">) -> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]]</span>:</span></span>
 
@@ -1914,7 +1914,7 @@ interval : int
 </span></pre></div>
 
 
-    
+
 
                             </div>
                 </section>

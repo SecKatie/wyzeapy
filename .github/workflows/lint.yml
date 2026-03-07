@@ -2,9 +2,9 @@ name: Lint
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, develop, release/* ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main, develop, release/* ]
 
 permissions:
   contents: read
@@ -25,13 +25,10 @@ jobs:
       uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098 # v7.3.1
 
     - name: Install dependencies
-      run: |
-        uv pip install --system ruff
+      run: uv sync --group dev
 
     - name: Run ruff check
-      run: |
-        ruff check src/
+      run: uv run ruff check src/
 
     - name: Run ruff format check
-      run: |
-        ruff format --check src/
+      run: uv run ruff format --check src/

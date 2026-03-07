@@ -30,11 +30,14 @@ jobs:
       - name: Sync project dependencies
         run: uv sync --all-groups
 
+      - name: Run tests
+        run: uv run pytest tests/ -v
+
       - name: Build distribution
-        run: uv run python -m build --sdist --wheel
+        run: python -m build --sdist --wheel
 
       - name: Publish package to Test PyPI
         env:
           TWINE_USERNAME: "__token__"
           TWINE_PASSWORD: "${{ secrets.TEST_PYPI_TOKEN }}"
-        run: uv run twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+        run: twine upload --skip-existing --repository-url https://test.pypi.org/legacy/ dist/*

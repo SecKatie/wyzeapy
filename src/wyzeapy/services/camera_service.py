@@ -11,8 +11,6 @@ from typing import Any, List, Optional, Dict, Callable, Tuple
 
 from aiohttp import ClientOSError, ContentTypeError
 
-from wyzeapy.const import APP_PLATFORM
-
 from ..exceptions import UnknownApiError
 from .base_service import BaseService
 from ..types import Device, DeviceTypes, Event, PropertyIDs, DeviceMgmtToggleProps

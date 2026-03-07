@@ -133,7 +133,7 @@
                     <h1 class="modulename">
 <a href="./../../wyzeapy.html">wyzeapy</a><wbr>.<a href="./../services.html">services</a><wbr>.camera_service    </h1>
 
-                
+
                         <input id="mod-camera_service-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 
                         <label class="view-source-button" for="mod-camera_service-view-source"><span>View Source</span></label>
@@ -293,7 +293,7 @@
 </span><span id="L-153"><a href="#L-153"><span class="linenos">153</span></a>    <span class="c1"># Garage door trigger uses run action on all models</span>
 </span><span id="L-154"><a href="#L-154"><span class="linenos">154</span></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">garage_door_open</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">camera</span><span class="p">:</span> <span class="n">Camera</span><span class="p">):</span>
 </span><span id="L-155"><a href="#L-155"><span class="linenos">155</span></a>        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_action</span><span class="p">(</span><span class="n">camera</span><span class="p">,</span> <span class="s2">&quot;garage_door_trigger&quot;</span><span class="p">)</span>
-</span><span id="L-156"><a href="#L-156"><span class="linenos">156</span></a>    
+</span><span id="L-156"><a href="#L-156"><span class="linenos">156</span></a>
 </span><span id="L-157"><a href="#L-157"><span class="linenos">157</span></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">garage_door_close</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">camera</span><span class="p">:</span> <span class="n">Camera</span><span class="p">):</span>
 </span><span id="L-158"><a href="#L-158"><span class="linenos">158</span></a>        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_action</span><span class="p">(</span><span class="n">camera</span><span class="p">,</span> <span class="s2">&quot;garage_door_trigger&quot;</span><span class="p">)</span>
 </span><span id="L-159"><a href="#L-159"><span class="linenos">159</span></a>
@@ -329,17 +329,17 @@
             <span class="name">DEVICEMGMT_API_MODELS</span>        =
 <span class="default_value">[&#39;LD_CFP&#39;, &#39;AN_RSCW&#39;, &#39;GW_GC1&#39;]</span>
 
-        
+
     </div>
     <a class="headerlink" href="#DEVICEMGMT_API_MODELS"></a>
-    
-    
+
+
 
                 </section>
                 <section id="Camera">
                             <input id="Camera-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr class">
-            
+
     <span class="def">class</span>
     <span class="name">Camera</span><wbr>(<span class="base"><a href="../types.html#Device">wyzeapy.types.Device</a></span>):
 
@@ -360,12 +360,12 @@
 </span></pre></div>
 
 
-    
+
 
                             <div id="Camera.__init__" class="classattr">
                                         <input id="Camera.__init__-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="name">Camera</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">dictionary</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span></span>)</span>
 
                 <label class="view-source-button" for="Camera.__init__-view-source"><span>View Source</span></label>
@@ -384,73 +384,73 @@
 </span></pre></div>
 
 
-    
+
 
                             </div>
                             <div id="Camera.last_event" class="classattr">
                                 <div class="attr variable">
             <span class="name">last_event</span><span class="annotation">: Optional[<a href="../types.html#Event">wyzeapy.types.Event</a>]</span>
 
-        
+
     </div>
     <a class="headerlink" href="#Camera.last_event"></a>
-    
-    
+
+
 
                             </div>
                             <div id="Camera.last_event_ts" class="classattr">
                                 <div class="attr variable">
             <span class="name">last_event_ts</span><span class="annotation">: int</span>
 
-        
+
     </div>
     <a class="headerlink" href="#Camera.last_event_ts"></a>
-    
-    
+
+
 
                             </div>
                             <div id="Camera.on" class="classattr">
                                 <div class="attr variable">
             <span class="name">on</span><span class="annotation">: bool</span>
 
-        
+
     </div>
     <a class="headerlink" href="#Camera.on"></a>
-    
-    
+
+
 
                             </div>
                             <div id="Camera.siren" class="classattr">
                                 <div class="attr variable">
             <span class="name">siren</span><span class="annotation">: bool</span>
 
-        
+
     </div>
     <a class="headerlink" href="#Camera.siren"></a>
-    
-    
+
+
 
                             </div>
                             <div id="Camera.floodlight" class="classattr">
                                 <div class="attr variable">
             <span class="name">floodlight</span><span class="annotation">: bool</span>
 
-        
+
     </div>
     <a class="headerlink" href="#Camera.floodlight"></a>
-    
-    
+
+
 
                             </div>
                             <div id="Camera.garage" class="classattr">
                                 <div class="attr variable">
             <span class="name">garage</span><span class="annotation">: bool</span>
 
-        
+
     </div>
     <a class="headerlink" href="#Camera.garage"></a>
-    
-    
+
+
 
                             </div>
                             <div class="inherited">
@@ -474,7 +474,7 @@
                 <section id="CameraService">
                             <input id="CameraService-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr class">
-            
+
     <span class="def">class</span>
     <span class="name">CameraService</span><wbr>(<span class="base"><a href="base_service.html#BaseService">wyzeapy.services.base_service.BaseService</a></span>):
 
@@ -600,7 +600,7 @@
 </span><span id="CameraService-154"><a href="#CameraService-154"><span class="linenos">154</span></a>    <span class="c1"># Garage door trigger uses run action on all models</span>
 </span><span id="CameraService-155"><a href="#CameraService-155"><span class="linenos">155</span></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">garage_door_open</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">camera</span><span class="p">:</span> <span class="n">Camera</span><span class="p">):</span>
 </span><span id="CameraService-156"><a href="#CameraService-156"><span class="linenos">156</span></a>        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_action</span><span class="p">(</span><span class="n">camera</span><span class="p">,</span> <span class="s2">&quot;garage_door_trigger&quot;</span><span class="p">)</span>
-</span><span id="CameraService-157"><a href="#CameraService-157"><span class="linenos">157</span></a>    
+</span><span id="CameraService-157"><a href="#CameraService-157"><span class="linenos">157</span></a>
 </span><span id="CameraService-158"><a href="#CameraService-158"><span class="linenos">158</span></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">garage_door_close</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">camera</span><span class="p">:</span> <span class="n">Camera</span><span class="p">):</span>
 </span><span id="CameraService-159"><a href="#CameraService-159"><span class="linenos">159</span></a>        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_action</span><span class="p">(</span><span class="n">camera</span><span class="p">,</span> <span class="s2">&quot;garage_door_trigger&quot;</span><span class="p">)</span>
 </span><span id="CameraService-160"><a href="#CameraService-160"><span class="linenos">160</span></a>
@@ -637,7 +637,7 @@
                             <div id="CameraService.update" class="classattr">
                                         <input id="CameraService.update-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">async def</span>
         <span class="name">update</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">camera</span><span class="p">:</span> <span class="n"><a href="#Camera">Camera</a></span></span><span class="return-annotation">):</span></span>
 
@@ -696,13 +696,13 @@
 </span></pre></div>
 
 
-    
+
 
                             </div>
                             <div id="CameraService.register_for_updates" class="classattr">
                                         <input id="CameraService.register_for_updates-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">async def</span>
         <span class="name">register_for_updates</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="bp">self</span>,</span><span class="param">	<span class="n">camera</span><span class="p">:</span> <span class="n"><a href="#Camera">Camera</a></span>,</span><span class="param">	<span class="n">callback</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n"><a href="#Camera">Camera</a></span><span class="p">],</span> <span class="n">NoneType</span><span class="p">]</span></span><span class="return-annotation">):</span></span>
 
@@ -720,13 +720,13 @@
 </span></pre></div>
 
 
-    
+
 
                             </div>
                             <div id="CameraService.deregister_for_updates" class="classattr">
                                         <input id="CameraService.deregister_for_updates-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">async def</span>
         <span class="name">deregister_for_updates</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">camera</span><span class="p">:</span> <span class="n"><a href="#Camera">Camera</a></span></span><span class="return-annotation">):</span></span>
 
@@ -739,13 +739,13 @@
 </span></pre></div>
 
 
-    
+
 
                             </div>
                             <div id="CameraService.update_worker" class="classattr">
                                         <input id="CameraService.update_worker-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">def</span>
         <span class="name">update_worker</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">loop</span></span><span class="return-annotation">):</span></span>
 
@@ -770,13 +770,13 @@
 </span></pre></div>
 
 
-    
+
 
                             </div>
                             <div id="CameraService.get_cameras" class="classattr">
                                         <input id="CameraService.get_cameras-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">async def</span>
         <span class="name">get_cameras</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span></span><span class="return-annotation">) -> <span class="n">List</span><span class="p">[</span><span class="n"><a href="#Camera">Camera</a></span><span class="p">]</span>:</span></span>
 
@@ -794,13 +794,13 @@
 </span></pre></div>
 
 
-    
+
 
                             </div>
                             <div id="CameraService.turn_on" class="classattr">
                                         <input id="CameraService.turn_on-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">async def</span>
         <span class="name">turn_on</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">camera</span><span class="p">:</span> <span class="n"><a href="#Camera">Camera</a></span></span><span class="return-annotation">):</span></span>
 
@@ -814,13 +814,13 @@
 </span></pre></div>
 
 
-    
+
 
                             </div>
                             <div id="CameraService.turn_off" class="classattr">
                                         <input id="CameraService.turn_off-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">async def</span>
         <span class="name">turn_off</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">camera</span><span class="p">:</span> <span class="n"><a href="#Camera">Camera</a></span></span><span class="return-annotation">):</span></span>
 
@@ -834,13 +834,13 @@
 </span></pre></div>
 
 
-    
+
 
                             </div>
                             <div id="CameraService.siren_on" class="classattr">
                                         <input id="CameraService.siren_on-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">async def</span>
         <span class="name">siren_on</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">camera</span><span class="p">:</span> <span class="n"><a href="#Camera">Camera</a></span></span><span class="return-annotation">):</span></span>
 
@@ -854,13 +854,13 @@
 </span></pre></div>
 
 
-    
+
 
                             </div>
                             <div id="CameraService.siren_off" class="classattr">
                                         <input id="CameraService.siren_off-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">async def</span>
         <span class="name">siren_off</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">camera</span><span class="p">:</span> <span class="n"><a href="#Camera">Camera</a></span></span><span class="return-annotation">):</span></span>
 
@@ -874,13 +874,13 @@
 </span></pre></div>
 
 
-    
+
 
                             </div>
                             <div id="CameraService.floodlight_on" class="classattr">
                                         <input id="CameraService.floodlight_on-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">async def</span>
         <span class="name">floodlight_on</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">camera</span><span class="p">:</span> <span class="n"><a href="#Camera">Camera</a></span></span><span class="return-annotation">):</span></span>
 
@@ -895,13 +895,13 @@
 </span></pre></div>
 
 
-    
+
 
                             </div>
                             <div id="CameraService.floodlight_off" class="classattr">
                                         <input id="CameraService.floodlight_off-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">async def</span>
         <span class="name">floodlight_off</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">camera</span><span class="p">:</span> <span class="n"><a href="#Camera">Camera</a></span></span><span class="return-annotation">):</span></span>
 
@@ -916,13 +916,13 @@
 </span></pre></div>
 
 
-    
+
 
                             </div>
                             <div id="CameraService.garage_door_open" class="classattr">
                                         <input id="CameraService.garage_door_open-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">async def</span>
         <span class="name">garage_door_open</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">camera</span><span class="p">:</span> <span class="n"><a href="#Camera">Camera</a></span></span><span class="return-annotation">):</span></span>
 
@@ -935,13 +935,13 @@
 </span></pre></div>
 
 
-    
+
 
                             </div>
                             <div id="CameraService.garage_door_close" class="classattr">
                                         <input id="CameraService.garage_door_close-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">async def</span>
         <span class="name">garage_door_close</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">camera</span><span class="p">:</span> <span class="n"><a href="#Camera">Camera</a></span></span><span class="return-annotation">):</span></span>
 
@@ -954,13 +954,13 @@
 </span></pre></div>
 
 
-    
+
 
                             </div>
                             <div id="CameraService.turn_on_notifications" class="classattr">
                                         <input id="CameraService.turn_on_notifications-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">async def</span>
         <span class="name">turn_on_notifications</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">camera</span><span class="p">:</span> <span class="n"><a href="#Camera">Camera</a></span></span><span class="return-annotation">):</span></span>
 
@@ -974,13 +974,13 @@
 </span></pre></div>
 
 
-    
+
 
                             </div>
                             <div id="CameraService.turn_off_notifications" class="classattr">
                                         <input id="CameraService.turn_off_notifications-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">async def</span>
         <span class="name">turn_off_notifications</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">camera</span><span class="p">:</span> <span class="n"><a href="#Camera">Camera</a></span></span><span class="return-annotation">):</span></span>
 
@@ -994,13 +994,13 @@
 </span></pre></div>
 
 
-    
+
 
                             </div>
                             <div id="CameraService.turn_on_motion_detection" class="classattr">
                                         <input id="CameraService.turn_on_motion_detection-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">async def</span>
         <span class="name">turn_on_motion_detection</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">camera</span><span class="p">:</span> <span class="n"><a href="#Camera">Camera</a></span></span><span class="return-annotation">):</span></span>
 
@@ -1017,13 +1017,13 @@
 </span></pre></div>
 
 
-    
+
 
                             </div>
                             <div id="CameraService.turn_off_motion_detection" class="classattr">
                                         <input id="CameraService.turn_off_motion_detection-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">async def</span>
         <span class="name">turn_off_motion_detection</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">camera</span><span class="p">:</span> <span class="n"><a href="#Camera">Camera</a></span></span><span class="return-annotation">):</span></span>
 
@@ -1040,7 +1040,7 @@
 </span></pre></div>
 
 
-    
+
 
                             </div>
                             <div class="inherited">

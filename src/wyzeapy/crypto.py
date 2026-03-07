@@ -68,9 +68,7 @@ def ford_create_signature(
     return hashlib.md5(urlencoded.encode()).hexdigest()
 
 
-def web_create_signature(
-    payload: Union[Dict[Any, Any], str], access_token: str
-) -> str:
+def web_create_signature(payload: Union[Dict[Any, Any], str], access_token: str) -> str:
     """
     Compute the app (my.wyze.com) API request signature using HMAC-MD5.
 

@@ -25,7 +25,7 @@ from ..const import (
     APP_PLATFORM,
     SOURCE,
     WEB_APP_ID,
-    WEB_APP_INFO
+    WEB_APP_INFO,
 )
 from ..crypto import olive_create_signature, web_create_signature
 from ..payload_factory import (
@@ -1019,15 +1019,15 @@ class BaseService:
                     "device_id": device.mac,
                     "device_model": device.product_model,
                     "provider": "webrtc",
-                    "parameters": {
-                        "use_trickle": True
-                    }
+                    "parameters": {"use_trickle": True},
                 }
             ],
             "nonce": str(int(time.time() * 1000)),
         }
 
-        signature = web_create_signature(json.dumps(payload), self._auth_lib.token.access_token)
+        signature = web_create_signature(
+            json.dumps(payload), self._auth_lib.token.access_token
+        )
         headers = {
             "Accept-Encoding": "gzip",
             "appId": WEB_APP_ID,
@@ -1035,11 +1035,13 @@ class BaseService:
             "access_token": self._auth_lib.token.access_token,
             "Authorization": self._auth_lib.token.access_token,
             "signature2": signature,
-            "requestid": str(time.time() % 100000)
+            "requestid": str(time.time() % 100000),
         }
 
         response_json = await self._auth_lib.post(
-            "https://app.wyzecam.com/app/v4/camera/get-streams", json=payload, headers=headers
+            "https://app.wyzecam.com/app/v4/camera/get-streams",
+            json=payload,
+            headers=headers,
         )
 
         check_for_errors_standard(self, response_json)

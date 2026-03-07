@@ -1,7 +1,12 @@
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 from wyzeapy.services.camera_service import CameraService, Camera
-from wyzeapy.types import DeviceTypes, PropertyIDs, DeviceMgmtToggleProps
+from wyzeapy.types import (
+    DeviceTypes,
+    PropertyIDs,
+    DeviceMgmtToggleProps,
+    ResponseCodes,
+)
 from wyzeapy.wyze_auth_lib import WyzeAuthLib
 import asyncio
 from wyzeapy.exceptions import UnknownApiError
@@ -23,6 +28,7 @@ class TestCameraService(unittest.IsolatedAsyncioTestCase):
         self.camera_service._set_toggle = AsyncMock()
         self.camera_service.get_updated_params = AsyncMock()
         self.camera_service._get_iot_prop_devicemgmt = AsyncMock()
+        self.camera_service._get_camera_stream = AsyncMock()
         self.camera_service.get_object_list = AsyncMock(
             return_value=[
                 MagicMock(type=DeviceTypes.CAMERA, raw_dict={"mac": "CAM1"}),
@@ -307,6 +313,33 @@ class TestCameraService(unittest.IsolatedAsyncioTestCase):
         self.assertIsInstance(cameras[0], Camera)
         self.assertEqual(cameras[0].mac, "CAM1")
         self.assertEqual(cameras[1].mac, "CAM2")
+
+    async def test_get_stream_info_returns_params(self):
+        self.camera_service._get_camera_stream.return_value = {
+            "code": ResponseCodes.SUCCESS.value,
+            "data": [
+                {
+                    "property": {
+                        "iot-device::iot-state": 1,
+                        "iot-device::iot-power": 1,
+                    },
+                    "params": {"answer": "ok"},
+                }
+            ],
+        }
+
+        stream_info = await self.camera_service.get_stream_info(self.test_camera)
+
+        self.assertEqual(stream_info, {"answer": "ok"})
+
+    async def test_get_stream_info_raises_offline_error_for_offline_response(self):
+        self.camera_service._get_camera_stream.return_value = {
+            "code": ResponseCodes.DEVICE_OFFLINE.value,
+            "msg": "device offline",
+        }
+
+        with self.assertRaisesRegex(UnknownApiError, "Camera is offline"):
+            await self.camera_service.get_stream_info(self.test_camera)
 
     async def test_register_for_updates(self):
         mock_callback = MagicMock()

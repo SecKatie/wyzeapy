@@ -603,6 +603,29 @@ def devicemgmt_get_iot_props_list(model: str):
                     ],
                 },
             ]
+        case "DX_LB2":  # Lock Bolt v2
+            return [
+                {
+                    "iid": 1,
+                    "name": "iot-device",
+                    "properties": ["iot-state", "push-switch"]
+                },
+                {
+                    "iid": 2,
+                    "name": "lock",
+                    "properties": ["lock-status"]
+                },
+                {
+                    "iid": 3,
+                    "name": "device-info",
+                    "properties": ["device-id", "firmware-ver", "mac", "hardware-ver"]
+                },
+                {
+                    "iid": 4,
+                    "name": "battery",
+                    "properties": ["battery-level", "power-source"]
+                },
+            ]
         case _:
             raise NotImplementedError(
                 f"No iot props for model ({model}) have been defined."

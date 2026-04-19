@@ -38,6 +38,7 @@ class DeviceTypes(Enum):
     BASE_STATION = "BaseStation"
     SCALE = "WyzeScale"
     LOCK = "Lock"
+    LOCK_BOLT_V2 = "DX_LB2"  # Wyze Lock Bolt v2 - uses product_model for matching
     GATEWAY = "gateway"
     COMMON = "Common"
     VACUUM = "JA_RO2"
@@ -69,13 +70,20 @@ class Device:
 
     @property
     def type(self) -> DeviceTypes:
+        # Check product_model first for devices that use a generic product_type
+        try:
+            model_type = DeviceTypes(self.product_model)
+            return model_type
+        except ValueError:
+            pass
+        # Fall back to product_type
         try:
             return DeviceTypes(self.product_type)
         except ValueError:
             return DeviceTypes.UNKNOWN
 
     def __repr__(self) -> str:
-        return "<Device: {}, {}>".format(DeviceTypes(self.product_type), self.mac)
+        return "<Device: {}, {}>".format(self.type, self.mac)
 
 
 class Sensor(Device):

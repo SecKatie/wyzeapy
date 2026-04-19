@@ -254,9 +254,7 @@ class TestCameraService(unittest.IsolatedAsyncioTestCase):
         - P1056='2' means light is OFF
         """
         # Mock responses
-        self.camera_service._get_event_list.return_value = {
-            "data": {"event_list": []}
-        }
+        self.camera_service._get_event_list.return_value = {"data": {"event_list": []}}
         self.camera_service.get_updated_params.return_value = {"ip": "192.168.1.104"}
 
         # Test light ON state (P1056='1')

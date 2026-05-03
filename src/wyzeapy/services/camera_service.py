@@ -30,7 +30,8 @@ DEVICEMGMT_API_MODELS = [
     "LD_CFP",
     "AN_RSCW",
     "GW_GC1",
-]  # Floodlight pro, battery cam pro, and OG use a diffrent api (devicemgmt)
+    "HL_PAN4",  # Wyze Cam Pan v4
+]  # Floodlight pro, battery cam pro, OG, and Pan v4 use a diffrent api (devicemgmt)
 
 
 class Camera(Device):
@@ -197,10 +198,10 @@ class CameraService(BaseService):
 
     # Also controls lamp socket, BCP spotlight, and Bulb Cam light
     async def floodlight_on(self, camera: Camera):
-        if camera.product_model == "AN_RSCW":
+        if camera.product_model in ("AN_RSCW", "HL_PAN4"):
             await self._run_action_devicemgmt(
                 camera, "spotlight", "1"
-            )  # Battery cam pro integrated spotlight is controllable
+            )  # Battery cam pro and Pan v4 have an integrated spotlight
         elif camera.product_model in DEVICEMGMT_API_MODELS:
             await self._run_action_devicemgmt(
                 camera, "floodlight", "1"
@@ -213,10 +214,10 @@ class CameraService(BaseService):
 
     # Also controls lamp socket, BCP spotlight, and Bulb Cam light
     async def floodlight_off(self, camera: Camera):
-        if camera.product_model == "AN_RSCW":
+        if camera.product_model in ("AN_RSCW", "HL_PAN4"):
             await self._run_action_devicemgmt(
                 camera, "spotlight", "0"
-            )  # Battery cam pro integrated spotlight is controllable
+            )  # Battery cam pro and Pan v4 have an integrated spotlight
         elif camera.product_model in DEVICEMGMT_API_MODELS:
             await self._run_action_devicemgmt(
                 camera, "floodlight", "0"

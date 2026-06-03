@@ -10,6 +10,7 @@ from wyzeapy.payload_factory import (
     devicemgmt_create_capabilities_payload,
     devicemgmt_get_iot_props_list,
     olive_create_get_air_prop_payload,
+    olive_create_query_air_history_payload,
 )
 from wyzeapy.crypto import olive_create_signature
 from unittest.mock import patch
@@ -58,6 +59,13 @@ class TestPayloadFactory(unittest.TestCase):
         self.assertEqual(result["deviceModel"], device_model)
         self.assertEqual(result["propNames"], prop_names)
         self.assertEqual(result["nonce"], 1234567890123)
+
+    def test_olive_create_query_air_history_payload(self):
+        result = olive_create_query_air_history_payload("test_mac", 1000, 2000)
+
+        self.assertEqual(result["device_id"], "test_mac")
+        self.assertEqual(result["begin_time"], "1000")
+        self.assertEqual(result["last_time"], "2000")
 
     @patch("time.time", return_value=1234567890.123)
     def test_olive_create_post_payload(self, mock_time):

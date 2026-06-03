@@ -1,4 +1,5 @@
 import logging
+import time
 from enum import Enum
 from typing import Any, Dict, List
 
@@ -27,6 +28,9 @@ class AirPurifier(Device):
         self.available: bool = False
         self.fan_mode: str = AirPurifierFanMode.AUTO.value
         self.aqi: int | None = None
+        self.max_hourly_aqi: int | None = None
+        self.max_hourly_aqi_start_time: int | None = None
+        self.max_hourly_aqi_end_time: int | None = None
         self.app_version: str | None = None
         self.sn: str | None = None
         self.wifi_mac: str | None = None
@@ -72,7 +76,10 @@ class AirPurifierService(BaseService):
         response = await self._air_purifier_get_air_prop(air_purifier)
         settings = response.get("data", {}).get("settings", {})
         aqi = settings.get(AirPurifierProps.AQI.value)
-        air_purifier.aqi = int(aqi) if aqi is not None else None
+        air_purifier.aqi = self._parse_int(aqi)
+
+        await self._air_purifier_update_max_hourly_aqi(air_purifier)
+
         return air_purifier
 
     async def get_air_purifiers(self) -> List[AirPurifier]:
@@ -111,6 +118,52 @@ class AirPurifierService(BaseService):
     async def _air_purifier_get_air_prop(self, device: Device) -> Dict[Any, Any]:
         url = "https://wyze-earth-service.wyzecam.com/plugin/earth/get_air_prop"
         return await self._get_air_prop(url, device, AirPurifierProps.AQI.value)
+
+    async def _air_purifier_update_max_hourly_aqi(
+        self, air_purifier: AirPurifier
+    ) -> None:
+        begin_time, last_time = self._air_quality_hour()
+        response = await self._air_purifier_query_air_history(
+            air_purifier, begin_time=begin_time, last_time=last_time
+        )
+
+        air_purifier.max_hourly_aqi_start_time = begin_time
+        air_purifier.max_hourly_aqi_end_time = last_time
+        air_purifier.max_hourly_aqi = self._get_max_hourly_aqi(
+            response.get("data") or []
+        )
+
+    @staticmethod
+    def _air_quality_hour() -> tuple[int, int]:
+        last_time = int(time.time())
+        begin_time = last_time - (last_time % 3600)
+        return begin_time, last_time
+
+    @classmethod
+    def _get_max_hourly_aqi(cls, history: List[Dict[Any, Any]]) -> int | None:
+        for sample in reversed(history):
+            max_aqi = cls._parse_int(sample.get("max_aqi"))
+            avg_aqi = cls._parse_int(sample.get("avg"))
+            if max_aqi is not None and (
+                max_aqi > 0 or (avg_aqi is not None and avg_aqi >= 0)
+            ):
+                return max_aqi
+        return None
+
+    @staticmethod
+    def _parse_int(value: Any) -> int | None:
+        if value is None:
+            return None
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            return None
+
+    async def _air_purifier_query_air_history(
+        self, device: Device, begin_time: int, last_time: int
+    ) -> Dict[Any, Any]:
+        url = "https://wyze-earth-service.wyzecam.com/plugin/earth/query_air_history"
+        return await self._query_air_history(url, device, begin_time, last_time)
 
     async def _air_purifier_set_iot_prop(
         self, device: Device, prop: AirPurifierProps, value: Any

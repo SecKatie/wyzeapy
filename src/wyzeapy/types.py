@@ -165,6 +165,15 @@ class IrrigationProps(Enum):
     SSID = "ssid"
 
 
+class AirPurifierProps(Enum):
+    AQI = "aqi"
+    IOT_STATE = "iot_state"  # Connection state: connected, disconnected
+    FAN_MODE = "fan_mode"
+    APP_VERSION = "app_version"
+    SN = "sn"
+    WIFI_MAC = "wifi_mac"
+
+
 class ResponseCodes(Enum):
     SUCCESS = "1"
     PARAMETER_ERROR = "1001"

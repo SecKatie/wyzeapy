@@ -52,6 +52,29 @@ def olive_create_get_payload(device_mac: str, keys: str) -> Dict[str, Any]:
     return {"keys": keys, "did": device_mac, "nonce": nonce}
 
 
+def olive_create_get_air_prop_payload(
+    device_mac: str, device_model: str, prop_names: str
+) -> Dict[str, Any]:
+    nonce = int(time.time() * 1000)
+
+    return {
+        "deviceId": device_mac,
+        "deviceModel": device_model,
+        "propNames": prop_names,
+        "nonce": nonce,
+    }
+
+
+def olive_create_query_air_history_payload(
+    device_mac: str, begin_time: int, last_time: int
+) -> Dict[str, Any]:
+    return {
+        "device_id": device_mac,
+        "begin_time": str(begin_time),
+        "last_time": str(last_time),
+    }
+
+
 def olive_create_get_payload_irrigation(device_mac: str) -> Dict[str, Any]:
     nonce = int(time.time() * 1000)
 

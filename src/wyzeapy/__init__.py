@@ -8,6 +8,7 @@ from inspect import iscoroutinefunction
 from typing import List, Optional, Set, Callable
 
 from .exceptions import TwoFactorAuthenticationEnabled
+from .services.air_purifier_service import AirPurifierService
 from .services.base_service import BaseService
 from .services.bulb_service import BulbService
 from .services.camera_service import CameraService
@@ -52,6 +53,7 @@ class Wyzeapy:
         self._lock_service = None
         self._sensor_service = None
         self._irrigation_service = None
+        self._air_purifier_service = None
         self._wall_switch_service = None
         self._switch_usage_service = None
         self._email = None
@@ -451,6 +453,14 @@ class Wyzeapy:
         if self._irrigation_service is None:
             self._irrigation_service = IrrigationService(self._auth_lib)
         return self._irrigation_service
+
+    @property
+    async def air_purifier_service(self) -> AirPurifierService:
+        """Returns an instance of the air purifier service"""
+
+        if self._air_purifier_service is None:
+            self._air_purifier_service = AirPurifierService(self._auth_lib)
+        return self._air_purifier_service
 
     @property
     async def wall_switch_service(self) -> WallSwitchService:

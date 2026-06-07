@@ -33,7 +33,9 @@ from ..payload_factory import (
     olive_create_hms_payload,
     olive_create_hms_get_payload,
     ford_create_payload,
+    olive_create_get_air_prop_payload,
     olive_create_get_payload,
+    olive_create_query_air_history_payload,
     olive_create_post_payload,
     olive_create_user_info_payload,
     devicemgmt_create_capabilities_payload,
@@ -790,6 +792,56 @@ class BaseService:
         await self._auth_lib.refresh_if_should()
 
         payload = olive_create_get_payload(device.mac, keys)
+        signature = olive_create_signature(payload, self._auth_lib.token.access_token)
+        headers = {
+            "Accept-Encoding": "gzip",
+            "User-Agent": "myapp",
+            "appid": OLIVE_APP_ID,
+            "appinfo": APP_INFO,
+            "phoneid": PHONE_ID,
+            "access_token": self._auth_lib.token.access_token,
+            "signature2": signature,
+        }
+
+        response_json = await self._auth_lib.get(url, headers=headers, params=payload)
+
+        check_for_errors_iot(self, response_json)
+
+        return response_json
+
+    async def _get_air_prop(
+        self, url: str, device: Device, prop_names: str
+    ) -> Dict[Any, Any]:
+        await self._auth_lib.refresh_if_should()
+
+        payload = olive_create_get_air_prop_payload(
+            device.mac, device.product_model, prop_names
+        )
+        signature = olive_create_signature(payload, self._auth_lib.token.access_token)
+        headers = {
+            "Accept-Encoding": "gzip",
+            "User-Agent": "myapp",
+            "appid": OLIVE_APP_ID,
+            "appinfo": APP_INFO,
+            "phoneid": PHONE_ID,
+            "access_token": self._auth_lib.token.access_token,
+            "signature2": signature,
+        }
+
+        response_json = await self._auth_lib.get(url, headers=headers, params=payload)
+
+        check_for_errors_iot(self, response_json)
+
+        return response_json
+
+    async def _query_air_history(
+        self, url: str, device: Device, begin_time: int, last_time: int
+    ) -> Dict[Any, Any]:
+        await self._auth_lib.refresh_if_should()
+
+        payload = olive_create_query_air_history_payload(
+            device.mac, begin_time, last_time
+        )
         signature = olive_create_signature(payload, self._auth_lib.token.access_token)
         headers = {
             "Accept-Encoding": "gzip",

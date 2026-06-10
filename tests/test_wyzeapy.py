@@ -227,6 +227,15 @@ async def test_thermostat_service(mock_auth_lib):
 
 
 @pytest.mark.asyncio
+async def test_air_purifier_service(mock_auth_lib):
+    wyze = await Wyzeapy.create()
+    await wyze.login("test@example.com", "password", "key_id", "api_key")
+    service = await wyze.air_purifier_service
+    assert service is not None
+    assert wyze._air_purifier_service is service
+
+
+@pytest.mark.asyncio
 async def test_hms_service(mock_auth_lib):
     wyze = await Wyzeapy.create()
     await wyze.login("test@example.com", "password", "key_id", "api_key")

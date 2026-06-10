@@ -9,6 +9,14 @@ All notable changes to this project will be documented in this file.
 See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## 0.6.0 - 2026-06-07
+
+### Features
+
+* Add support for Wyze air purifiers (#262)
+* Add support for Wyze Cam Pan v4 (HL_PAN4) (#252)
+
+- - -
 ## 0.5.0..0.5.26 - 2023-12-08
 
 ### Bug Fixes

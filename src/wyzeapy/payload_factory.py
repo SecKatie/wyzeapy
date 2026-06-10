@@ -52,6 +52,29 @@ def olive_create_get_payload(device_mac: str, keys: str) -> Dict[str, Any]:
     return {"keys": keys, "did": device_mac, "nonce": nonce}
 
 
+def olive_create_get_air_prop_payload(
+    device_mac: str, device_model: str, prop_names: str
+) -> Dict[str, Any]:
+    nonce = int(time.time() * 1000)
+
+    return {
+        "deviceId": device_mac,
+        "deviceModel": device_model,
+        "propNames": prop_names,
+        "nonce": nonce,
+    }
+
+
+def olive_create_query_air_history_payload(
+    device_mac: str, begin_time: int, last_time: int
+) -> Dict[str, Any]:
+    return {
+        "device_id": device_mac,
+        "begin_time": str(begin_time),
+        "last_time": str(last_time),
+    }
+
+
 def olive_create_get_payload_irrigation(device_mac: str) -> Dict[str, Any]:
     nonce = int(time.time() * 1000)
 
@@ -601,6 +624,82 @@ def devicemgmt_get_iot_props_list(model: str):
                         "wifi-ssid",
                         "wifi-encrypted-password",
                     ],
+                },
+            ]
+        case "HL_PAN4":  # Wyze Cam Pan v4
+            return [
+                {
+                    "iid": 2,
+                    "name": "camera",
+                    "properties": [
+                        "motion-detect",
+                        "resolution",
+                        "bit-rate",
+                        "live-stream-mode",
+                        "recording-mode",
+                        "frame-rate",
+                        "night-shot",
+                        "night-shot-state",
+                        "time-watermark",
+                        "logo-watermark",
+                        "cool-down-interval",
+                        "motion-push",
+                        "infrared-mode",
+                        "motion-detect-recording",
+                        "rotate-angle",
+                        "sound-collection-on",
+                    ],
+                },
+                {
+                    "iid": 3,
+                    "name": "device-info",
+                    "properties": [
+                        "device-id",
+                        "device-model",
+                        "firmware-ver",
+                        "mac",
+                        "timezone",
+                        "lat",
+                        "ip",
+                        "lon",
+                        "company-code",
+                        "hardware-ver",
+                        "public-ip",
+                    ],
+                },
+                {
+                    "iid": 1,
+                    "name": "iot-device",
+                    "properties": ["iot-state", "iot-power", "push-switch"],
+                },
+                {
+                    "iid": 12,
+                    "name": "camera-ai",
+                    "properties": ["smart-detection-type", "on"],
+                },
+                {"iid": 8, "name": "indicator-light", "properties": ["on", "mode"]},
+                {
+                    "iid": 6,
+                    "name": "motion-detection",
+                    "properties": [
+                        "sensitivity-motion",
+                        "on",
+                        "motion-zone",
+                        "motion-zone-block-size",
+                        "motion-zone-selected-block",
+                        "motion-tag",
+                    ],
+                },
+                {"iid": 4, "name": "siren", "properties": ["state", "siren-on-ts"]},
+                {
+                    "iid": 5,
+                    "name": "spotlight",
+                    "properties": ["on", "enabled", "brightness"],
+                },
+                {
+                    "iid": 9,
+                    "name": "wifi",
+                    "properties": ["on", "signal-strength", "wifi-ssid"],
                 },
             ]
         case _:

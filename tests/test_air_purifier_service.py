@@ -1,7 +1,9 @@
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 
+from wyzeapy.exceptions import UnknownApiError
 from wyzeapy.services.air_purifier_service import (
+    AIR_QUALITY_UPDATE_INTERVAL,
     AirPurifier,
     AirPurifierFanMode,
     AirPurifierService,
@@ -21,6 +23,10 @@ class TestAirPurifierService(unittest.IsolatedAsyncioTestCase):
         self.air_purifier_service._get_air_prop = AsyncMock()
         self.air_purifier_service._query_air_history = AsyncMock()
         self.air_purifier_service.get_object_list = AsyncMock()
+        self.air_purifier_service._get_air_prop.return_value = {
+            "data": {"settings": {}}
+        }
+        self.air_purifier_service._query_air_history.return_value = {"data": []}
 
         self.test_air_purifier = AirPurifier(
             {
@@ -60,6 +66,100 @@ class TestAirPurifierService(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(updated_air_purifier.app_version, "1.0.18.0")
         self.assertEqual(updated_air_purifier.sn, "SN123456789")
         self.assertEqual(updated_air_purifier.wifi_mac, "AA:BB:CC:DD:EE:FF")
+        self.air_purifier_service._get_air_prop.assert_awaited_once()
+        self.air_purifier_service._query_air_history.assert_awaited_once()
+
+    @patch("wyzeapy.services.air_purifier_service.time.time", return_value=3700)
+    async def test_update_keeps_device_state_when_air_quality_fails(self, _mock_time):
+        self.air_purifier_service._get_property_list.return_value = [
+            (PropertyIDs.ON, "1"),
+            (PropertyIDs.AVAILABLE, "1"),
+        ]
+        self.air_purifier_service._get_iot_prop.return_value = {
+            "data": {"props": {"iot_state": "connected", "fan_mode": "auto"}}
+        }
+        self.air_purifier_service._get_air_prop.side_effect = UnknownApiError(
+            {"code": 5030}
+        )
+
+        updated_air_purifier = await self.air_purifier_service.update(
+            self.test_air_purifier
+        )
+
+        self.assertTrue(updated_air_purifier.on)
+        self.assertTrue(updated_air_purifier.available)
+        self.assertEqual(updated_air_purifier.fan_mode, "auto")
+        self.assertIsNone(updated_air_purifier.aqi)
+        self.assertEqual(updated_air_purifier.air_quality_updated_at, 3700)
+        self.air_purifier_service._get_air_prop.assert_awaited_once()
+        self.air_purifier_service._query_air_history.assert_not_awaited()
+
+    @patch("wyzeapy.services.air_purifier_service.time.time", return_value=3700)
+    async def test_update_refreshes_air_quality_when_stale(self, _mock_time):
+        self.air_purifier_service._get_property_list.return_value = []
+        self.air_purifier_service._get_iot_prop.return_value = {
+            "data": {"props": {"iot_state": "connected"}}
+        }
+        self.air_purifier_service._query_air_history.return_value = {
+            "data": [{"avg": -1, "max_aqi": 5}]
+        }
+        self.air_purifier_service._get_air_prop.return_value = {
+            "data": {"settings": {"aqi": "6"}}
+        }
+
+        updated_air_purifier = await self.air_purifier_service.update(
+            self.test_air_purifier
+        )
+
+        self.assertEqual(updated_air_purifier.aqi, 6)
+        self.assertEqual(updated_air_purifier.max_hourly_aqi, 5)
+        self.assertEqual(updated_air_purifier.air_quality_updated_at, 3700)
+        self.air_purifier_service._get_air_prop.assert_awaited_once()
+        self.air_purifier_service._query_air_history.assert_awaited_once()
+
+    @patch("wyzeapy.services.air_purifier_service.time.time")
+    async def test_update_uses_cached_air_quality_before_interval(self, mock_time):
+        mock_time.return_value = AIR_QUALITY_UPDATE_INTERVAL
+        self.air_purifier_service._get_property_list.return_value = []
+        self.air_purifier_service._get_iot_prop.return_value = {
+            "data": {"props": {"iot_state": "connected"}}
+        }
+        self.test_air_purifier.air_quality_updated_at = 1
+        self.test_air_purifier.aqi = 6
+        self.test_air_purifier.max_hourly_aqi = 5
+
+        updated_air_purifier = await self.air_purifier_service.update(
+            self.test_air_purifier
+        )
+
+        self.assertEqual(updated_air_purifier.aqi, 6)
+        self.assertEqual(updated_air_purifier.max_hourly_aqi, 5)
+        self.air_purifier_service._get_air_prop.assert_not_awaited()
+        self.air_purifier_service._query_air_history.assert_not_awaited()
+
+    @patch("wyzeapy.services.air_purifier_service.time.time")
+    async def test_update_refreshes_air_quality_after_interval(self, mock_time):
+        mock_time.return_value = AIR_QUALITY_UPDATE_INTERVAL + 1
+        self.air_purifier_service._get_property_list.return_value = []
+        self.air_purifier_service._get_iot_prop.return_value = {
+            "data": {"props": {"iot_state": "connected"}}
+        }
+        self.test_air_purifier.air_quality_updated_at = 1
+        self.air_purifier_service._query_air_history.return_value = {
+            "data": [{"avg": -1, "max_aqi": 5}]
+        }
+        self.air_purifier_service._get_air_prop.return_value = {
+            "data": {"settings": {"aqi": "6"}}
+        }
+
+        updated_air_purifier = await self.air_purifier_service.update(
+            self.test_air_purifier
+        )
+
+        self.assertEqual(updated_air_purifier.aqi, 6)
+        self.assertEqual(updated_air_purifier.max_hourly_aqi, 5)
+        self.air_purifier_service._get_air_prop.assert_awaited_once()
+        self.air_purifier_service._query_air_history.assert_awaited_once()
 
     async def test_update_air_purifier_disconnected(self):
         self.air_purifier_service._get_property_list.return_value = [
@@ -76,6 +176,8 @@ class TestAirPurifierService(unittest.IsolatedAsyncioTestCase):
 
         self.assertTrue(updated_air_purifier.on)
         self.assertFalse(updated_air_purifier.available)
+        self.air_purifier_service._get_air_prop.assert_not_awaited()
+        self.air_purifier_service._query_air_history.assert_not_awaited()
 
     async def test_update_with_invalid_property(self):
         self.air_purifier_service._get_property_list.return_value = []
@@ -112,6 +214,7 @@ class TestAirPurifierService(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(updated_air_purifier.max_hourly_aqi, 5)
         self.assertEqual(updated_air_purifier.max_hourly_aqi_start_time, 3600)
         self.assertEqual(updated_air_purifier.max_hourly_aqi_end_time, 3700)
+        self.assertEqual(updated_air_purifier.air_quality_updated_at, 3700)
         self.air_purifier_service._get_air_prop.assert_awaited_once()
         self.air_purifier_service._query_air_history.assert_awaited_once_with(
             "https://wyze-earth-service.wyzecam.com/plugin/earth/query_air_history",

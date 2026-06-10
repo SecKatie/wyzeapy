@@ -4,11 +4,13 @@ from enum import Enum
 from typing import Any, Dict, List
 
 from .base_service import BaseService
+from ..exceptions import UnknownApiError
 from ..types import AirPurifierProps, Device, DeviceTypes, PropertyIDs
 
 _LOGGER = logging.getLogger(__name__)
 
 AIR_PURIFIER_MODELS = {"CO_AP1"}
+AIR_QUALITY_UPDATE_INTERVAL = 20 * 60
 
 
 class AirPurifierFanMode(Enum):
@@ -31,6 +33,7 @@ class AirPurifier(Device):
         self.max_hourly_aqi: int | None = None
         self.max_hourly_aqi_start_time: int | None = None
         self.max_hourly_aqi_end_time: int | None = None
+        self.air_quality_updated_at: float | None = None
         self.app_version: str | None = None
         self.sn: str | None = None
         self.wifi_mac: str | None = None
@@ -70,6 +73,17 @@ class AirPurifierService(BaseService):
             elif prop == AirPurifierProps.WIFI_MAC:
                 air_purifier.wifi_mac = value
 
+        if self._should_update_air_quality(air_purifier):
+            try:
+                air_purifier = await self.update_air_quality(air_purifier)
+            except UnknownApiError as err:
+                air_purifier.air_quality_updated_at = time.time()
+                _LOGGER.warning(
+                    "Unable to update air quality for %s: %s",
+                    air_purifier.nickname,
+                    err,
+                )
+
         return air_purifier
 
     async def update_air_quality(self, air_purifier: AirPurifier) -> AirPurifier:
@@ -79,8 +93,20 @@ class AirPurifierService(BaseService):
         air_purifier.aqi = self._parse_int(aqi)
 
         await self._air_purifier_update_max_hourly_aqi(air_purifier)
+        air_purifier.air_quality_updated_at = time.time()
 
         return air_purifier
+
+    @staticmethod
+    def _should_update_air_quality(air_purifier: AirPurifier) -> bool:
+        if not air_purifier.available:
+            return False
+        if air_purifier.air_quality_updated_at is None:
+            return True
+        return (
+            time.time() - air_purifier.air_quality_updated_at
+            >= AIR_QUALITY_UPDATE_INTERVAL
+        )
 
     async def get_air_purifiers(self) -> List[AirPurifier]:
         if self._devices is None:

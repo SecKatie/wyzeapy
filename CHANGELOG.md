@@ -9,6 +9,13 @@ All notable changes to this project will be documented in this file.
 See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## 0.6.1 - 2026-06-09
+
+### Bug Fixes
+
+* Throttle air purifier AQI refreshes (#265)
+
+- - -
 ## 0.6.0 - 2026-06-07
 
 ### Features

@@ -19,6 +19,7 @@ from .services.switch_service import SwitchService, SwitchUsageService
 from .services.thermostat_service import ThermostatService
 from .services.irrigation_service import IrrigationService
 from .services.wall_switch_service import WallSwitchService
+from .services.scale_service import ScaleService, Scale, ScaleRecord
 from .wyze_auth_lib import WyzeAuthLib, Token
 
 _LOGGER = logging.getLogger(__name__)
@@ -54,6 +55,7 @@ class Wyzeapy:
         self._sensor_service = None
         self._irrigation_service = None
         self._air_purifier_service = None
+        self._scale_service = None
         self._wall_switch_service = None
         self._switch_usage_service = None
         self._email = None
@@ -483,6 +485,11 @@ class Wyzeapy:
         if self._wall_switch_service is None:
             self._wall_switch_service = WallSwitchService(self._auth_lib)
         return self._wall_switch_service
+    @property
+    async def scale_service(self) -> ScaleService:
+        if self._scale_service is None:
+            self._scale_service = ScaleService(self._auth_lib)
+        return self._scale_service
 
     @property
     async def switch_usage_service(self) -> SwitchUsageService:

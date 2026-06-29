@@ -19,7 +19,7 @@ from .services.switch_service import SwitchService, SwitchUsageService
 from .services.thermostat_service import ThermostatService
 from .services.irrigation_service import IrrigationService
 from .services.wall_switch_service import WallSwitchService
-from .services.scale_service import ScaleService, Scale, ScaleRecord
+from .services.scale_service import ScaleService, Scale as Scale, ScaleRecord as ScaleRecord
 from .wyze_auth_lib import WyzeAuthLib, Token
 
 _LOGGER = logging.getLogger(__name__)

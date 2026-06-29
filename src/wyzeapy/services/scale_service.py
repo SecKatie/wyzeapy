@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional
 from wyzeapy.const import OLIVE_APP_ID, APP_INFO, PHONE_ID
 from wyzeapy.crypto import olive_create_signature
 from wyzeapy.services.base_service import BaseService
-from wyzeapy.types import Device, DeviceTypes
+from wyzeapy.types import Device
 
 _LOGGER = logging.getLogger(__name__)
 

@@ -352,6 +352,47 @@ class BaseService:
 
         check_for_errors_standard(self, response_json)
 
+    async def _set_device_list_property_list(
+        self, device: Device, plist: List[Dict[str, str]]
+    ):
+        """Wraps the api.wyzecam.com/app/v2/device_list/set_property_list (bulk) endpoint.
+
+        Current bulb firmware (e.g. WLPA19) silently ignores the P3 power property sent to
+        the single-device ``device/set_property_list`` endpoint (the server returns
+        ``code 1 / SUCCESS`` but the bulb no-ops). The Wyze app drives power through this
+        bulk ``device_list`` endpoint, which the firmware honors. Verified on-device
+        against real ``get_property_list`` reads, both directions.
+
+        :param device: The device for which to set the property(ies)
+        :param plist: A list of properties [{"pid": pid, "pvalue": pvalue},...]
+        """
+        await self._auth_lib.refresh_if_should()
+
+        payload = {
+            "phone_system_type": PHONE_SYSTEM_TYPE,
+            "app_version": APP_VERSION,
+            "app_ver": APP_VER,
+            "sc": "a626948714654991afd3c0dbd7cdb901",
+            "ts": int(time.time()),
+            "sv": "ddb9baef0d7f44379cd6bfaa8698e682",
+            "access_token": self._auth_lib.token.access_token,
+            "phone_id": PHONE_ID,
+            "app_name": APP_NAME,
+            "device_list": [
+                {
+                    "device_mac": device.mac,
+                    "device_model": device.product_model,
+                    "property_list": plist,
+                }
+            ],
+        }
+
+        response_json = await self._auth_lib.post(
+            "https://api.wyzecam.com/app/v2/device_list/set_property_list", json=payload
+        )
+
+        check_for_errors_standard(self, response_json)
+
     async def _run_action_list(self, device: Device, plist: List[Dict[Any, Any]]):
         """Wraps the api.wyzecam.com/app/v2/auto/run_action_list endpoint
 

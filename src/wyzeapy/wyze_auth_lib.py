@@ -5,9 +5,11 @@
 #  katie@mulliken.net to receive a copy
 import asyncio
 import logging
+import ssl
 import time
 from typing import Dict, Any, Optional
 
+import certifi
 from aiohttp import TCPConnector, ClientSession, ContentTypeError
 
 from .const import (
@@ -35,6 +37,75 @@ Authentication token data and timing management.
 This module handles Wyze API authentication tokens, including expiration
 tracking, automatic refresh timing, and secure request methods in WyzeAuthLib.
 """
+
+# Shared SSL context for all Wyze API requests.
+#
+# WHY THIS EXISTS (2026-07-05): Mozilla removed the legacy "DigiCert Global
+# Root CA" from its root program, so certifi >= 2026.06 (and OS stores built
+# from it, e.g. the Home Assistant 2026.7 container) no longer contain it.
+# Wyze's API certificates (*.wyzecam.com and friends) are still anchored to
+# that root, so every HTTPS call fails with CERTIFICATE_VERIFY_FAILED
+# "unable to get local issuer certificate" even though the chain is valid.
+# Mobile apps keep working because iOS/Android trust stores still ship the
+# root. Until Wyze rotates to a currently-trusted root, we build our context
+# from certifi PLUS this one pinned root, scoped to this library's sessions
+# only (nothing system-wide is modified).
+#
+# DigiCert Global Root CA - self-signed, expires 2031-11-10.
+# SHA256 fingerprint (publicly documented):
+#   4348A0E9444C78CB265E058D5E8944B4D84F9662BD26DB257F8934A443C70161
+_DIGICERT_GLOBAL_ROOT_CA = """-----BEGIN CERTIFICATE-----
+MIIDrzCCApegAwIBAgIQCDvgVpBCRrGhdWrJWZHHSjANBgkqhkiG9w0BAQUFADBh
+MQswCQYDVQQGEwJVUzEVMBMGA1UEChMMRGlnaUNlcnQgSW5jMRkwFwYDVQQLExB3
+d3cuZGlnaWNlcnQuY29tMSAwHgYDVQQDExdEaWdpQ2VydCBHbG9iYWwgUm9vdCBD
+QTAeFw0wNjExMTAwMDAwMDBaFw0zMTExMTAwMDAwMDBaMGExCzAJBgNVBAYTAlVT
+MRUwEwYDVQQKEwxEaWdpQ2VydCBJbmMxGTAXBgNVBAsTEHd3dy5kaWdpY2VydC5j
+b20xIDAeBgNVBAMTF0RpZ2lDZXJ0IEdsb2JhbCBSb290IENBMIIBIjANBgkqhkiG
+9w0BAQEFAAOCAQ8AMIIBCgKCAQEA4jvhEXLeqKTTo1eqUKKPC3eQyaKl7hLOllsB
+CSDMAZOnTjC3U/dDxGkAV53ijSLdhwZAAIEJzs4bg7/fzTtxRuLWZscFs3YnFo97
+nh6Vfe63SKMI2tavegw5BmV/Sl0fvBf4q77uKNd0f3p4mVmFaG5cIzJLv07A6Fpt
+43C/dxC//AH2hdmoRBBYMql1GNXRor5H4idq9Joz+EkIYIvUX7Q6hL+hqkpMfT7P
+T19sdl6gSzeRntwi5m3OFBqOasv+zbMUZBfHWymeMr/y7vrTC0LUq7dBMtoM1O/4
+gdW7jVg/tRvoSSiicNoxBN33shbyTApOB6jtSj1etX+jkMOvJwIDAQABo2MwYTAO
+BgNVHQ8BAf8EBAMCAYYwDwYDVR0TAQH/BAUwAwEB/zAdBgNVHQ4EFgQUA95QNVbR
+TLtm8KPiGxvDl7I90VUwHwYDVR0jBBgwFoAUA95QNVbRTLtm8KPiGxvDl7I90VUw
+DQYJKoZIhvcNAQEFBQADggEBAMucN6pIExIK+t1EnE9SsPTfrgT1eXkIoyQY/Esr
+hMAtudXH/vTBH1jLuG2cenTnmCmrEbXjcKChzUyImZOMkXDiqw8cvpOp/2PV5Adg
+06O/nVsJ8dWO41P0jmP6P6fbtGbfYmbW0W5BjfIttep3Sp+dWOIrWcBAI+0tKIJF
+PnlUkiaY4IBIqDfv8NZ5YBberOgOzW6sRBc4L0na4UU+Krk2U886UAb3LujEV0ls
+YSEY1QSteDwsOoBrp+uvFRTp2InBuThs4pFsiv9kuXclVzDAGySj4dzp30d8tbQk
+CAUw7C29C79Fv1C5qfPrmAESrciIxpg0X40KPMbp1ZWVbd4=
+-----END CERTIFICATE-----
+"""
+
+_SSL_CONTEXT: Optional[ssl.SSLContext] = None
+
+
+def set_ssl_context(context: ssl.SSLContext) -> None:
+    """Inject the SSL context used for all Wyze API requests.
+
+    Host applications may call this once before logging in to supply their own
+    context. Note: a plain certifi/Mozilla-based context will NOT verify the
+    Wyze API until Wyze moves off the removed DigiCert Global Root CA - use
+    get_ssl_context() (or add that root yourself) unless you know better.
+    """
+    global _SSL_CONTEXT
+    _SSL_CONTEXT = context
+
+
+def get_ssl_context() -> ssl.SSLContext:
+    """Return the shared SSL context (certifi + pinned DigiCert Global Root CA).
+
+    Created lazily on first use. Creating the context reads certificate files
+    from disk; event-loop applications should pre-build it off the loop, e.g.
+    ``await loop.run_in_executor(None, get_ssl_context)``.
+    """
+    global _SSL_CONTEXT
+    if _SSL_CONTEXT is None:
+        context = ssl.create_default_context(cafile=certifi.where())
+        context.load_verify_locations(cadata=_DIGICERT_GLOBAL_ROOT_CA)
+        _SSL_CONTEXT = context
+    return _SSL_CONTEXT
 
 
 class Token:
@@ -328,7 +399,7 @@ class WyzeAuthLib:
         headers = {"X-API-Key": API_KEY}
 
         async with ClientSession(
-            connector=TCPConnector(ttl_dns_cache=(30 * 60))
+            connector=TCPConnector(ttl_dns_cache=(30 * 60), ssl=get_ssl_context())
         ) as _session:
             response = await _session.post(
                 "https://api.wyzecam.com/app/user/refresh_token",
@@ -371,7 +442,7 @@ class WyzeAuthLib:
             Parsed JSON response.
         """
         async with ClientSession(
-            connector=TCPConnector(ttl_dns_cache=(30 * 60))
+            connector=TCPConnector(ttl_dns_cache=(30 * 60), ssl=get_ssl_context())
         ) as _session:
             response = await _session.post(url, json=json, headers=headers, data=data)
             # Relocated these below as the sanitization seems to modify the data before it goes to the post.
@@ -394,7 +465,7 @@ class WyzeAuthLib:
         See `post` for parameter details.
         """
         async with ClientSession(
-            connector=TCPConnector(ttl_dns_cache=(30 * 60))
+            connector=TCPConnector(ttl_dns_cache=(30 * 60), ssl=get_ssl_context())
         ) as _session:
             response = await _session.put(url, json=json, headers=headers, data=data)
             # Relocated these below as the sanitization seems to modify the data before it goes to the post.
@@ -423,7 +494,7 @@ class WyzeAuthLib:
             Parsed JSON response.
         """
         async with ClientSession(
-            connector=TCPConnector(ttl_dns_cache=(30 * 60))
+            connector=TCPConnector(ttl_dns_cache=(30 * 60), ssl=get_ssl_context())
         ) as _session:
             response = await _session.get(url, params=params, headers=headers)
             # Relocated these below as the sanitization seems to modify the data before it goes to the post.
@@ -445,7 +516,7 @@ class WyzeAuthLib:
         See `get`/`post` for parameter details.
         """
         async with ClientSession(
-            connector=TCPConnector(ttl_dns_cache=(30 * 60))
+            connector=TCPConnector(ttl_dns_cache=(30 * 60), ssl=get_ssl_context())
         ) as _session:
             response = await _session.patch(
                 url, headers=headers, params=params, json=json
@@ -476,7 +547,7 @@ class WyzeAuthLib:
             Parsed JSON response.
         """
         async with ClientSession(
-            connector=TCPConnector(ttl_dns_cache=(30 * 60))
+            connector=TCPConnector(ttl_dns_cache=(30 * 60), ssl=get_ssl_context())
         ) as _session:
             response = await _session.delete(url, headers=headers, json=json)
             # Relocated these below as the sanitization seems to modify the data before it goes to the post.

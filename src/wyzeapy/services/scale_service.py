@@ -26,15 +26,15 @@ class ScaleRecord:
         self.family_member_id = raw.get("family_member_id")
         self.user_id = raw.get("user_id")
         self.measure_ts = raw.get("measure_ts")
-        self.weight = _to_float(raw.get("weight"))        # kg
+        self.weight = _to_float(raw.get("weight"))  # kg
         self.bmi = _to_float(raw.get("bmi"))
         self.bmr = _to_float(raw.get("bmr"))
-        self.body_fat = _to_float(raw.get("body_fat"))    # %
+        self.body_fat = _to_float(raw.get("body_fat"))  # %
         self.body_water = _to_float(raw.get("body_water"))
         self.bone_mineral = _to_float(raw.get("bone_mineral"))
         self.muscle = _to_float(raw.get("muscle"))
-        self.protein = _to_float(raw.get("protein"))      # %
-        self.body_vfr = _to_float(raw.get("body_vfr"))    # visceral fat rating
+        self.protein = _to_float(raw.get("protein"))  # %
+        self.body_vfr = _to_float(raw.get("body_vfr"))  # visceral fat rating
         self.metabolic_age = _to_float(raw.get("metabolic_age"))
         self.heart_rate = _to_float(raw.get("heart_rate"))
 
@@ -52,9 +52,7 @@ class ScaleService(BaseService):
         if self._devices is None:
             self._devices = await self.get_object_list()
         return [
-            Scale(d.raw_dict)
-            for d in self._devices
-            if d.product_model in SCALE_MODELS
+            Scale(d.raw_dict) for d in self._devices if d.product_model in SCALE_MODELS
         ]
 
     async def update(self, scale: Scale) -> Scale:
@@ -99,9 +97,7 @@ class ScaleService(BaseService):
         params: Dict[str, Any] = {"record_number": str(record_number)}
         if user_id:
             params["family_member_id"] = user_id
-        data = await self._scale_get(
-            "/plugin/scale/get_heart_rate_record_list", params
-        )
+        data = await self._scale_get("/plugin/scale/get_heart_rate_record_list", params)
         rows = data.get("data") or []
         if isinstance(rows, dict):
             rows = rows.get("record_list", [])

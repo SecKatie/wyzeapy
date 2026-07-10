@@ -173,7 +173,9 @@ class BulbService(BaseService):
             plist.extend(options)
 
         if bulb.type is DeviceTypes.LIGHT:
-            await self._set_property_list(bulb, plist)
+            # Power (P3) is only honored via the bulk device_list endpoint on
+            # current bulb firmware; the single-device endpoint no-ops it.
+            await self._set_device_list_property_list(bulb, plist)
 
         elif bulb.type in [DeviceTypes.MESH_LIGHT, DeviceTypes.LIGHTSTRIP]:
             # Local Control
@@ -196,7 +198,9 @@ class BulbService(BaseService):
         plist = [create_pid_pair(PropertyIDs.ON, "0")]
 
         if bulb.type in [DeviceTypes.LIGHT]:
-            await self._set_property_list(bulb, plist)
+            # Power (P3) is only honored via the bulk device_list endpoint on
+            # current bulb firmware; the single-device endpoint no-ops it.
+            await self._set_device_list_property_list(bulb, plist)
         elif bulb.type in [DeviceTypes.MESH_LIGHT, DeviceTypes.LIGHTSTRIP]:
             if local_control and not bulb.cloud_fallback:
                 await self._local_bulb_command(bulb, plist)

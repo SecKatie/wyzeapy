@@ -23,13 +23,13 @@ from wyzeapy import Wyzeapy
 
 async def async_main():
     client = await Wyzeapy.create()
-    await client.login("EMAIL", "PASSWORD")
+    await client.login(email="EMAIL", password="PASSWORD", key_id="KEY_ID", api_key="API_KEY")
 
 
 if __name__ == "__main__":
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(async_main())
+    asyncio.run(async_main())
 ```
+Note: Visit the [Wyze developer console](https://developer-api-console.wyze.com/#/apikey/view) to generate an Key Id and Api Key.
 
 ## Thanks to:
 

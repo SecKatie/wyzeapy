@@ -1,7 +1,12 @@
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 from wyzeapy.services.camera_service import CameraService, Camera
-from wyzeapy.types import DeviceTypes, PropertyIDs, DeviceMgmtToggleProps
+from wyzeapy.types import (
+    DeviceTypes,
+    PropertyIDs,
+    DeviceMgmtToggleProps,
+    ResponseCodes,
+)
 from wyzeapy.wyze_auth_lib import WyzeAuthLib
 import asyncio
 from wyzeapy.exceptions import UnknownApiError
@@ -23,6 +28,7 @@ class TestCameraService(unittest.IsolatedAsyncioTestCase):
         self.camera_service._set_toggle = AsyncMock()
         self.camera_service.get_updated_params = AsyncMock()
         self.camera_service._get_iot_prop_devicemgmt = AsyncMock()
+        self.camera_service._get_camera_stream = AsyncMock()
         self.camera_service.get_object_list = AsyncMock(
             return_value=[
                 MagicMock(type=DeviceTypes.CAMERA, raw_dict={"mac": "CAM1"}),
@@ -73,6 +79,18 @@ class TestCameraService(unittest.IsolatedAsyncioTestCase):
                 "mac": "TEST012",
                 "nickname": "Test WCO2 Camera",
                 "device_params": {"ip": "192.168.1.103"},
+                "raw_dict": {},
+            }
+        )
+
+        self.bulb_cam = Camera(
+            {
+                "device_type": DeviceTypes.CAMERA.value,
+                "product_type": DeviceTypes.CAMERA.value,
+                "product_model": "HL_BC",  # Wyze Bulb Cam
+                "mac": "TEST_BC",
+                "nickname": "Test Bulb Cam",
+                "device_params": {"ip": "192.168.1.104"},
                 "raw_dict": {},
             }
         )
@@ -216,6 +234,49 @@ class TestCameraService(unittest.IsolatedAsyncioTestCase):
             self.bcp_camera, "spotlight", "0"
         )
 
+    async def test_floodlight_control_bulb_cam(self):
+        """Test Bulb Cam (HL_BC) light control uses run_action."""
+        await self.camera_service.floodlight_on(self.bulb_cam)
+        self.camera_service._run_action.assert_awaited_with(
+            self.bulb_cam, "floodlight_on"
+        )
+
+        await self.camera_service.floodlight_off(self.bulb_cam)
+        self.camera_service._run_action.assert_awaited_with(
+            self.bulb_cam, "floodlight_off"
+        )
+
+    async def test_update_bulb_cam_light_state(self):
+        """Test that Bulb Cam correctly reads P1056 as light state.
+
+        For Bulb Cam (HL_BC):
+        - P1056='1' means light is ON
+        - P1056='2' means light is OFF
+        """
+        # Mock responses
+        self.camera_service._get_event_list.return_value = {"data": {"event_list": []}}
+        self.camera_service.get_updated_params.return_value = {"ip": "192.168.1.104"}
+
+        # Test light ON state (P1056='1')
+        self.camera_service._get_property_list.return_value = [
+            (PropertyIDs.AVAILABLE, "1"),
+            (PropertyIDs.ON, "1"),
+            (PropertyIDs.ACCESSORY, "1"),  # Light is ON
+        ]
+
+        updated_camera = await self.camera_service.update(self.bulb_cam)
+        self.assertTrue(updated_camera.floodlight)
+
+        # Test light OFF state (P1056='2')
+        self.camera_service._get_property_list.return_value = [
+            (PropertyIDs.AVAILABLE, "1"),
+            (PropertyIDs.ON, "1"),
+            (PropertyIDs.ACCESSORY, "2"),  # Light is OFF
+        ]
+
+        updated_camera = await self.camera_service.update(self.bulb_cam)
+        self.assertFalse(updated_camera.floodlight)
+
     async def test_notification_control_legacy_camera(self):
         await self.camera_service.turn_on_notifications(self.test_camera)
         self.camera_service._set_property.assert_awaited_with(
@@ -307,6 +368,33 @@ class TestCameraService(unittest.IsolatedAsyncioTestCase):
         self.assertIsInstance(cameras[0], Camera)
         self.assertEqual(cameras[0].mac, "CAM1")
         self.assertEqual(cameras[1].mac, "CAM2")
+
+    async def test_get_stream_info_returns_params(self):
+        self.camera_service._get_camera_stream.return_value = {
+            "code": ResponseCodes.SUCCESS.value,
+            "data": [
+                {
+                    "property": {
+                        "iot-device::iot-state": 1,
+                        "iot-device::iot-power": 1,
+                    },
+                    "params": {"answer": "ok"},
+                }
+            ],
+        }
+
+        stream_info = await self.camera_service.get_stream_info(self.test_camera)
+
+        self.assertEqual(stream_info, {"answer": "ok"})
+
+    async def test_get_stream_info_raises_offline_error_for_offline_response(self):
+        self.camera_service._get_camera_stream.return_value = {
+            "code": ResponseCodes.DEVICE_OFFLINE.value,
+            "msg": "device offline",
+        }
+
+        with self.assertRaisesRegex(UnknownApiError, "Camera is offline"):
+            await self.camera_service.get_stream_info(self.test_camera)
 
     async def test_register_for_updates(self):
         mock_callback = MagicMock()

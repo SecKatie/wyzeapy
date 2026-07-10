@@ -13,7 +13,14 @@ from aiohttp import ClientOSError, ContentTypeError
 
 from ..exceptions import UnknownApiError
 from .base_service import BaseService
-from ..types import Device, DeviceTypes, Event, PropertyIDs, DeviceMgmtToggleProps
+from ..types import (
+    Device,
+    DeviceTypes,
+    Event,
+    PropertyIDs,
+    DeviceMgmtToggleProps,
+    ResponseCodes,
+)
 from ..utils import return_event_for_device, create_pid_pair
 
 _LOGGER = logging.getLogger(__name__)
@@ -23,7 +30,8 @@ DEVICEMGMT_API_MODELS = [
     "LD_CFP",
     "AN_RSCW",
     "GW_GC1",
-]  # Floodlight pro, battery cam pro, and OG use a diffrent api (devicemgmt)
+    "HL_PAN4",  # Wyze Cam Pan v4
+]  # Floodlight pro, battery cam pro, OG, and Pan v4 use a diffrent api (devicemgmt)
 
 
 class Camera(Device):
@@ -88,8 +96,10 @@ class CameraService(BaseService):
                 if property is PropertyIDs.CAMERA_SIREN:
                     camera.siren = value == "1"
                 if property is PropertyIDs.ACCESSORY:
+                    # Bulb Cam (HL_BC): '1' = ON, '2' = OFF
+                    # Other cameras with accessories: same logic
                     camera.floodlight = value == "1"
-                    if camera.device_params["dongle_product_model"] == "HL_CGDC":
+                    if camera.device_params.get("dongle_product_model") == "HL_CGDC":
                         camera.garage = (
                             value == "1"
                         )  # 1 = open, 2 = closed by automation or smart platform (Alexa, Google Home, Rules), 0 = closed by app
@@ -186,29 +196,35 @@ class CameraService(BaseService):
         else:
             await self._run_action(camera, "siren_off")
 
-    # Also controls lamp socket and BCP spotlight
+    # Also controls lamp socket, BCP spotlight, and Bulb Cam light
     async def floodlight_on(self, camera: Camera):
-        if camera.product_model == "AN_RSCW":
+        if camera.product_model in ("AN_RSCW", "HL_PAN4"):
             await self._run_action_devicemgmt(
                 camera, "spotlight", "1"
-            )  # Battery cam pro integrated spotlight is controllable
+            )  # Battery cam pro and Pan v4 have an integrated spotlight
         elif camera.product_model in DEVICEMGMT_API_MODELS:
             await self._run_action_devicemgmt(
                 camera, "floodlight", "1"
             )  # Some camera models use a diffrent api
+        elif camera.product_model == "HL_BC":
+            # Bulb Cam uses run_action with floodlight_on action
+            await self._run_action(camera, "floodlight_on")
         else:
             await self._set_property(camera, PropertyIDs.ACCESSORY.value, "1")
 
-    # Also controls lamp socket and BCP spotlight
+    # Also controls lamp socket, BCP spotlight, and Bulb Cam light
     async def floodlight_off(self, camera: Camera):
-        if camera.product_model == "AN_RSCW":
+        if camera.product_model in ("AN_RSCW", "HL_PAN4"):
             await self._run_action_devicemgmt(
                 camera, "spotlight", "0"
-            )  # Battery cam pro integrated spotlight is controllable
+            )  # Battery cam pro and Pan v4 have an integrated spotlight
         elif camera.product_model in DEVICEMGMT_API_MODELS:
             await self._run_action_devicemgmt(
                 camera, "floodlight", "0"
             )  # Some camera models use a diffrent api
+        elif camera.product_model == "HL_BC":
+            # Bulb Cam uses run_action with floodlight_off action
+            await self._run_action(camera, "floodlight_off")
         else:
             await self._set_property(camera, PropertyIDs.ACCESSORY.value, "2")
 
@@ -266,3 +282,29 @@ class CameraService(BaseService):
             await self._set_property(
                 camera, PropertyIDs.MOTION_DETECTION_TOGGLE.value, "0"
             )
+
+    async def get_stream_info(self, camera: Camera):
+        data = await self._get_camera_stream(camera)
+        if data.get("code") == ResponseCodes.DEVICE_OFFLINE.value:
+            raise UnknownApiError(
+                "Camera is offline according to get_stream_info response: " + str(data)
+            )
+        if "data" not in data or len(data["data"]) != 1:
+            raise UnknownApiError(
+                "Unexpected response from get_stream_info: " + str(data)
+            )
+
+        data = data["data"][0]
+        if "property" not in data:
+            raise UnknownApiError(
+                "Unexpected response from get_stream_info: " + str(data)
+            )
+        if data["property"]["iot-device::iot-state"] != 1:
+            raise UnknownApiError(
+                "Camera is offline according to get_stream_info response: " + str(data)
+            )
+        if data["property"]["iot-device::iot-power"] != 1:
+            raise UnknownApiError(
+                "Camera is off according to get_stream_info response: " + str(data)
+            )
+        return data["params"]

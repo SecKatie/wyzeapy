@@ -112,7 +112,7 @@
                     <h1 class="modulename">
 <a href="./../../wyzeapy.html">wyzeapy</a><wbr>.<a href="./../services.html">services</a><wbr>.wall_switch_service    </h1>
 
-                
+
                         <input id="mod-wall_switch_service-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 
                         <label class="view-source-button" for="mod-wall_switch_service-view-source"><span>View Source</span></label>
@@ -187,7 +187,7 @@
 </span><span id="L-68"><a href="#L-68"><span class="linenos"> 68</span></a>            <span class="bp">self</span><span class="o">.</span><span class="n">_devices</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_object_list</span><span class="p">()</span>
 </span><span id="L-69"><a href="#L-69"><span class="linenos"> 69</span></a>
 </span><span id="L-70"><a href="#L-70"><span class="linenos"> 70</span></a>        <span class="n">switches</span> <span class="o">=</span> <span class="p">[</span><span class="n">device</span> <span class="k">for</span> <span class="n">device</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_devices</span>
-</span><span id="L-71"><a href="#L-71"><span class="linenos"> 71</span></a>                    <span class="k">if</span> <span class="n">device</span><span class="o">.</span><span class="n">type</span> <span class="ow">is</span> <span class="n">DeviceTypes</span><span class="o">.</span><span class="n">COMMON</span> 
+</span><span id="L-71"><a href="#L-71"><span class="linenos"> 71</span></a>                    <span class="k">if</span> <span class="n">device</span><span class="o">.</span><span class="n">type</span> <span class="ow">is</span> <span class="n">DeviceTypes</span><span class="o">.</span><span class="n">COMMON</span>
 </span><span id="L-72"><a href="#L-72"><span class="linenos"> 72</span></a>                    <span class="ow">and</span> <span class="n">device</span><span class="o">.</span><span class="n">product_model</span> <span class="o">==</span> <span class="s2">&quot;LD_SS1&quot;</span><span class="p">]</span>
 </span><span id="L-73"><a href="#L-73"><span class="linenos"> 73</span></a>
 </span><span id="L-74"><a href="#L-74"><span class="linenos"> 74</span></a>        <span class="k">return</span> <span class="p">[</span><span class="n">WallSwitch</span><span class="p">(</span><span class="n">switch</span><span class="o">.</span><span class="n">raw_dict</span><span class="p">)</span> <span class="k">for</span> <span class="n">switch</span> <span class="ow">in</span> <span class="n">switches</span><span class="p">]</span>
@@ -234,7 +234,7 @@
                 <section id="SinglePressType">
                             <input id="SinglePressType-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr class">
-            
+
     <span class="def">class</span>
     <span class="name">SinglePressType</span><wbr>(<span class="base">enum.Enum</span>):
 
@@ -248,18 +248,18 @@
 </span></pre></div>
 
 
-    
+
 
                             <div id="SinglePressType.CLASSIC" class="classattr">
                                 <div class="attr variable">
             <span class="name">CLASSIC</span>        =
 <span class="default_value">&lt;<a href="#SinglePressType.CLASSIC">SinglePressType.CLASSIC</a>: 1&gt;</span>
 
-        
+
     </div>
     <a class="headerlink" href="#SinglePressType.CLASSIC"></a>
-    
-    
+
+
 
                             </div>
                             <div id="SinglePressType.IOT" class="classattr">
@@ -267,18 +267,18 @@
             <span class="name">IOT</span>        =
 <span class="default_value">&lt;<a href="#SinglePressType.IOT">SinglePressType.IOT</a>: 2&gt;</span>
 
-        
+
     </div>
     <a class="headerlink" href="#SinglePressType.IOT"></a>
-    
-    
+
+
 
                             </div>
                 </section>
                 <section id="WallSwitch">
                             <input id="WallSwitch-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr class">
-            
+
     <span class="def">class</span>
     <span class="name">WallSwitch</span><wbr>(<span class="base"><a href="../types.html#Device">wyzeapy.types.Device</a></span>):
 
@@ -308,12 +308,12 @@
 </span></pre></div>
 
 
-    
+
 
                             <div id="WallSwitch.__init__" class="classattr">
                                         <input id="WallSwitch.__init__-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="name">WallSwitch</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">dictionary</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span></span>)</span>
 
                 <label class="view-source-button" for="WallSwitch.__init__-view-source"><span>View Source</span></label>
@@ -329,40 +329,40 @@
 </span></pre></div>
 
 
-    
+
 
                             </div>
                             <div id="WallSwitch.switch_power" class="classattr">
                                 <div class="attr variable">
             <span class="name">switch_power</span><span class="annotation">: bool</span>
 
-        
+
     </div>
     <a class="headerlink" href="#WallSwitch.switch_power"></a>
-    
-    
+
+
 
                             </div>
                             <div id="WallSwitch.switch_iot" class="classattr">
                                 <div class="attr variable">
             <span class="name">switch_iot</span><span class="annotation">: bool</span>
 
-        
+
     </div>
     <a class="headerlink" href="#WallSwitch.switch_iot"></a>
-    
-    
+
+
 
                             </div>
                             <div id="WallSwitch.single_press_type" class="classattr">
                                 <div class="attr variable">
             <span class="name">single_press_type</span><span class="annotation">: <a href="#SinglePressType">SinglePressType</a></span>
 
-        
+
     </div>
     <a class="headerlink" href="#WallSwitch.single_press_type"></a>
-    
-    
+
+
 
                             </div>
                             <div id="WallSwitch.on" class="classattr">
@@ -382,7 +382,7 @@
 </span></pre></div>
 
 
-    
+
 
                             </div>
                             <div class="inherited">
@@ -406,7 +406,7 @@
                 <section id="WallSwitchService">
                             <input id="WallSwitchService-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr class">
-            
+
     <span class="def">class</span>
     <span class="name">WallSwitchService</span><wbr>(<span class="base"><a href="base_service.html#BaseService">wyzeapy.services.base_service.BaseService</a></span>):
 
@@ -443,7 +443,7 @@
 </span><span id="WallSwitchService-69"><a href="#WallSwitchService-69"><span class="linenos"> 69</span></a>            <span class="bp">self</span><span class="o">.</span><span class="n">_devices</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_object_list</span><span class="p">()</span>
 </span><span id="WallSwitchService-70"><a href="#WallSwitchService-70"><span class="linenos"> 70</span></a>
 </span><span id="WallSwitchService-71"><a href="#WallSwitchService-71"><span class="linenos"> 71</span></a>        <span class="n">switches</span> <span class="o">=</span> <span class="p">[</span><span class="n">device</span> <span class="k">for</span> <span class="n">device</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_devices</span>
-</span><span id="WallSwitchService-72"><a href="#WallSwitchService-72"><span class="linenos"> 72</span></a>                    <span class="k">if</span> <span class="n">device</span><span class="o">.</span><span class="n">type</span> <span class="ow">is</span> <span class="n">DeviceTypes</span><span class="o">.</span><span class="n">COMMON</span> 
+</span><span id="WallSwitchService-72"><a href="#WallSwitchService-72"><span class="linenos"> 72</span></a>                    <span class="k">if</span> <span class="n">device</span><span class="o">.</span><span class="n">type</span> <span class="ow">is</span> <span class="n">DeviceTypes</span><span class="o">.</span><span class="n">COMMON</span>
 </span><span id="WallSwitchService-73"><a href="#WallSwitchService-73"><span class="linenos"> 73</span></a>                    <span class="ow">and</span> <span class="n">device</span><span class="o">.</span><span class="n">product_model</span> <span class="o">==</span> <span class="s2">&quot;LD_SS1&quot;</span><span class="p">]</span>
 </span><span id="WallSwitchService-74"><a href="#WallSwitchService-74"><span class="linenos"> 74</span></a>
 </span><span id="WallSwitchService-75"><a href="#WallSwitchService-75"><span class="linenos"> 75</span></a>        <span class="k">return</span> <span class="p">[</span><span class="n">WallSwitch</span><span class="p">(</span><span class="n">switch</span><span class="o">.</span><span class="n">raw_dict</span><span class="p">)</span> <span class="k">for</span> <span class="n">switch</span> <span class="ow">in</span> <span class="n">switches</span><span class="p">]</span>
@@ -493,7 +493,7 @@
                             <div id="WallSwitchService.update" class="classattr">
                                         <input id="WallSwitchService.update-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">async def</span>
         <span class="name">update</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="bp">self</span>,</span><span class="param">	<span class="n">switch</span><span class="p">:</span> <span class="n"><a href="#WallSwitch">WallSwitch</a></span></span><span class="return-annotation">) -> <span class="n"><a href="#WallSwitch">WallSwitch</a></span>:</span></span>
 
@@ -526,13 +526,13 @@
 </span></pre></div>
 
 
-    
+
 
                             </div>
                             <div id="WallSwitchService.get_switches" class="classattr">
                                         <input id="WallSwitchService.get_switches-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">async def</span>
         <span class="name">get_switches</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span></span><span class="return-annotation">) -> <span class="n">List</span><span class="p">[</span><span class="n"><a href="#WallSwitch">WallSwitch</a></span><span class="p">]</span>:</span></span>
 
@@ -545,20 +545,20 @@
 </span><span id="WallSwitchService.get_switches-69"><a href="#WallSwitchService.get_switches-69"><span class="linenos">69</span></a>            <span class="bp">self</span><span class="o">.</span><span class="n">_devices</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_object_list</span><span class="p">()</span>
 </span><span id="WallSwitchService.get_switches-70"><a href="#WallSwitchService.get_switches-70"><span class="linenos">70</span></a>
 </span><span id="WallSwitchService.get_switches-71"><a href="#WallSwitchService.get_switches-71"><span class="linenos">71</span></a>        <span class="n">switches</span> <span class="o">=</span> <span class="p">[</span><span class="n">device</span> <span class="k">for</span> <span class="n">device</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_devices</span>
-</span><span id="WallSwitchService.get_switches-72"><a href="#WallSwitchService.get_switches-72"><span class="linenos">72</span></a>                    <span class="k">if</span> <span class="n">device</span><span class="o">.</span><span class="n">type</span> <span class="ow">is</span> <span class="n">DeviceTypes</span><span class="o">.</span><span class="n">COMMON</span> 
+</span><span id="WallSwitchService.get_switches-72"><a href="#WallSwitchService.get_switches-72"><span class="linenos">72</span></a>                    <span class="k">if</span> <span class="n">device</span><span class="o">.</span><span class="n">type</span> <span class="ow">is</span> <span class="n">DeviceTypes</span><span class="o">.</span><span class="n">COMMON</span>
 </span><span id="WallSwitchService.get_switches-73"><a href="#WallSwitchService.get_switches-73"><span class="linenos">73</span></a>                    <span class="ow">and</span> <span class="n">device</span><span class="o">.</span><span class="n">product_model</span> <span class="o">==</span> <span class="s2">&quot;LD_SS1&quot;</span><span class="p">]</span>
 </span><span id="WallSwitchService.get_switches-74"><a href="#WallSwitchService.get_switches-74"><span class="linenos">74</span></a>
 </span><span id="WallSwitchService.get_switches-75"><a href="#WallSwitchService.get_switches-75"><span class="linenos">75</span></a>        <span class="k">return</span> <span class="p">[</span><span class="n">WallSwitch</span><span class="p">(</span><span class="n">switch</span><span class="o">.</span><span class="n">raw_dict</span><span class="p">)</span> <span class="k">for</span> <span class="n">switch</span> <span class="ow">in</span> <span class="n">switches</span><span class="p">]</span>
 </span></pre></div>
 
 
-    
+
 
                             </div>
                             <div id="WallSwitchService.turn_on" class="classattr">
                                         <input id="WallSwitchService.turn_on-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">async def</span>
         <span class="name">turn_on</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">switch</span><span class="p">:</span> <span class="n"><a href="#WallSwitch">WallSwitch</a></span></span><span class="return-annotation">):</span></span>
 
@@ -574,13 +574,13 @@
 </span></pre></div>
 
 
-    
+
 
                             </div>
                             <div id="WallSwitchService.turn_off" class="classattr">
                                         <input id="WallSwitchService.turn_off-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">async def</span>
         <span class="name">turn_off</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">switch</span><span class="p">:</span> <span class="n"><a href="#WallSwitch">WallSwitch</a></span></span><span class="return-annotation">):</span></span>
 
@@ -596,13 +596,13 @@
 </span></pre></div>
 
 
-    
+
 
                             </div>
                             <div id="WallSwitchService.power_on" class="classattr">
                                         <input id="WallSwitchService.power_on-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">async def</span>
         <span class="name">power_on</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">switch</span><span class="p">:</span> <span class="n"><a href="#WallSwitch">WallSwitch</a></span></span><span class="return-annotation">):</span></span>
 
@@ -615,13 +615,13 @@
 </span></pre></div>
 
 
-    
+
 
                             </div>
                             <div id="WallSwitchService.power_off" class="classattr">
                                         <input id="WallSwitchService.power_off-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">async def</span>
         <span class="name">power_off</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">switch</span><span class="p">:</span> <span class="n"><a href="#WallSwitch">WallSwitch</a></span></span><span class="return-annotation">):</span></span>
 
@@ -634,13 +634,13 @@
 </span></pre></div>
 
 
-    
+
 
                             </div>
                             <div id="WallSwitchService.iot_on" class="classattr">
                                         <input id="WallSwitchService.iot_on-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">async def</span>
         <span class="name">iot_on</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">switch</span><span class="p">:</span> <span class="n"><a href="#WallSwitch">WallSwitch</a></span></span><span class="return-annotation">):</span></span>
 
@@ -653,13 +653,13 @@
 </span></pre></div>
 
 
-    
+
 
                             </div>
                             <div id="WallSwitchService.iot_off" class="classattr">
                                         <input id="WallSwitchService.iot_off-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">async def</span>
         <span class="name">iot_off</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">switch</span><span class="p">:</span> <span class="n"><a href="#WallSwitch">WallSwitch</a></span></span><span class="return-annotation">):</span></span>
 
@@ -672,13 +672,13 @@
 </span></pre></div>
 
 
-    
+
 
                             </div>
                             <div id="WallSwitchService.set_single_press_type" class="classattr">
                                         <input id="WallSwitchService.set_single_press_type-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">async def</span>
         <span class="name">set_single_press_type</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="bp">self</span>,</span><span class="param">	<span class="n">switch</span><span class="p">:</span> <span class="n"><a href="#WallSwitch">WallSwitch</a></span>,</span><span class="param">	<span class="n">single_press_type</span><span class="p">:</span> <span class="n"><a href="#SinglePressType">SinglePressType</a></span></span><span class="return-annotation">):</span></span>
 
@@ -691,7 +691,7 @@
 </span></pre></div>
 
 
-    
+
 
                             </div>
                             <div class="inherited">

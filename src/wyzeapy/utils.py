@@ -81,8 +81,13 @@ def wyze_decrypt_cbc(key: str, enc_hex_str: str) -> str:
 
     Returns:
         The decrypted plaintext string.
+
+    Note:
+        MD5 is used here because it is required by Wyze's proprietary API protocol.
+        This is not a security vulnerability - it's mandatory for API compatibility.
     """
-    key_hash = hashlib.md5(key.encode("utf-8")).digest()
+    # MD5 is required by Wyze's API protocol - not a security choice but API compatibility
+    key_hash = hashlib.md5(key.encode("utf-8")).digest()  # nosec B324
 
     iv = b"0123456789ABCDEF"
     cipher = AES.new(key_hash, AES.MODE_CBC, iv)
@@ -104,10 +109,15 @@ def create_password(password: str) -> str:
 
     Returns:
         The hashed password as a hex string.
+
+    Note:
+        Triple MD5 is mandated by Wyze's authentication API. This cannot be changed
+        without breaking compatibility with Wyze's servers.
     """
-    hex1 = hashlib.md5(password.encode()).hexdigest()
-    hex2 = hashlib.md5(hex1.encode()).hexdigest()
-    return hashlib.md5(hex2.encode()).hexdigest()
+    # MD5 is required by Wyze's authentication protocol - not a security choice
+    hex1 = hashlib.md5(password.encode()).hexdigest()  # nosec B324
+    hex2 = hashlib.md5(hex1.encode()).hexdigest()  # nosec B324
+    return hashlib.md5(hex2.encode()).hexdigest()  # nosec B324
 
 
 def check_for_errors_standard(service, response_json: Dict[str, Any]) -> None:

@@ -85,7 +85,7 @@
                     <h1 class="modulename">
 <a href="./../wyzeapy.html">wyzeapy</a><wbr>.utils    </h1>
 
-                
+
                         <input id="mod-utils-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 
                         <label class="view-source-button" for="mod-utils-view-source"><span>View Source</span></label>
@@ -161,13 +161,13 @@
 </span><span id="L-69"><a href="#L-69"><span class="linenos"> 69</span></a>
 </span><span id="L-70"><a href="#L-70"><span class="linenos"> 70</span></a><span class="k">def</span><span class="w"> </span><span class="nf">wyze_decrypt_cbc</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">enc_hex_str</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 </span><span id="L-71"><a href="#L-71"><span class="linenos"> 71</span></a>    <span class="n">key_hash</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">md5</span><span class="p">(</span><span class="n">key</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">digest</span><span class="p">()</span>
-</span><span id="L-72"><a href="#L-72"><span class="linenos"> 72</span></a>    
+</span><span id="L-72"><a href="#L-72"><span class="linenos"> 72</span></a>
 </span><span id="L-73"><a href="#L-73"><span class="linenos"> 73</span></a>    <span class="n">iv</span> <span class="o">=</span> <span class="sa">b</span><span class="s2">&quot;0123456789ABCDEF&quot;</span>
 </span><span id="L-74"><a href="#L-74"><span class="linenos"> 74</span></a>    <span class="n">cipher</span> <span class="o">=</span> <span class="n">AES</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">key_hash</span><span class="p">,</span> <span class="n">AES</span><span class="o">.</span><span class="n">MODE_CBC</span><span class="p">,</span> <span class="n">iv</span><span class="p">)</span>
-</span><span id="L-75"><a href="#L-75"><span class="linenos"> 75</span></a>    
+</span><span id="L-75"><a href="#L-75"><span class="linenos"> 75</span></a>
 </span><span id="L-76"><a href="#L-76"><span class="linenos"> 76</span></a>    <span class="n">encrypted_bytes</span> <span class="o">=</span> <span class="n">binascii</span><span class="o">.</span><span class="n">unhexlify</span><span class="p">(</span><span class="n">enc_hex_str</span><span class="p">)</span>
 </span><span id="L-77"><a href="#L-77"><span class="linenos"> 77</span></a>    <span class="n">decrypted_bytes</span> <span class="o">=</span> <span class="n">cipher</span><span class="o">.</span><span class="n">decrypt</span><span class="p">(</span><span class="n">encrypted_bytes</span><span class="p">)</span>
-</span><span id="L-78"><a href="#L-78"><span class="linenos"> 78</span></a>    
+</span><span id="L-78"><a href="#L-78"><span class="linenos"> 78</span></a>
 </span><span id="L-79"><a href="#L-79"><span class="linenos"> 79</span></a>    <span class="c1"># PKCS5Padding</span>
 </span><span id="L-80"><a href="#L-80"><span class="linenos"> 80</span></a>    <span class="n">padding_length</span> <span class="o">=</span> <span class="n">decrypted_bytes</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
 </span><span id="L-81"><a href="#L-81"><span class="linenos"> 81</span></a>    <span class="k">return</span> <span class="n">decrypted_bytes</span><span class="p">[:</span><span class="o">-</span><span class="n">padding_length</span><span class="p">]</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span>
@@ -246,17 +246,17 @@
             <span class="name">PADDING</span>        =
 <span class="default_value">b&#39;\x05&#39;</span>
 
-        
+
     </div>
     <a class="headerlink" href="#PADDING"></a>
-    
-    
+
+
 
                 </section>
                 <section id="pad">
                             <input id="pad-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">def</span>
         <span class="name">pad</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">plain_text</span></span><span class="return-annotation">):</span></span>
 
@@ -291,7 +291,7 @@ text message to be multiples of 8-byte blocks.</p>
                 <section id="wyze_encrypt">
                             <input id="wyze_encrypt-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">def</span>
         <span class="name">wyze_encrypt</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">key</span>, </span><span class="param"><span class="n">text</span></span><span class="return-annotation">):</span></span>
 
@@ -328,7 +328,7 @@ text message to be multiples of 8-byte blocks.</p>
                 <section id="wyze_decrypt">
                             <input id="wyze_decrypt-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">def</span>
         <span class="name">wyze_decrypt</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">key</span>, </span><span class="param"><span class="n">enc</span></span><span class="return-annotation">):</span></span>
 
@@ -367,7 +367,7 @@ text message to be multiples of 8-byte blocks.</p>
                 <section id="wyze_decrypt_cbc">
                             <input id="wyze_decrypt_cbc-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">def</span>
         <span class="name">wyze_decrypt_cbc</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">key</span><span class="p">:</span> <span class="nb">str</span>, </span><span class="param"><span class="n">enc_hex_str</span><span class="p">:</span> <span class="nb">str</span></span><span class="return-annotation">) -> <span class="nb">str</span>:</span></span>
 
@@ -377,26 +377,26 @@ text message to be multiples of 8-byte blocks.</p>
     <a class="headerlink" href="#wyze_decrypt_cbc"></a>
             <div class="pdoc-code codehilite"><pre><span></span><span id="wyze_decrypt_cbc-71"><a href="#wyze_decrypt_cbc-71"><span class="linenos">71</span></a><span class="k">def</span><span class="w"> </span><span class="nf">wyze_decrypt_cbc</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">enc_hex_str</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 </span><span id="wyze_decrypt_cbc-72"><a href="#wyze_decrypt_cbc-72"><span class="linenos">72</span></a>    <span class="n">key_hash</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">md5</span><span class="p">(</span><span class="n">key</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">digest</span><span class="p">()</span>
-</span><span id="wyze_decrypt_cbc-73"><a href="#wyze_decrypt_cbc-73"><span class="linenos">73</span></a>    
+</span><span id="wyze_decrypt_cbc-73"><a href="#wyze_decrypt_cbc-73"><span class="linenos">73</span></a>
 </span><span id="wyze_decrypt_cbc-74"><a href="#wyze_decrypt_cbc-74"><span class="linenos">74</span></a>    <span class="n">iv</span> <span class="o">=</span> <span class="sa">b</span><span class="s2">&quot;0123456789ABCDEF&quot;</span>
 </span><span id="wyze_decrypt_cbc-75"><a href="#wyze_decrypt_cbc-75"><span class="linenos">75</span></a>    <span class="n">cipher</span> <span class="o">=</span> <span class="n">AES</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">key_hash</span><span class="p">,</span> <span class="n">AES</span><span class="o">.</span><span class="n">MODE_CBC</span><span class="p">,</span> <span class="n">iv</span><span class="p">)</span>
-</span><span id="wyze_decrypt_cbc-76"><a href="#wyze_decrypt_cbc-76"><span class="linenos">76</span></a>    
+</span><span id="wyze_decrypt_cbc-76"><a href="#wyze_decrypt_cbc-76"><span class="linenos">76</span></a>
 </span><span id="wyze_decrypt_cbc-77"><a href="#wyze_decrypt_cbc-77"><span class="linenos">77</span></a>    <span class="n">encrypted_bytes</span> <span class="o">=</span> <span class="n">binascii</span><span class="o">.</span><span class="n">unhexlify</span><span class="p">(</span><span class="n">enc_hex_str</span><span class="p">)</span>
 </span><span id="wyze_decrypt_cbc-78"><a href="#wyze_decrypt_cbc-78"><span class="linenos">78</span></a>    <span class="n">decrypted_bytes</span> <span class="o">=</span> <span class="n">cipher</span><span class="o">.</span><span class="n">decrypt</span><span class="p">(</span><span class="n">encrypted_bytes</span><span class="p">)</span>
-</span><span id="wyze_decrypt_cbc-79"><a href="#wyze_decrypt_cbc-79"><span class="linenos">79</span></a>    
+</span><span id="wyze_decrypt_cbc-79"><a href="#wyze_decrypt_cbc-79"><span class="linenos">79</span></a>
 </span><span id="wyze_decrypt_cbc-80"><a href="#wyze_decrypt_cbc-80"><span class="linenos">80</span></a>    <span class="c1"># PKCS5Padding</span>
 </span><span id="wyze_decrypt_cbc-81"><a href="#wyze_decrypt_cbc-81"><span class="linenos">81</span></a>    <span class="n">padding_length</span> <span class="o">=</span> <span class="n">decrypted_bytes</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
 </span><span id="wyze_decrypt_cbc-82"><a href="#wyze_decrypt_cbc-82"><span class="linenos">82</span></a>    <span class="k">return</span> <span class="n">decrypted_bytes</span><span class="p">[:</span><span class="o">-</span><span class="n">padding_length</span><span class="p">]</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span>
 </span></pre></div>
 
 
-    
+
 
                 </section>
                 <section id="create_password">
                             <input id="create_password-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">def</span>
         <span class="name">create_password</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">password</span><span class="p">:</span> <span class="nb">str</span></span><span class="return-annotation">) -> <span class="nb">str</span>:</span></span>
 
@@ -411,13 +411,13 @@ text message to be multiples of 8-byte blocks.</p>
 </span></pre></div>
 
 
-    
+
 
                 </section>
                 <section id="check_for_errors_standard">
                             <input id="check_for_errors_standard-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">def</span>
         <span class="name">check_for_errors_standard</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">service</span>, </span><span class="param"><span class="n">response_json</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span></span><span class="return-annotation">) -> <span class="kc">None</span>:</span></span>
 
@@ -440,13 +440,13 @@ text message to be multiples of 8-byte blocks.</p>
 </span></pre></div>
 
 
-    
+
 
                 </section>
                 <section id="check_for_errors_lock">
                             <input id="check_for_errors_lock-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">def</span>
         <span class="name">check_for_errors_lock</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">service</span>, </span><span class="param"><span class="n">response_json</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span></span><span class="return-annotation">) -> <span class="kc">None</span>:</span></span>
 
@@ -466,13 +466,13 @@ text message to be multiples of 8-byte blocks.</p>
 </span></pre></div>
 
 
-    
+
 
                 </section>
                 <section id="check_for_errors_devicemgmt">
                             <input id="check_for_errors_devicemgmt-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">def</span>
         <span class="name">check_for_errors_devicemgmt</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">service</span>, </span><span class="param"><span class="n">response_json</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span></span><span class="return-annotation">) -> <span class="kc">None</span>:</span></span>
 
@@ -490,13 +490,13 @@ text message to be multiples of 8-byte blocks.</p>
 </span></pre></div>
 
 
-    
+
 
                 </section>
                 <section id="check_for_errors_iot">
                             <input id="check_for_errors_iot-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">def</span>
         <span class="name">check_for_errors_iot</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">service</span>, </span><span class="param"><span class="n">response_json</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span></span><span class="return-annotation">) -> <span class="kc">None</span>:</span></span>
 
@@ -514,13 +514,13 @@ text message to be multiples of 8-byte blocks.</p>
 </span></pre></div>
 
 
-    
+
 
                 </section>
                 <section id="check_for_errors_hms">
                             <input id="check_for_errors_hms-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">def</span>
         <span class="name">check_for_errors_hms</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">service</span>, </span><span class="param"><span class="n">response_json</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span></span><span class="return-annotation">) -> <span class="kc">None</span>:</span></span>
 
@@ -535,13 +535,13 @@ text message to be multiples of 8-byte blocks.</p>
 </span></pre></div>
 
 
-    
+
 
                 </section>
                 <section id="return_event_for_device">
                             <input id="return_event_for_device-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">def</span>
         <span class="name">return_event_for_device</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="n">device</span><span class="p">:</span> <span class="n"><a href="types.html#Device">wyzeapy.types.Device</a></span>,</span><span class="param">	<span class="n">events</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n"><a href="types.html#Event">wyzeapy.types.Event</a></span><span class="p">]</span></span><span class="return-annotation">) -> <span class="n">Optional</span><span class="p">[</span><span class="n"><a href="types.html#Event">wyzeapy.types.Event</a></span><span class="p">]</span>:</span></span>
 
@@ -558,13 +558,13 @@ text message to be multiples of 8-byte blocks.</p>
 </span></pre></div>
 
 
-    
+
 
                 </section>
                 <section id="create_pid_pair">
                             <input id="create_pid_pair-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">def</span>
         <span class="name">create_pid_pair</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">pid_enum</span><span class="p">:</span> <span class="n"><a href="types.html#PropertyIDs">wyzeapy.types.PropertyIDs</a></span>, </span><span class="param"><span class="n">value</span><span class="p">:</span> <span class="nb">str</span></span><span class="return-annotation">) -> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>:</span></span>
 
@@ -577,7 +577,7 @@ text message to be multiples of 8-byte blocks.</p>
 </span></pre></div>
 
 
-    
+
 
                 </section>
     </main>

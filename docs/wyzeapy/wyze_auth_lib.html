@@ -139,7 +139,7 @@
                     <h1 class="modulename">
 <a href="./../wyzeapy.html">wyzeapy</a><wbr>.wyze_auth_lib    </h1>
 
-                
+
                         <input id="mod-wyze_auth_lib-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 
                         <label class="view-source-button" for="mod-wyze_auth_lib-view-source"><span>View Source</span></label>
@@ -413,7 +413,7 @@
 </span><span id="L-267"><a href="#L-267"><span class="linenos">267</span></a>            <span class="k">except</span> <span class="n">ContentTypeError</span><span class="p">:</span>
 </span><span id="L-268"><a href="#L-268"><span class="linenos">268</span></a>                <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Response: </span><span class="si">{</span><span class="n">response</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </span><span id="L-269"><a href="#L-269"><span class="linenos">269</span></a>            <span class="k">return</span> <span class="k">await</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
-</span><span id="L-270"><a href="#L-270"><span class="linenos">270</span></a>    
+</span><span id="L-270"><a href="#L-270"><span class="linenos">270</span></a>
 </span><span id="L-271"><a href="#L-271"><span class="linenos">271</span></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">put</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 </span><span id="L-272"><a href="#L-272"><span class="linenos">272</span></a>        <span class="k">async</span> <span class="k">with</span> <span class="n">ClientSession</span><span class="p">(</span><span class="n">connector</span><span class="o">=</span><span class="n">TCPConnector</span><span class="p">(</span><span class="n">ttl_dns_cache</span><span class="o">=</span><span class="p">(</span><span class="mi">30</span> <span class="o">*</span> <span class="mi">60</span><span class="p">)))</span> <span class="k">as</span> <span class="n">_session</span><span class="p">:</span>
 </span><span id="L-273"><a href="#L-273"><span class="linenos">273</span></a>            <span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="n">_session</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="n">json</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
@@ -486,7 +486,7 @@
                 <section id="Token">
                             <input id="Token-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr class">
-            
+
     <span class="def">class</span>
     <span class="name">Token</span>:
 
@@ -530,12 +530,12 @@
 </span></pre></div>
 
 
-    
+
 
                             <div id="Token.__init__" class="classattr">
                                         <input id="Token.__init__-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="name">Token</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">access_token</span>, </span><span class="param"><span class="n">refresh_token</span>, </span><span class="param"><span class="n">refresh_time</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span></span>)</span>
 
                 <label class="view-source-button" for="Token.__init__-view-source"><span>View Source</span></label>
@@ -553,7 +553,7 @@
 </span></pre></div>
 
 
-    
+
 
                             </div>
                             <div id="Token.REFRESH_INTERVAL" class="classattr">
@@ -561,22 +561,22 @@
             <span class="name">REFRESH_INTERVAL</span>        =
 <span class="default_value">82800</span>
 
-        
+
     </div>
     <a class="headerlink" href="#Token.REFRESH_INTERVAL"></a>
-    
-    
+
+
 
                             </div>
                             <div id="Token.expired" class="classattr">
                                 <div class="attr variable">
             <span class="name">expired</span>
 
-        
+
     </div>
     <a class="headerlink" href="#Token.expired"></a>
-    
-    
+
+
 
                             </div>
                             <div id="Token.access_token" class="classattr">
@@ -594,7 +594,7 @@
 </span></pre></div>
 
 
-    
+
 
                             </div>
                             <div id="Token.refresh_token" class="classattr">
@@ -612,7 +612,7 @@
 </span></pre></div>
 
 
-    
+
 
                             </div>
                             <div id="Token.refresh_time" class="classattr">
@@ -630,14 +630,14 @@
 </span></pre></div>
 
 
-    
+
 
                             </div>
                 </section>
                 <section id="WyzeAuthLib">
                             <input id="WyzeAuthLib-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr class">
-            
+
     <span class="def">class</span>
     <span class="name">WyzeAuthLib</span>:
 
@@ -856,7 +856,7 @@
 </span><span id="WyzeAuthLib-268"><a href="#WyzeAuthLib-268"><span class="linenos">268</span></a>            <span class="k">except</span> <span class="n">ContentTypeError</span><span class="p">:</span>
 </span><span id="WyzeAuthLib-269"><a href="#WyzeAuthLib-269"><span class="linenos">269</span></a>                <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Response: </span><span class="si">{</span><span class="n">response</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </span><span id="WyzeAuthLib-270"><a href="#WyzeAuthLib-270"><span class="linenos">270</span></a>            <span class="k">return</span> <span class="k">await</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
-</span><span id="WyzeAuthLib-271"><a href="#WyzeAuthLib-271"><span class="linenos">271</span></a>    
+</span><span id="WyzeAuthLib-271"><a href="#WyzeAuthLib-271"><span class="linenos">271</span></a>
 </span><span id="WyzeAuthLib-272"><a href="#WyzeAuthLib-272"><span class="linenos">272</span></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">put</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 </span><span id="WyzeAuthLib-273"><a href="#WyzeAuthLib-273"><span class="linenos">273</span></a>        <span class="k">async</span> <span class="k">with</span> <span class="n">ClientSession</span><span class="p">(</span><span class="n">connector</span><span class="o">=</span><span class="n">TCPConnector</span><span class="p">(</span><span class="n">ttl_dns_cache</span><span class="o">=</span><span class="p">(</span><span class="mi">30</span> <span class="o">*</span> <span class="mi">60</span><span class="p">)))</span> <span class="k">as</span> <span class="n">_session</span><span class="p">:</span>
 </span><span id="WyzeAuthLib-274"><a href="#WyzeAuthLib-274"><span class="linenos">274</span></a>            <span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="n">_session</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="n">json</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
@@ -925,12 +925,12 @@
 </span></pre></div>
 
 
-    
+
 
                             <div id="WyzeAuthLib.__init__" class="classattr">
                                         <input id="WyzeAuthLib.__init__-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="name">WyzeAuthLib</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="n">username</span><span class="o">=</span><span class="kc">None</span>,</span><span class="param">	<span class="n">password</span><span class="o">=</span><span class="kc">None</span>,</span><span class="param">	<span class="n">key_id</span><span class="o">=</span><span class="kc">None</span>,</span><span class="param">	<span class="n">api_key</span><span class="o">=</span><span class="kc">None</span>,</span><span class="param">	<span class="n">token</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n"><a href="#Token">Token</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">token_callback</span><span class="o">=</span><span class="kc">None</span></span>)</span>
 
                 <label class="view-source-button" for="WyzeAuthLib.__init__-view-source"><span>View Source</span></label>
@@ -959,7 +959,7 @@
 </span></pre></div>
 
 
-    
+
 
                             </div>
                             <div id="WyzeAuthLib.token" class="classattr">
@@ -967,11 +967,11 @@
             <span class="name">token</span><span class="annotation">: Optional[<a href="#Token">Token</a>]</span>        =
 <span class="default_value">None</span>
 
-        
+
     </div>
     <a class="headerlink" href="#WyzeAuthLib.token"></a>
-    
-    
+
+
 
                             </div>
                             <div id="WyzeAuthLib.SANITIZE_FIELDS" class="classattr">
@@ -979,11 +979,11 @@
             <span class="name">SANITIZE_FIELDS</span>        =
 <span class="default_value">[&#39;email&#39;, &#39;password&#39;, &#39;access_token&#39;, &#39;accessToken&#39;, &#39;refresh_token&#39;, &#39;lat&#39;, &#39;lon&#39;, &#39;address&#39;]</span>
 
-        
+
     </div>
     <a class="headerlink" href="#WyzeAuthLib.SANITIZE_FIELDS"></a>
-    
-    
+
+
 
                             </div>
                             <div id="WyzeAuthLib.SANITIZE_STRING" class="classattr">
@@ -991,66 +991,66 @@
             <span class="name">SANITIZE_STRING</span>        =
 <span class="default_value">&#39;**Sanitized**&#39;</span>
 
-        
+
     </div>
     <a class="headerlink" href="#WyzeAuthLib.SANITIZE_STRING"></a>
-    
-    
+
+
 
                             </div>
                             <div id="WyzeAuthLib.session_id" class="classattr">
                                 <div class="attr variable">
             <span class="name">session_id</span>
 
-        
+
     </div>
     <a class="headerlink" href="#WyzeAuthLib.session_id"></a>
-    
-    
+
+
 
                             </div>
                             <div id="WyzeAuthLib.verification_id" class="classattr">
                                 <div class="attr variable">
             <span class="name">verification_id</span>
 
-        
+
     </div>
     <a class="headerlink" href="#WyzeAuthLib.verification_id"></a>
-    
-    
+
+
 
                             </div>
                             <div id="WyzeAuthLib.two_factor_type" class="classattr">
                                 <div class="attr variable">
             <span class="name">two_factor_type</span>
 
-        
+
     </div>
     <a class="headerlink" href="#WyzeAuthLib.two_factor_type"></a>
-    
-    
+
+
 
                             </div>
                             <div id="WyzeAuthLib.refresh_lock" class="classattr">
                                 <div class="attr variable">
             <span class="name">refresh_lock</span>
 
-        
+
     </div>
     <a class="headerlink" href="#WyzeAuthLib.refresh_lock"></a>
-    
-    
+
+
 
                             </div>
                             <div id="WyzeAuthLib.token_callback" class="classattr">
                                 <div class="attr variable">
             <span class="name">token_callback</span>
 
-        
+
     </div>
     <a class="headerlink" href="#WyzeAuthLib.token_callback"></a>
-    
-    
+
+
 
                             </div>
                             <div id="WyzeAuthLib.create" class="classattr">
@@ -1094,13 +1094,13 @@
 </span></pre></div>
 
 
-    
+
 
                             </div>
                             <div id="WyzeAuthLib.get_token_with_username_password" class="classattr">
                                         <input id="WyzeAuthLib.get_token_with_username_password-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">async def</span>
         <span class="name">get_token_with_username_password</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">username</span>, </span><span class="param"><span class="n">password</span>, </span><span class="param"><span class="n">key_id</span>, </span><span class="param"><span class="n">api_key</span></span><span class="return-annotation">) -> <span class="n"><a href="#Token">Token</a></span>:</span></span>
 
@@ -1162,13 +1162,13 @@
 </span></pre></div>
 
 
-    
+
 
                             </div>
                             <div id="WyzeAuthLib.get_token_with_2fa" class="classattr">
                                         <input id="WyzeAuthLib.get_token_with_2fa-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">async def</span>
         <span class="name">get_token_with_2fa</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">verification_code</span></span><span class="return-annotation">) -> <span class="n"><a href="#Token">Token</a></span>:</span></span>
 
@@ -1211,7 +1211,7 @@
 </span></pre></div>
 
 
-    
+
 
                             </div>
                             <div id="WyzeAuthLib.should_refresh" class="classattr">
@@ -1229,13 +1229,13 @@
 </span></pre></div>
 
 
-    
+
 
                             </div>
                             <div id="WyzeAuthLib.refresh_if_should" class="classattr">
                                         <input id="WyzeAuthLib.refresh_if_should-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">async def</span>
         <span class="name">refresh_if_should</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span></span><span class="return-annotation">):</span></span>
 
@@ -1252,13 +1252,13 @@
 </span></pre></div>
 
 
-    
+
 
                             </div>
                             <div id="WyzeAuthLib.refresh" class="classattr">
                                         <input id="WyzeAuthLib.refresh-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">async def</span>
         <span class="name">refresh</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span></span><span class="return-annotation">) -> <span class="kc">None</span>:</span></span>
 
@@ -1296,13 +1296,13 @@
 </span></pre></div>
 
 
-    
+
 
                             </div>
                             <div id="WyzeAuthLib.sanitize" class="classattr">
                                         <input id="WyzeAuthLib.sanitize-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">def</span>
         <span class="name">sanitize</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">data</span></span><span class="return-annotation">):</span></span>
 
@@ -1322,13 +1322,13 @@
 </span></pre></div>
 
 
-    
+
 
                             </div>
                             <div id="WyzeAuthLib.post" class="classattr">
                                         <input id="WyzeAuthLib.post-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">async def</span>
         <span class="name">post</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">url</span>, </span><span class="param"><span class="n">json</span><span class="o">=</span><span class="kc">None</span>, </span><span class="param"><span class="n">headers</span><span class="o">=</span><span class="kc">None</span>, </span><span class="param"><span class="n">data</span><span class="o">=</span><span class="kc">None</span></span><span class="return-annotation">) -> <span class="n">Dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>:</span></span>
 
@@ -1355,13 +1355,13 @@
 </span></pre></div>
 
 
-    
+
 
                             </div>
                             <div id="WyzeAuthLib.put" class="classattr">
                                         <input id="WyzeAuthLib.put-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">async def</span>
         <span class="name">put</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">url</span>, </span><span class="param"><span class="n">json</span><span class="o">=</span><span class="kc">None</span>, </span><span class="param"><span class="n">headers</span><span class="o">=</span><span class="kc">None</span>, </span><span class="param"><span class="n">data</span><span class="o">=</span><span class="kc">None</span></span><span class="return-annotation">) -> <span class="n">Dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>:</span></span>
 
@@ -1388,13 +1388,13 @@
 </span></pre></div>
 
 
-    
+
 
                             </div>
                             <div id="WyzeAuthLib.get" class="classattr">
                                         <input id="WyzeAuthLib.get-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">async def</span>
         <span class="name">get</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">url</span>, </span><span class="param"><span class="n">headers</span><span class="o">=</span><span class="kc">None</span>, </span><span class="param"><span class="n">params</span><span class="o">=</span><span class="kc">None</span></span><span class="return-annotation">) -> <span class="n">Dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>:</span></span>
 
@@ -1420,13 +1420,13 @@
 </span></pre></div>
 
 
-    
+
 
                             </div>
                             <div id="WyzeAuthLib.patch" class="classattr">
                                         <input id="WyzeAuthLib.patch-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">async def</span>
         <span class="name">patch</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">url</span>, </span><span class="param"><span class="n">headers</span><span class="o">=</span><span class="kc">None</span>, </span><span class="param"><span class="n">params</span><span class="o">=</span><span class="kc">None</span>, </span><span class="param"><span class="n">json</span><span class="o">=</span><span class="kc">None</span></span><span class="return-annotation">) -> <span class="n">Dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>:</span></span>
 
@@ -1453,13 +1453,13 @@
 </span></pre></div>
 
 
-    
+
 
                             </div>
                             <div id="WyzeAuthLib.delete" class="classattr">
                                         <input id="WyzeAuthLib.delete-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
-            
+
         <span class="def">async def</span>
         <span class="name">delete</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">url</span>, </span><span class="param"><span class="n">headers</span><span class="o">=</span><span class="kc">None</span>, </span><span class="param"><span class="n">json</span><span class="o">=</span><span class="kc">None</span></span><span class="return-annotation">) -> <span class="n">Dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>:</span></span>
 
@@ -1485,7 +1485,7 @@
 </span></pre></div>
 
 
-    
+
 
                             </div>
                 </section>

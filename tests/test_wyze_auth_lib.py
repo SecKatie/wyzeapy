@@ -1,3 +1,4 @@
+from hashlib import sha256
 import unittest
 from unittest.mock import patch, MagicMock, AsyncMock
 from wyzeapy.wyze_auth_lib import (
@@ -6,12 +7,23 @@ from wyzeapy.wyze_auth_lib import (
     TwoFactorAuthenticationEnabled,
     AccessTokenError,
     UnknownApiError,
+    get_ssl_context,
 )
 import time
 import aiohttp  # Import aiohttp
 
 
 class TestWyzeAuthLib(unittest.IsolatedAsyncioTestCase):
+    def test_ssl_context_includes_certifi_and_wyze_ca(self):
+        certificates = get_ssl_context().get_ca_certs(binary_form=True)
+        fingerprints = {sha256(certificate).hexdigest() for certificate in certificates}
+
+        self.assertGreater(len(certificates), 1)
+        self.assertIn(
+            "4348a0e9444c78cb265e058d5e8944b4d84f9662bd26db257f8934a443c70161",
+            fingerprints,
+        )
+
     def test_initialization(self):
         auth_lib = WyzeAuthLib(username="test_user", password="test_password")
         self.assertEqual(auth_lib._username, "test_user")

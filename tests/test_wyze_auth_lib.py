@@ -1,4 +1,5 @@
 from hashlib import sha256
+import ssl
 import unittest
 from unittest.mock import patch, MagicMock, AsyncMock
 from wyzeapy.wyze_auth_lib import (
@@ -14,11 +15,18 @@ import aiohttp  # Import aiohttp
 
 
 class TestWyzeAuthLib(unittest.IsolatedAsyncioTestCase):
-    def test_ssl_context_includes_certifi_and_wyze_ca(self):
+    def test_ssl_context_includes_system_certifi_and_wyze_ca(self):
         certificates = get_ssl_context().get_ca_certs(binary_form=True)
         fingerprints = {sha256(certificate).hexdigest() for certificate in certificates}
+        system_certificates = ssl.create_default_context().get_ca_certs(
+            binary_form=True
+        )
+        system_fingerprints = {
+            sha256(certificate).hexdigest() for certificate in system_certificates
+        }
 
         self.assertGreater(len(certificates), 1)
+        self.assertLessEqual(system_fingerprints, fingerprints)
         self.assertIn(
             "4348a0e9444c78cb265e058d5e8944b4d84f9662bd26db257f8934a443c70161",
             fingerprints,

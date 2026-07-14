@@ -9,11 +9,14 @@ All notable changes to this project will be documented in this file.
 See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
-## 0.6.1 - 2026-06-09
+## 0.6.1 - 2026-07-14
 
 ### Bug Fixes
 
 * Throttle air purifier AQI refreshes (#265)
+* Fix WLPA19 bulb on/off commands (#273)
+* Restore Wyze API TLS verification with the packaged legacy root (#288)
+* Preserve system CA certificates in the Wyze TLS context (#289)
 
 - - -
 ## 0.6.0 - 2026-06-07

@@ -45,8 +45,9 @@ _EXTRA_CA_BUNDLE = Path(__file__).with_name("wyze_api_ca.pem")
 
 @cache
 def get_ssl_context() -> ssl.SSLContext:
-    """Return an SSL context containing certifi and Wyze's legacy root CA."""
-    context = ssl.create_default_context(cafile=certifi.where())
+    """Return an SSL context containing system, certifi, and Wyze CA roots."""
+    context = ssl.create_default_context()
+    context.load_verify_locations(cafile=certifi.where())
     context.load_verify_locations(cafile=_EXTRA_CA_BUNDLE)
     return context
 

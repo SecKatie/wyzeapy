@@ -4,10 +4,14 @@
 #  the license with this file. If not, please write to:
 #  katie@mulliken.net to receive a copy
 import asyncio
+from functools import cache
 import logging
+from pathlib import Path
+import ssl
 import time
 from typing import Dict, Any, Optional
 
+import certifi
 from aiohttp import TCPConnector, ClientSession, ContentTypeError
 
 from .const import (
@@ -35,6 +39,24 @@ Authentication token data and timing management.
 This module handles Wyze API authentication tokens, including expiration
 tracking, automatic refresh timing, and secure request methods in WyzeAuthLib.
 """
+
+_EXTRA_CA_BUNDLE = Path(__file__).with_name("wyze_api_ca.pem")
+
+
+@cache
+def get_ssl_context() -> ssl.SSLContext:
+    """Return an SSL context containing system, certifi, and Wyze CA roots."""
+    context = ssl.create_default_context()
+    context.load_verify_locations(cafile=certifi.where())
+    context.load_verify_locations(cafile=_EXTRA_CA_BUNDLE)
+    return context
+
+
+def _create_client_session() -> ClientSession:
+    """Create a client session configured for Wyze API requests."""
+    return ClientSession(
+        connector=TCPConnector(ttl_dns_cache=(30 * 60), ssl=get_ssl_context())
+    )
 
 
 class Token:
@@ -327,9 +349,7 @@ class WyzeAuthLib:
 
         headers = {"X-API-Key": API_KEY}
 
-        async with ClientSession(
-            connector=TCPConnector(ttl_dns_cache=(30 * 60))
-        ) as _session:
+        async with _create_client_session() as _session:
             response = await _session.post(
                 "https://api.wyzecam.com/app/user/refresh_token",
                 headers=headers,
@@ -370,9 +390,7 @@ class WyzeAuthLib:
         Returns:
             Parsed JSON response.
         """
-        async with ClientSession(
-            connector=TCPConnector(ttl_dns_cache=(30 * 60))
-        ) as _session:
+        async with _create_client_session() as _session:
             response = await _session.post(url, json=json, headers=headers, data=data)
             # Relocated these below as the sanitization seems to modify the data before it goes to the post.
             _LOGGER.debug("Request:")
@@ -393,9 +411,7 @@ class WyzeAuthLib:
 
         See `post` for parameter details.
         """
-        async with ClientSession(
-            connector=TCPConnector(ttl_dns_cache=(30 * 60))
-        ) as _session:
+        async with _create_client_session() as _session:
             response = await _session.put(url, json=json, headers=headers, data=data)
             # Relocated these below as the sanitization seems to modify the data before it goes to the post.
             _LOGGER.debug("Request:")
@@ -422,9 +438,7 @@ class WyzeAuthLib:
         Returns:
             Parsed JSON response.
         """
-        async with ClientSession(
-            connector=TCPConnector(ttl_dns_cache=(30 * 60))
-        ) as _session:
+        async with _create_client_session() as _session:
             response = await _session.get(url, params=params, headers=headers)
             # Relocated these below as the sanitization seems to modify the data before it goes to the post.
             _LOGGER.debug("Request:")
@@ -444,9 +458,7 @@ class WyzeAuthLib:
 
         See `get`/`post` for parameter details.
         """
-        async with ClientSession(
-            connector=TCPConnector(ttl_dns_cache=(30 * 60))
-        ) as _session:
+        async with _create_client_session() as _session:
             response = await _session.patch(
                 url, headers=headers, params=params, json=json
             )
@@ -475,9 +487,7 @@ class WyzeAuthLib:
         Returns:
             Parsed JSON response.
         """
-        async with ClientSession(
-            connector=TCPConnector(ttl_dns_cache=(30 * 60))
-        ) as _session:
+        async with _create_client_session() as _session:
             response = await _session.delete(url, headers=headers, json=json)
             # Relocated these below as the sanitization seems to modify the data before it goes to the post.
             _LOGGER.debug("Request:")

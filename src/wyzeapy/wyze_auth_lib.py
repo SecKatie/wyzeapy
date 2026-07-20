@@ -15,6 +15,7 @@ import certifi
 from aiohttp import TCPConnector, ClientSession, ContentTypeError
 
 from .const import (
+    WYZE_API_URL,
     API_KEY,
     PHONE_ID,
     APP_NAME,
@@ -351,7 +352,7 @@ class WyzeAuthLib:
 
         async with _create_client_session() as _session:
             response = await _session.post(
-                "https://api.wyzecam.com/app/user/refresh_token",
+                f"{WYZE_API_URL}/app/user/refresh_token",
                 headers=headers,
                 json=payload,
             )

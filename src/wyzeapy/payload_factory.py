@@ -81,6 +81,15 @@ def olive_create_get_payload_irrigation(device_mac: str) -> Dict[str, Any]:
     return {"device_id": device_mac, "nonce": str(nonce)}
 
 
+def olive_create_get_payload_irrigation_device_info(
+    device_mac: str, keys: str
+) -> Dict[str, Any]:
+    """Build a sprinkler device-info request payload."""
+    payload = olive_create_get_payload_irrigation(device_mac)
+    payload["keys"] = keys
+    return payload
+
+
 def olive_create_post_payload_irrigation_stop(
     device_mac: str, action: str
 ) -> Dict[str, Any]:

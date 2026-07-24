@@ -41,6 +41,7 @@ from ..payload_factory import (
     devicemgmt_create_capabilities_payload,
     devicemgmt_get_iot_props_list,
     olive_create_get_payload_irrigation,
+    olive_create_get_payload_irrigation_device_info,
     olive_create_post_payload_irrigation_stop,
     olive_create_post_payload_irrigation_quickrun,
     olive_create_get_payload_irrigation_schedule_runs,
@@ -1000,6 +1001,30 @@ class BaseService:
         await self._auth_lib.refresh_if_should()
 
         payload = olive_create_get_payload_irrigation(device.mac)
+        signature = olive_create_signature(payload, self._auth_lib.token.access_token)
+        headers = {
+            "Accept-Encoding": "gzip",
+            "User-Agent": "myapp",
+            "appid": OLIVE_APP_ID,
+            "appinfo": APP_INFO,
+            "phoneid": PHONE_ID,
+            "access_token": self._auth_lib.token.access_token,
+            "signature2": signature,
+        }
+
+        response_json = await self._auth_lib.get(url, headers=headers, params=payload)
+
+        check_for_errors_iot(self, response_json)
+
+        return response_json
+
+    async def _irrigation_device_info(
+        self, url: str, device: Device, keys: str
+    ) -> Dict[Any, Any]:
+        """Fetch selected sprinkler controller properties."""
+        await self._auth_lib.refresh_if_should()
+
+        payload = olive_create_get_payload_irrigation_device_info(device.mac, keys)
         signature = olive_create_signature(payload, self._auth_lib.token.access_token)
         headers = {
             "Accept-Encoding": "gzip",

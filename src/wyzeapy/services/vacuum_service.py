@@ -63,6 +63,51 @@ class VacuumMode(Enum):
         return cls.UNKNOWN
 
 
+class VacuumFaultCode(Enum):
+    """The faults the vacuum firmware reports.
+
+    Wyze publishes a fault code on every read, including codes outside this set
+    that a healthy docked vacuum reports steadily. A code being non-zero is
+    therefore not evidence of a fault; only a code in this set is.
+    """
+
+    RADAR_OUT_OF_TIME = ("Lidar sensor blocked", 500)
+    WHEEL_LIFT_UP = ("Vacuum not on ground", 501)
+    DUST_BOX_NO_EXIST = ("Dustbin not installed", 503)
+    RELOCATE_FAILED = ("Relocation failed", 507)
+    SLOPE_START = ("Vacuum not on flat ground", 508)
+    COLLISION_EXCEPTION = ("Vacuum stuck", 510)
+    GO_CHARGE_FAILED = ("Failed to return to the charging station", 511)
+    STOP_POINT_GO_CHARGE_FAILED = ("Failed to return to the charging station", 512)
+    NAVIGATION_FAILED = ("Mapping failed", 513)
+    GET_OUT_OF_TROUBLE_FAILED = ("Wheels stuck", 514)
+    ROBOT_NO_WATER = ("Water tank not installed", 521)
+    ROBOT_NO_MOP = ("Mop not installed", 522)
+    ROBOT_NO_DUSTANDWATER_MOP = ("Water tank and mop not installed", 529)
+    ROBOT_NO_DUSTANDWATER_HURRI = (
+        "2-in-1 dustbin with water tank and mop not installed",
+        530,
+    )
+    ROBOT_NO_WATER_HURRI = ("2-in-1 dustbin with water tank not installed", 531)
+    ROBOT_IN_VIRTUALWALL = ("Vacuum stuck in no-go zone", 567)
+
+    def __init__(self, description: str, code: int):
+        self.description = description
+        self.code = code
+
+    @classmethod
+    def parse(cls, code: Union[str, int, None]) -> Optional["VacuumFaultCode"]:
+        try:
+            code = int(code)
+        except (TypeError, ValueError):
+            return None
+
+        for fault in cls:
+            if code == fault.code:
+                return fault
+        return None
+
+
 class VacuumSuctionLevel(Enum):
     QUIET = ("Quiet", 1)
     STANDARD = ("Standard", 2)
@@ -112,6 +157,7 @@ class Vacuum(Device):
         self.clean_time: Optional[int] = None
         self.suction_level: Optional[VacuumSuctionLevel] = None
         self.fault_code: Optional[int] = None
+        self.fault: Optional[VacuumFaultCode] = None
         self.current_map_id: Optional[int] = None
         self.filter_remaining: Optional[int] = None
         self.side_brush_remaining: Optional[int] = None
@@ -151,6 +197,7 @@ class VacuumService(BaseService):
                 vacuum.suction_level = VacuumSuctionLevel.parse(self._parse_int(value))
             elif prop == VacuumProps.FAULT_CODE:
                 vacuum.fault_code = self._parse_int(value)
+                vacuum.fault = VacuumFaultCode.parse(value)
             elif prop == VacuumProps.CURRENT_MAP_ID:
                 vacuum.current_map_id = self._parse_int(value)
             elif prop == VacuumProps.FILTER:

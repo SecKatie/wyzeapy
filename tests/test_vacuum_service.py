@@ -3,6 +3,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 from wyzeapy.services.vacuum_service import (
     Vacuum,
+    VacuumFaultCode,
     VacuumMode,
     VacuumService,
     VacuumSuctionLevel,
@@ -28,6 +29,18 @@ class TestVacuumMode(unittest.TestCase):
     def test_parse_returns_unknown_for_an_unlisted_code(self):
         self.assertIs(VacuumMode.parse(9999), VacuumMode.UNKNOWN)
         self.assertIs(VacuumMode.parse(None), VacuumMode.UNKNOWN)
+
+
+class TestVacuumFaultCode(unittest.TestCase):
+    def test_parse_maps_a_known_fault(self):
+        self.assertIs(VacuumFaultCode.parse(510), VacuumFaultCode.COLLISION_EXCEPTION)
+        self.assertIs(VacuumFaultCode.parse("510"), VacuumFaultCode.COLLISION_EXCEPTION)
+
+    def test_an_undocumented_code_is_not_a_fault(self):
+        """A healthy docked vacuum reports 2105 steadily; non-zero is not a fault."""
+        self.assertIsNone(VacuumFaultCode.parse(2105))
+        self.assertIsNone(VacuumFaultCode.parse(0))
+        self.assertIsNone(VacuumFaultCode.parse(None))
 
 
 class TestVacuumService(unittest.IsolatedAsyncioTestCase):
@@ -80,6 +93,7 @@ class TestVacuumService(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(vacuum.clean_time, 34)
         self.assertIs(vacuum.suction_level, VacuumSuctionLevel.STRONG)
         self.assertEqual(vacuum.fault_code, 0)
+        self.assertIsNone(vacuum.fault)
         self.assertEqual(vacuum.current_map_id, 1738263642)
         self.assertEqual(vacuum.filter_remaining, 461)
         self.assertEqual(vacuum.side_brush_remaining, 445)

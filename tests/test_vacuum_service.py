@@ -1,6 +1,7 @@
 import unittest
 from unittest.mock import AsyncMock, MagicMock
 
+from wyzeapy.exceptions import UnknownApiError
 from wyzeapy.services.vacuum_service import (
     Vacuum,
     VacuumFaultCode,
@@ -108,6 +109,36 @@ class TestVacuumService(unittest.IsolatedAsyncioTestCase):
 
         self.assertFalse(vacuum.available)
         self.assertIs(vacuum.mode, VacuumMode.IDLE)
+
+    async def test_a_disconnected_vacuum_is_unavailable_even_though_reads_work(self):
+        """Sleep leaves the cloud readable but not commandable, so both must be true.
+
+        Guards the pairing that makes availability correct rather than over-strict:
+        a live JA_RO2 asleep on its dock answers a read in full and refuses every
+        command with code 3000 "Device is offline". Anyone tempted to let
+        `available` follow whether venus answered should have this fail.
+        """
+        self.vacuum_service._get_iot_prop.return_value = {
+            "data": {
+                "props": {
+                    "iot_state": "disconnected",
+                    "battary": 100,
+                    "mode": 0,
+                    "chargeState": 1,
+                }
+            }
+        }
+        self.vacuum_service._venus_control.side_effect = UnknownApiError(
+            {"code": 3000, "message": "Device is offline", "data": None}
+        )
+
+        vacuum = await self.vacuum_service.update(self.test_vacuum)
+
+        self.assertFalse(vacuum.available)
+        self.assertEqual(vacuum.battery, 100)
+        self.assertTrue(vacuum.charging)
+        with self.assertRaises(UnknownApiError):
+            await self.vacuum_service.sweep(vacuum)
 
     async def test_update_survives_a_partial_prop_payload(self):
         """The API omits props it has no value for; an absent key must not wipe state."""

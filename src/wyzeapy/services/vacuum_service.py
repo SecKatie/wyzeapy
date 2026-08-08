@@ -182,6 +182,13 @@ class VacuumService(BaseService):
                 continue
 
             if prop == VacuumProps.IOT_STATE:
+                # A sleeping JA_RO2 reports "disconnected" while the cloud still
+                # answers reads with a full prop set, so this looks like an
+                # over-strict gate worth relaxing. It is not: measured against a
+                # live vacuum, both `set_preference` and `control` are refused
+                # with code 3000 "Device is offline" while it reads disconnected.
+                # Availability has to follow this, or the command fails at the API
+                # instead of at the caller.
                 vacuum.available = value == "connected"
             elif prop == VacuumProps.MODE:
                 vacuum.mode = VacuumMode.parse(value)

@@ -19,6 +19,7 @@ from ..const import (
     PHONE_ID,
     APP_NAME,
     OLIVE_APP_ID,
+    OLIVE_SIGNING_SECRET,
     APP_INFO,
     SC,
     SV,
@@ -26,6 +27,9 @@ from ..const import (
     SOURCE,
     WEB_APP_ID,
     WEB_APP_INFO,
+    VENUS_APP_ID,
+    VENUS_SIGNING_SECRET,
+    VENUS_URL,
 )
 from ..crypto import olive_create_signature, web_create_signature
 from ..payload_factory import (
@@ -828,16 +832,23 @@ class BaseService:
         return response_json
 
     async def _get_iot_prop(
-        self, url: str, device: Device, keys: str
+        self,
+        url: str,
+        device: Device,
+        keys: str,
+        app_id: str = OLIVE_APP_ID,
+        signing_secret: str = OLIVE_SIGNING_SECRET,
     ) -> Dict[Any, Any]:
         await self._auth_lib.refresh_if_should()
 
         payload = olive_create_get_payload(device.mac, keys)
-        signature = olive_create_signature(payload, self._auth_lib.token.access_token)
+        signature = olive_create_signature(
+            payload, self._auth_lib.token.access_token, signing_secret
+        )
         headers = {
             "Accept-Encoding": "gzip",
             "User-Agent": "myapp",
-            "appid": OLIVE_APP_ID,
+            "appid": app_id,
             "appinfo": APP_INFO,
             "phoneid": PHONE_ID,
             "access_token": self._auth_lib.token.access_token,
@@ -845,6 +856,37 @@ class BaseService:
         }
 
         response_json = await self._auth_lib.get(url, headers=headers, params=payload)
+
+        check_for_errors_iot(self, response_json)
+
+        return response_json
+
+    async def _venus_post(self, path: str, payload: Dict[Any, Any]) -> Dict[Any, Any]:
+        """POST to the venus plugin service, which the robot vacuum lives behind.
+
+        Venus signs with its own salt and app id rather than the olive pair the
+        thermostat and air purifier use.
+        """
+        await self._auth_lib.refresh_if_should()
+
+        payload_str = json.dumps(payload, separators=(",", ":"))
+        signature = olive_create_signature(
+            payload_str, self._auth_lib.token.access_token, VENUS_SIGNING_SECRET
+        )
+        headers = {
+            "Accept-Encoding": "gzip",
+            "Content-Type": "application/json",
+            "User-Agent": "myapp",
+            "appid": VENUS_APP_ID,
+            "appinfo": APP_INFO,
+            "phoneid": PHONE_ID,
+            "access_token": self._auth_lib.token.access_token,
+            "signature2": signature,
+        }
+
+        response_json = await self._auth_lib.post(
+            f"{VENUS_URL}{path}", headers=headers, data=payload_str
+        )
 
         check_for_errors_iot(self, response_json)
 

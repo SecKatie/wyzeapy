@@ -165,6 +165,22 @@ class IrrigationProps(Enum):
     SSID = "ssid"
 
 
+class VacuumProps(Enum):
+    IOT_STATE = "iot_state"  # Connection state: connected, disconnected
+    BATTERY = "battary"  # Wyze's spelling, not a typo here
+    MODE = "mode"
+    CHARGE_STATE = "chargeState"
+    CLEAN_SIZE = "cleanSize"
+    CLEAN_TIME = "cleanTime"
+    CLEAN_LEVEL = "cleanlevel"
+    FAULT_TYPE = "fault_type"
+    FAULT_CODE = "fault_code"
+    CURRENT_MAP_ID = "current_mapid"
+    FILTER = "filter"
+    SIDE_BRUSH = "side_brush"
+    MAIN_BRUSH = "main_brush"
+
+
 class AirPurifierProps(Enum):
     AQI = "aqi"
     IOT_STATE = "iot_state"  # Connection state: connected, disconnected

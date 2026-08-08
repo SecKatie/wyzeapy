@@ -34,3 +34,8 @@ WEB_SIGNING_SECRET = (
     "gbJojEBViLklgwyyDikx5ztSvKBXI5oU"  # Required for camera webRTC feed info
 )
 WEB_APP_ID = "strv_e7f78e9e7738dc50"  # Required for camera webRTC feed info
+VENUS_SIGNING_SECRET = (
+    "CVCSNoa0ALsNEpgKls6ybVTVOmGzFoiq"  # Required for the robot vacuum
+)
+VENUS_APP_ID = "venp_4c30f812828de875"  # Required for the robot vacuum
+VENUS_URL = "https://wyze-venus-service-vn.wyzecam.com"

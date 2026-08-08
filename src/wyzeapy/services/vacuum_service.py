@@ -1,4 +1,5 @@
 import logging
+import time
 from enum import Enum
 from typing import Any, Dict, List, Optional, Sequence, Union
 
@@ -66,9 +67,9 @@ class VacuumMode(Enum):
 class VacuumFaultCode(Enum):
     """The faults the vacuum firmware reports.
 
-    Wyze publishes a fault code on every read, including codes outside this set
-    that a healthy docked vacuum reports steadily. A code being non-zero is
-    therefore not evidence of a fault; only a code in this set is.
+    `fault_code` carries status as well as faults: a healthy vacuum publishes
+    codes in the 2100s that track charge and dock state. Membership of this set
+    is what identifies a fault, not a non-zero value.
     """
 
     RADAR_OUT_OF_TIME = ("Lidar sensor blocked", 500)
@@ -182,13 +183,10 @@ class VacuumService(BaseService):
                 continue
 
             if prop == VacuumProps.IOT_STATE:
-                # A sleeping JA_RO2 reports "disconnected" while the cloud still
-                # answers reads with a full prop set, so this looks like an
-                # over-strict gate worth relaxing. It is not: measured against a
-                # live vacuum, both `set_preference` and `control` are refused
-                # with code 3000 "Device is offline" while it reads disconnected.
-                # Availability has to follow this, or the command fails at the API
-                # instead of at the caller.
+                # `iot_state` tracks commandability, not readability. A sleeping
+                # JA_RO2 reports "disconnected" while the cloud still answers a
+                # read with a full prop set, but venus refuses every command with
+                # code 3000 "Device is offline" until it reconnects.
                 vacuum.available = value == "connected"
             elif prop == VacuumProps.MODE:
                 vacuum.mode = VacuumMode.parse(value)
@@ -233,6 +231,47 @@ class VacuumService(BaseService):
             VacuumControlType.GLOBAL_SWEEPING.value,
             VacuumControlValue.START.value,
         )
+
+    async def sweep_rooms(
+        self, vacuum: Vacuum, rooms: Union[int, Sequence[int]]
+    ) -> None:
+        """Clean only the named rooms of the current map.
+
+        Room ids come from `get_rooms` and are only meaningful against the map
+        that was current when they were read.
+        """
+        if isinstance(rooms, int):
+            rooms = [rooms]
+        rooms = list(rooms)
+        if not rooms:
+            # Venus reads an absent room list as a whole-home clean, so an empty
+            # selection would quietly do far more than the caller asked.
+            raise ValueError("sweep_rooms requires at least one room id")
+
+        await self._venus_control(
+            vacuum,
+            VacuumControlType.GLOBAL_SWEEPING.value,
+            VacuumControlValue.START.value,
+            rooms=rooms,
+        )
+
+    async def get_rooms(self, vacuum: Vacuum) -> Dict[str, int]:
+        """Return {room name: room id} for the vacuum's current map."""
+        maps = (await self._venus_get_maps(vacuum)).get("data") or []
+        current = next((m for m in maps if m.get("current_map")), None)
+        if current is None:
+            return {}
+
+        return {
+            room["room_name"]: room["room_id"]
+            for room in current.get("room_info_list") or []
+        }
+
+    async def get_last_clean(self, vacuum: Vacuum) -> Optional[Dict[str, Any]]:
+        """Return the most recent cleaning record, or None if there is no history."""
+        response = await self._venus_get_sweep_records(vacuum, limit=1)
+        records = ((response.get("data") or {}).get("data")) or []
+        return records[0] if records else None
 
     async def pause(self, vacuum: Vacuum) -> None:
         await self._venus_control(
@@ -279,11 +318,35 @@ class VacuumService(BaseService):
         )
 
     async def _venus_control(
-        self, device: Device, control_type: int, value: int
+        self,
+        device: Device,
+        control_type: int,
+        value: int,
+        rooms: Optional[Sequence[int]] = None,
     ) -> Dict[Any, Any]:
+        payload = {"type": control_type, "value": value, "vacuumMopMode": 0}
+        if rooms is not None:
+            payload["rooms_id"] = list(rooms)
         return await self._venus_post(
-            f"/plugin/venus/{device.mac}/control",
-            {"type": control_type, "value": value, "vacuumMopMode": 0},
+            f"/plugin/venus/{device.mac}/control", payload
+        )
+
+    async def _venus_get_maps(self, device: Device) -> Dict[Any, Any]:
+        return await self._venus_get(
+            "/plugin/venus/memory_map/list", {"did": device.mac}
+        )
+
+    async def _venus_get_sweep_records(
+        self, device: Device, limit: int
+    ) -> Dict[Any, Any]:
+        return await self._venus_get(
+            "/plugin/venus/sweep_record/query_data",
+            {
+                "did": device.mac,
+                "purpose": "history_map",
+                "count": limit,
+                "last_time": int(time.time() * 1000),
+            },
         )
 
     async def _venus_set_iot_action(

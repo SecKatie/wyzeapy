@@ -892,6 +892,33 @@ class BaseService:
 
         return response_json
 
+    async def _venus_get(self, path: str, params: Dict[str, Any]) -> Dict[Any, Any]:
+        """GET from the venus plugin service."""
+        await self._auth_lib.refresh_if_should()
+
+        payload = dict(params)
+        payload["nonce"] = int(time.time() * 1000)
+        signature = olive_create_signature(
+            payload, self._auth_lib.token.access_token, VENUS_SIGNING_SECRET
+        )
+        headers = {
+            "Accept-Encoding": "gzip",
+            "User-Agent": "myapp",
+            "appid": VENUS_APP_ID,
+            "appinfo": APP_INFO,
+            "phoneid": PHONE_ID,
+            "access_token": self._auth_lib.token.access_token,
+            "signature2": signature,
+        }
+
+        response_json = await self._auth_lib.get(
+            f"{VENUS_URL}{path}", headers=headers, params=payload
+        )
+
+        check_for_errors_iot(self, response_json)
+
+        return response_json
+
     async def _get_air_prop(
         self, url: str, device: Device, prop_names: str
     ) -> Dict[Any, Any]:

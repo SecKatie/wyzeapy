@@ -111,12 +111,11 @@ class TestVacuumService(unittest.IsolatedAsyncioTestCase):
         self.assertIs(vacuum.mode, VacuumMode.IDLE)
 
     async def test_a_disconnected_vacuum_is_unavailable_even_though_reads_work(self):
-        """Sleep leaves the cloud readable but not commandable, so both must be true.
+        """Sleep leaves the cloud readable but not commandable.
 
-        Guards the pairing that makes availability correct rather than over-strict:
-        a live JA_RO2 asleep on its dock answers a read in full and refuses every
-        command with code 3000 "Device is offline". Anyone tempted to let
-        `available` follow whether venus answered should have this fail.
+        A sleeping JA_RO2 answers a read in full and refuses every command with
+        code 3000, so availability must track commandability. This fails if
+        `available` is ever made to follow whether venus answered.
         """
         self.vacuum_service._get_iot_prop.return_value = {
             "data": {
@@ -219,6 +218,98 @@ class TestVacuumService(unittest.IsolatedAsyncioTestCase):
         self.vacuum_service._venus_set_iot_action.assert_awaited_once_with(
             self.test_vacuum, "set_preference", {"ctrltype": 1, "value": 3}
         )
+
+    async def test_sweep_rooms_sends_the_room_ids(self):
+        await self.vacuum_service.sweep_rooms(self.test_vacuum, [16, 15])
+
+        self.vacuum_service._venus_control.assert_awaited_once_with(
+            self.test_vacuum, 0, 1, rooms=[16, 15]
+        )
+
+    async def test_sweep_rooms_accepts_a_single_room(self):
+        await self.vacuum_service.sweep_rooms(self.test_vacuum, 16)
+
+        self.vacuum_service._venus_control.assert_awaited_once_with(
+            self.test_vacuum, 0, 1, rooms=[16]
+        )
+
+    async def test_sweep_rooms_rejects_an_empty_selection(self):
+        """An empty list would silently become a whole-home clean, which is worse."""
+        with self.assertRaises(ValueError):
+            await self.vacuum_service.sweep_rooms(self.test_vacuum, [])
+
+        self.vacuum_service._venus_control.assert_not_awaited()
+
+    async def test_get_rooms_returns_the_current_maps_rooms(self):
+        self.vacuum_service._venus_get = AsyncMock(
+            return_value={
+                "data": [
+                    {
+                        "current_map": False,
+                        "map_id": 1,
+                        "user_map_name": "Downstairs",
+                        "room_info_list": [{"room_id": 99, "room_name": "Garage"}],
+                    },
+                    {
+                        "current_map": True,
+                        "map_id": 1738263642,
+                        "user_map_name": "Upstairs",
+                        "room_info_list": [
+                            {"room_id": 16, "room_name": "Kitchen"},
+                            {"room_id": 15, "room_name": "Family Room"},
+                        ],
+                    },
+                ]
+            }
+        )
+
+        rooms = await self.vacuum_service.get_rooms(self.test_vacuum)
+
+        self.assertEqual(rooms, {"Kitchen": 16, "Family Room": 15})
+
+    async def test_get_rooms_is_empty_when_no_map_is_current(self):
+        self.vacuum_service._venus_get = AsyncMock(return_value={"data": []})
+
+        self.assertEqual(await self.vacuum_service.get_rooms(self.test_vacuum), {})
+
+    async def test_get_rooms_tolerates_a_null_payload(self):
+        self.vacuum_service._venus_get = AsyncMock(return_value={"data": None})
+
+        self.assertEqual(await self.vacuum_service.get_rooms(self.test_vacuum), {})
+
+    async def test_get_last_clean_returns_the_newest_record(self):
+        self.vacuum_service._venus_get = AsyncMock(
+            return_value={
+                "data": {
+                    "data": [
+                        {
+                            "cleanSize": 694,
+                            "cleanTime": 15,
+                            "cleanTypeText": "House Vacuuming",
+                            "launchTypeText": "Manual",
+                            "create_time": 1785764496542,
+                        },
+                        {
+                            "cleanSize": 329,
+                            "cleanTime": 5,
+                            "cleanTypeText": "House Vacuuming",
+                            "launchTypeText": "Manual",
+                            "create_time": 1785763496542,
+                        },
+                    ]
+                }
+            }
+        )
+
+        record = await self.vacuum_service.get_last_clean(self.test_vacuum)
+
+        self.assertEqual(record["cleanSize"], 694)
+        self.assertEqual(record["cleanTime"], 15)
+
+    async def test_get_last_clean_is_none_when_there_is_no_history(self):
+        self.vacuum_service._venus_get = AsyncMock(return_value={"data": {"data": []}})
+
+        self.assertIsNone(await self.vacuum_service.get_last_clean(self.test_vacuum))
 
     async def test_set_suction_level_rejects_an_unknown_level(self):
         with self.assertRaises(ValueError):

@@ -376,7 +376,9 @@ def devicemgmt_get_iot_props_list(model: str):
                     ],
                 },
             ]
-        case "AN_RSCW":  # Battery Cam pro
+        # The Solar Cam Pan (ME_WCO3) answers the Battery Cam Pro's full
+        # capability list (verified against a live device), so they share it.
+        case "AN_RSCW" | "ME_WCO3":  # Battery Cam pro / Solar Cam Pan
             return [
                 {
                     "iid": 2,

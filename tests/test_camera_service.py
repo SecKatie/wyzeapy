@@ -1,6 +1,14 @@
+import base64
+import json
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
-from wyzeapy.services.camera_service import CameraService, Camera
+from wyzeapy.services.camera_service import (
+    CameraService,
+    Camera,
+    DEVICEMGMT_API_MODELS,
+    LAKE_API_MODELS,
+)
+from wyzeapy.payload_factory import devicemgmt_get_iot_props_list
 from wyzeapy.types import (
     DeviceTypes,
     PropertyIDs,
@@ -475,6 +483,157 @@ class TestCameraService(unittest.IsolatedAsyncioTestCase):
             )
             # Check that error was called for other exceptions
             self.assertGreaterEqual(mock_error.call_count, 2)
+
+
+class TestSolarCamPan(unittest.IsolatedAsyncioTestCase):
+    """Wyze Solar Cam Pan (ME_WCO3): speaks the devicemgmt API for state and
+    streams via Agora RTC (provider "lake") rather than Kinesis WebRTC."""
+
+    async def asyncSetUp(self):
+        self.mock_auth_lib = MagicMock(spec=WyzeAuthLib)
+        self.camera_service = CameraService(auth_lib=self.mock_auth_lib)
+        self.camera_service._run_action = AsyncMock()
+        self.camera_service._run_action_devicemgmt = AsyncMock()
+        self.camera = Camera(
+            {
+                "product_type": "Camera",
+                "product_model": "ME_WCO3",
+                "mac": "ME_WCO3_TEST123",
+                "nickname": "Test Solar Cam",
+                "device_params": {},
+            }
+        )
+
+    def test_uses_devicemgmt_api(self):
+        self.assertIn("ME_WCO3", DEVICEMGMT_API_MODELS)
+
+    def test_uses_lake_provider(self):
+        self.assertIn("ME_WCO3", LAKE_API_MODELS)
+
+    def test_iot_props_defined(self):
+        names = {cap["name"] for cap in devicemgmt_get_iot_props_list("ME_WCO3")}
+        self.assertLessEqual({"camera", "iot-device", "siren", "spotlight"}, names)
+
+    async def test_turn_on_uses_devicemgmt(self):
+        await self.camera_service.turn_on(self.camera)
+        self.camera_service._run_action_devicemgmt.assert_called_once_with(
+            self.camera, "power", "wakeup"
+        )
+        self.camera_service._run_action.assert_not_called()
+
+    async def test_floodlight_on_uses_spotlight(self):
+        await self.camera_service.floodlight_on(self.camera)
+        self.camera_service._run_action_devicemgmt.assert_called_once_with(
+            self.camera, "spotlight", "1"
+        )
+
+    async def test_update_reads_devicemgmt_state(self):
+        self.camera_service.get_updated_params = AsyncMock(return_value={})
+        self.camera_service._get_event_list = AsyncMock(
+            return_value={"data": {"event_list": []}}
+        )
+        self.camera_service._get_iot_prop_devicemgmt = AsyncMock(
+            return_value={
+                "data": {
+                    "capabilities": [
+                        {
+                            "name": "camera",
+                            "properties": {"motion-detect-recording": True},
+                        },
+                        {"name": "spotlight", "properties": {"on": False}},
+                        {"name": "siren", "properties": {"state": False}},
+                        {
+                            "name": "iot-device",
+                            "properties": {
+                                "push-switch": True,
+                                "iot-power": True,
+                                "iot-state": True,
+                            },
+                        },
+                    ]
+                }
+            }
+        )
+
+        camera = await self.camera_service.update(self.camera)
+
+        self.assertTrue(camera.available)
+        self.assertTrue(camera.on)
+        self.assertTrue(camera.motion)
+        self.assertFalse(camera.siren)
+        self.assertFalse(camera.floodlight)
+
+    async def test_get_stream_info_lake_flow(self):
+        """The Agora ("lake") flow: get-streams(provider=lake) → wakeup →
+        create-connection, decrypting the key/salt and merging the params.
+        The actual XXTEA decryption is covered by test_crypto; here it is
+        patched so this test stays focused on the request flow."""
+        token = (
+            "header."
+            + base64.urlsafe_b64encode(
+                json.dumps({"user_id": "test-user-id"}).encode()
+            ).decode().rstrip("=")
+            + ".signature"
+        )
+        self.camera_service._auth_lib.token = MagicMock(access_token=token)
+        self.camera_service._get_camera_stream = AsyncMock(
+            return_value={
+                "code": "1",
+                "data": [
+                    {
+                        "property": {
+                            "iot-device::iot-state": 1,
+                            "iot-device::iot-power": 1,
+                        },
+                        "device_id": self.camera.mac,
+                        "provider": "lake",
+                        "params": {
+                            "channel": "ME_WCO3_TEST123-abc",
+                            "encryption_mode": 7,
+                            "encryption_key": "enc-key",
+                            "encryption_salt": "enc-salt",
+                        },
+                    }
+                ],
+            }
+        )
+        self.camera_service._wakeup_device = AsyncMock(
+            return_value={"code": "1", "data": {"tid": 1}}
+        )
+        self.camera_service._create_rtc_connection = AsyncMock(
+            return_value={
+                "code": "1",
+                "data": {
+                    "app_id": "agora-app-id",
+                    "uid": 12345,
+                    "rtc_token": "agora-token",
+                    "p2p_mode": True,
+                },
+            }
+        )
+
+        with patch(
+            "wyzeapy.services.camera_service.xxtea_decrypt_b64",
+            side_effect=lambda value, key: {
+                "enc-key": "decrypted-key",
+                "enc-salt": "decrypted-salt",
+            }[value],
+        ):
+            params = await self.camera_service.get_stream_info(self.camera)
+
+        self.camera_service._get_camera_stream.assert_called_once_with(
+            self.camera, provider="lake"
+        )
+        self.assertEqual(
+            self.camera_service._wakeup_device.call_args.args[1], "test-user-id"
+        )
+        self.assertEqual(params["provider"], "lake")
+        self.assertEqual(params["channel"], "ME_WCO3_TEST123-abc")
+        self.assertEqual(params["encryption_key"], "decrypted-key")
+        self.assertEqual(params["encryption_salt"], "decrypted-salt")
+        self.assertEqual(params["app_id"], "agora-app-id")
+        self.assertEqual(params["rtc_token"], "agora-token")
+        self.assertEqual(params["uid"], 12345)
 
 
 if __name__ == "__main__":

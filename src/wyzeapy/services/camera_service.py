@@ -4,13 +4,17 @@
 #  the license with this file. If not, please write to:
 #  katie@mulliken.net to receive a copy
 import asyncio
+import base64
+import json
 import logging
+import random
 import time
 from threading import Thread
 from typing import Any, List, Optional, Dict, Callable, Tuple
 
 from aiohttp import ClientOSError, ContentTypeError
 
+from ..crypto import xxtea_decrypt_b64
 from ..exceptions import UnknownApiError
 from .base_service import BaseService
 from ..types import (
@@ -31,7 +35,16 @@ DEVICEMGMT_API_MODELS = [
     "AN_RSCW",
     "GW_GC1",
     "HL_PAN4",  # Wyze Cam Pan v4
-]  # Floodlight pro, battery cam pro, OG, and Pan v4 use a diffrent api (devicemgmt)
+    "ME_WCO3",  # Wyze Solar Cam Pan
+]  # Floodlight pro, battery cam pro, OG, Pan v4, and Solar Cam Pan use a diffrent api (devicemgmt)
+
+# Cameras that livestream via Agora RTC (Wyze provider name "lake") instead of
+# AWS Kinesis WebRTC signaling. These never join the Kinesis signaling channel
+# that the "webrtc" provider hands out, so get_stream_info must request the
+# "lake" provider and issue Agora credentials via wcsa/create-connection.
+LAKE_API_MODELS = [
+    "ME_WCO3",  # Wyze Solar Cam Pan
+]
 
 
 class Camera(Device):
@@ -198,10 +211,10 @@ class CameraService(BaseService):
 
     # Also controls lamp socket, BCP spotlight, and Bulb Cam light
     async def floodlight_on(self, camera: Camera):
-        if camera.product_model in ("AN_RSCW", "HL_PAN4"):
+        if camera.product_model in ("AN_RSCW", "HL_PAN4", "ME_WCO3"):
             await self._run_action_devicemgmt(
                 camera, "spotlight", "1"
-            )  # Battery cam pro and Pan v4 have an integrated spotlight
+            )  # Battery cam pro, Pan v4, and Solar Cam Pan have an integrated spotlight
         elif camera.product_model in DEVICEMGMT_API_MODELS:
             await self._run_action_devicemgmt(
                 camera, "floodlight", "1"
@@ -214,10 +227,10 @@ class CameraService(BaseService):
 
     # Also controls lamp socket, BCP spotlight, and Bulb Cam light
     async def floodlight_off(self, camera: Camera):
-        if camera.product_model in ("AN_RSCW", "HL_PAN4"):
+        if camera.product_model in ("AN_RSCW", "HL_PAN4", "ME_WCO3"):
             await self._run_action_devicemgmt(
                 camera, "spotlight", "0"
-            )  # Battery cam pro and Pan v4 have an integrated spotlight
+            )  # Battery cam pro, Pan v4, and Solar Cam Pan have an integrated spotlight
         elif camera.product_model in DEVICEMGMT_API_MODELS:
             await self._run_action_devicemgmt(
                 camera, "floodlight", "0"
@@ -283,7 +296,16 @@ class CameraService(BaseService):
                 camera, PropertyIDs.MOTION_DETECTION_TOGGLE.value, "0"
             )
 
+    def _user_id_from_token(self) -> str:
+        """Extract the Wyze account user_id claim from the JWT access token."""
+        claims_segment = self._auth_lib.token.access_token.split(".")[1]
+        claims_segment += "=" * (-len(claims_segment) % 4)
+        claims = json.loads(base64.urlsafe_b64decode(claims_segment))
+        return claims["user_id"]
+
     async def get_stream_info(self, camera: Camera):
+        if camera.product_model in LAKE_API_MODELS:
+            return await self._get_lake_stream_info(camera)
         data = await self._get_camera_stream(camera)
         if data.get("code") == ResponseCodes.DEVICE_OFFLINE.value:
             raise UnknownApiError(
@@ -308,3 +330,52 @@ class CameraService(BaseService):
                 "Camera is off according to get_stream_info response: " + str(data)
             )
         return data["params"]
+
+    async def _get_lake_stream_info(self, camera: Camera):
+        """Stream connection info for cameras that livestream via Agora RTC.
+
+        Mirrors the Wyze web portal's flow: get-streams with provider
+        "lake" (returns the Agora channel and encryption key/salt), wake
+        the camera so it joins the channel, then create-connection for
+        the Agora app_id/rtc_token/uid. Returns a params dict with all of
+        those merged, plus provider="lake" so callers can tell it apart
+        from the Kinesis "webrtc" config.
+        """
+        rtc_client_uid = random.randint(10000, 999999)
+
+        data = await self._get_camera_stream(camera, provider="lake")
+        if data.get("code") == ResponseCodes.DEVICE_OFFLINE.value:
+            raise UnknownApiError(
+                "Camera is offline according to get_stream_info response: " + str(data)
+            )
+        if "data" not in data or len(data["data"]) != 1:
+            raise UnknownApiError(
+                "Unexpected response from get_stream_info: " + str(data)
+            )
+        data = data["data"][0]
+        if data.get("property", {}).get("iot-device::iot-state") != 1:
+            raise UnknownApiError(
+                "Camera is offline according to get_stream_info response: " + str(data)
+            )
+
+        await self._wakeup_device(camera, self._user_id_from_token(), rtc_client_uid)
+        connection = await self._create_rtc_connection(camera, rtc_client_uid)
+
+        params = dict(data["params"])
+        params.update(connection["data"])
+        params["provider"] = "lake"
+
+        # The Agora stream key/salt are XXTEA-encrypted with the account
+        # access token. Decrypt so callers get values usable directly with
+        # Agora's setEncryptionConfig (key as a string, salt as 32 base64
+        # bytes to decode into a Uint8Array).
+        token = self._auth_lib.token.access_token
+        if params.get("encryption_key"):
+            params["encryption_key"] = xxtea_decrypt_b64(
+                params["encryption_key"], token
+            )
+        if params.get("encryption_salt"):
+            params["encryption_salt"] = xxtea_decrypt_b64(
+                params["encryption_salt"], token
+            )
+        return params

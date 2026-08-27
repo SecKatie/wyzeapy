@@ -1,11 +1,186 @@
 import logging
+from dataclasses import dataclass, field
 from enum import Enum
+import json
+from time import time
 from typing import Any, Dict, List
 
 from .base_service import BaseService
 from ..types import Device, IrrigationProps, DeviceTypes
 
 _LOGGER = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True, slots=True)
+class IrrigationRun:
+    """A currently active sprinkler zone run."""
+
+    zone_number: int
+    zone_name: str | None
+    start_ts: int | None
+    end_ts: int | None
+    schedule_name: str | None
+    schedule_type: str | None
+
+
+@dataclass(frozen=True, slots=True)
+class IrrigationControllerInfo:
+    """Configuration and diagnostic properties for a sprinkler controller."""
+
+    schedules_enabled: bool | None
+    wiring: Any = None
+    sensor: Any = None
+    notification_enabled: Any = None
+    notification_watering_begins: Any = None
+    notification_watering_ends: Any = None
+    notification_watering_is_skipped: Any = None
+    skip_low_temp: Any = None
+    skip_wind: Any = None
+    skip_rain: Any = None
+    skip_saturation: Any = None
+    raw_dict: Dict[str, Any] = field(default_factory=dict, repr=False)
+
+
+def _timestamp(value: Any) -> int | None:
+    """Return a valid Unix timestamp from an API value."""
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _integer(value: Any) -> int | None:
+    """Return a valid integer from an API value."""
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _boolean(value: Any) -> bool | None:
+    """Return a normalized boolean from an API value."""
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, int):
+        return bool(value)
+    if isinstance(value, str):
+        normalized = value.casefold()
+        if normalized in {"1", "true", "on", "enabled"}:
+            return True
+        if normalized in {"0", "false", "off", "disabled"}:
+            return False
+    return None
+
+
+def _find_property(value: Any, name: str) -> Any:
+    """Find a named property in nested Wyze response formats."""
+    if isinstance(value, dict):
+        if name in value:
+            return value[name]
+
+        property_name = value.get("key", value.get("name"))
+        if property_name == name and "value" in value:
+            return value["value"]
+
+        for nested_value in value.values():
+            result = _find_property(nested_value, name)
+            if result is not None:
+                return result
+        return None
+
+    if isinstance(value, list):
+        for nested_value in value:
+            result = _find_property(nested_value, name)
+            if result is not None:
+                return result
+        return None
+
+    if isinstance(value, str) and value.lstrip().startswith(("{", "[")):
+        try:
+            return _find_property(json.loads(value), name)
+        except json.JSONDecodeError:
+            return None
+
+    return None
+
+
+def _parse_current_run(
+    response: Dict[Any, Any], now_timestamp: int | None = None
+) -> IrrigationRun | None:
+    """Parse the active zone whose time interval contains the current time."""
+    now_timestamp = int(time()) if now_timestamp is None else now_timestamp
+    schedules = response.get("data", {}).get("schedules", [])
+
+    for schedule in schedules:
+        if schedule.get("schedule_state") != "running":
+            continue
+
+        zone_runs = schedule.get("zone_runs") or []
+        if not zone_runs:
+            return None
+
+        current_run = next(
+            (
+                zone_run
+                for zone_run in zone_runs
+                if (start := _timestamp(zone_run.get("start_ts"))) is not None
+                and start <= now_timestamp
+                and (
+                    (end := _timestamp(zone_run.get("end_ts"))) is None
+                    or now_timestamp < end
+                )
+            ),
+            None,
+        )
+        if current_run is None and len(zone_runs) == 1:
+            only_run = zone_runs[0]
+            if (
+                _timestamp(only_run.get("start_ts")) is None
+                and _timestamp(only_run.get("end_ts")) is None
+            ):
+                current_run = only_run
+        if current_run is None:
+            return None
+
+        zone_number = _integer(current_run.get("zone_number"))
+        if zone_number is None:
+            return None
+
+        return IrrigationRun(
+            zone_number=zone_number,
+            zone_name=current_run.get("zone_name"),
+            start_ts=_timestamp(current_run.get("start_ts")),
+            end_ts=_timestamp(current_run.get("end_ts")),
+            schedule_name=schedule.get("schedule_name"),
+            schedule_type=current_run.get(
+                "schedule_type", schedule.get("schedule_type")
+            ),
+        )
+
+    return None
+
+
+def _parse_controller_info(response: Dict[Any, Any]) -> IrrigationControllerInfo:
+    """Parse controller properties while retaining the raw API data."""
+    data = response.get("data", {})
+    return IrrigationControllerInfo(
+        schedules_enabled=_boolean(_find_property(data, "enable_schedules")),
+        wiring=_find_property(data, "wiring"),
+        sensor=_find_property(data, "sensor"),
+        notification_enabled=_find_property(data, "notification_enable"),
+        notification_watering_begins=_find_property(
+            data, "notification_watering_begins"
+        ),
+        notification_watering_ends=_find_property(data, "notification_watering_ends"),
+        notification_watering_is_skipped=_find_property(
+            data, "notification_watering_is_skipped"
+        ),
+        skip_low_temp=_find_property(data, "skip_low_temp"),
+        skip_wind=_find_property(data, "skip_wind"),
+        skip_rain=_find_property(data, "skip_rain"),
+        skip_saturation=_find_property(data, "skip_saturation"),
+        raw_dict=data if isinstance(data, dict) else {"value": data},
+    )
 
 
 class CropType(Enum):
@@ -193,7 +368,7 @@ class IrrigationService(BaseService):
         return await self._get_iot_prop(url, device, keys)
 
     async def get_device_info(self, device: Device) -> Dict[Any, Any]:
-        """Get device info from Wyze API."""
+        """Get the raw device-info response from the Wyze API."""
         url = "https://wyze-lockwood-service.wyzecam.com/plugin/irrigation/device_info"
         keys = (
             "wiring,sensor,enable_schedules,notification_enable,notification_watering_begins,"
@@ -201,6 +376,10 @@ class IrrigationService(BaseService):
             "skip_rain,skip_saturation"
         )
         return await self._irrigation_device_info(url, device, keys)
+
+    async def get_controller_info(self, device: Device) -> IrrigationControllerInfo:
+        """Get normalized sprinkler controller configuration."""
+        return _parse_controller_info(await self.get_device_info(device))
 
     async def get_zone_by_device(self, device: Device) -> List[Dict[Any, Any]]:
         """Get zones for a device."""
@@ -220,27 +399,33 @@ class IrrigationService(BaseService):
             "https://wyze-lockwood-service.wyzecam.com/plugin/irrigation/schedule_runs"
         )
         response = await self._get_schedule_runs(url, device, limit=2)
-
-        # Process the response and return simplified payload
-        result = {"running": False}
-
-        if "data" in response and "schedules" in response["data"]:
-            schedules = response["data"]["schedules"]
-            for schedule in schedules:
-                schedule_state = schedule.get("schedule_state")
-
-                if schedule_state == "running":
-                    result["running"] = True
-                    # Get zone information from zone_runs
-                    zone_runs = schedule.get("zone_runs")
-                    # Use the first zone run for zone info
-                    zone_run = zone_runs[0]
-                    result["zone_number"] = zone_run.get("zone_number")
-                    result["zone_name"] = zone_run.get("zone_name")
-                    break  # Found a running schedule, no need to check others
-        else:
+        if "data" not in response or "schedules" not in response["data"]:
             _LOGGER.warning(
                 "No schedule data found in response for device %s", device.mac
             )
+            return {"running": False}
 
-        return result
+        for schedule in response["data"]["schedules"]:
+            if schedule.get("schedule_state") != "running":
+                continue
+            zone_runs = schedule.get("zone_runs") or []
+            if not zone_runs:
+                return {"running": True}
+            zone_run = zone_runs[0]
+            return {
+                "running": True,
+                "zone_number": zone_run.get("zone_number"),
+                "zone_name": zone_run.get("zone_name"),
+            }
+
+        return {"running": False}
+
+    async def get_current_run(
+        self, device: Device, *, now_timestamp: int | None = None
+    ) -> IrrigationRun | None:
+        """Get the zone that is currently watering, including timer metadata."""
+        url = (
+            "https://wyze-lockwood-service.wyzecam.com/plugin/irrigation/schedule_runs"
+        )
+        response = await self._get_schedule_runs(url, device, limit=2)
+        return _parse_current_run(response, now_timestamp)

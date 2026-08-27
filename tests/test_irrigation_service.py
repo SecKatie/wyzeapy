@@ -1,6 +1,12 @@
 import unittest
 from unittest.mock import AsyncMock, MagicMock
-from wyzeapy.services.irrigation_service import IrrigationService, Irrigation, Zone
+from wyzeapy.services.irrigation_service import (
+    Irrigation,
+    IrrigationControllerInfo,
+    IrrigationRun,
+    IrrigationService,
+    Zone,
+)
 from wyzeapy.types import DeviceTypes, Device
 from wyzeapy.wyze_auth_lib import WyzeAuthLib
 
@@ -290,6 +296,54 @@ class TestIrrigationService(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual(result, expected_response)
 
+    async def test_get_device_info_uses_irrigation_payload(self):
+        """Device info sends the endpoint's required device_id and keys."""
+        auth_lib = MagicMock(spec=WyzeAuthLib)
+        auth_lib.refresh_if_should = AsyncMock()
+        auth_lib.get = AsyncMock(
+            return_value={
+                "code": 1,
+                "data": {"props": {"enable_schedules": True}},
+            }
+        )
+        auth_lib.token = MagicMock(access_token="token")
+        service = IrrigationService(auth_lib=auth_lib)
+
+        result = await service.get_device_info(self.test_irrigation)
+
+        self.assertTrue(result["data"]["props"]["enable_schedules"])
+        auth_lib.refresh_if_should.assert_awaited_once()
+        request = auth_lib.get.await_args
+        self.assertEqual(
+            request.args[0],
+            "https://wyze-lockwood-service.wyzecam.com/plugin/irrigation/device_info",
+        )
+        self.assertEqual(request.kwargs["params"]["device_id"], "IRRIG123")
+        self.assertIn("enable_schedules", request.kwargs["params"]["keys"])
+        self.assertNotIn("did", request.kwargs["params"])
+
+    async def test_get_controller_info(self):
+        """Controller info normalizes nested Wyze property formats."""
+        self.irrigation_service.get_device_info = AsyncMock(
+            return_value={
+                "data": {
+                    "props": (
+                        '{"properties": ['
+                        '{"key": "enable_schedules", "value": "enabled"}, '
+                        '{"key": "wiring", "value": {"1": true}}'
+                        "]}"
+                    )
+                }
+            }
+        )
+
+        result = await self.irrigation_service.get_controller_info(self.test_irrigation)
+
+        self.assertIsInstance(result, IrrigationControllerInfo)
+        self.assertTrue(result.schedules_enabled)
+        self.assertEqual(result.wiring, {"1": True})
+        self.assertIn("props", result.raw_dict)
+
     async def test_get_zone_by_device_method(self):
         # Mock the get_zone_by_device method directly to test the public interface
         expected_response = {"data": {"zones": [{"zone_number": 1, "name": "Zone 1"}]}}
@@ -572,6 +626,115 @@ class TestIrrigationServiceEdgeCases(unittest.IsolatedAsyncioTestCase):
         # Verify the result
         expected_result = {"running": True, "zone_number": 3, "zone_name": "Backyard S"}
         self.assertEqual(result, expected_result)
+
+    async def test_get_current_run_selects_active_sequential_zone(self):
+        """Current run is selected by timestamps, not list position."""
+        self.irrigation_service._get_schedule_runs = AsyncMock(
+            return_value={
+                "data": {
+                    "schedules": [
+                        {
+                            "schedule_state": "running",
+                            "schedule_name": "Morning Watering",
+                            "schedule_type": "FIXED",
+                            "zone_runs": [
+                                {
+                                    "zone_number": 1,
+                                    "zone_name": "Front Yard",
+                                    "start_ts": 1000,
+                                    "end_ts": 1100,
+                                },
+                                {
+                                    "zone_number": "2",
+                                    "zone_name": "Back Yard",
+                                    "start_ts": "1100",
+                                    "end_ts": "1200",
+                                },
+                            ],
+                        }
+                    ]
+                }
+            }
+        )
+
+        result = await self.irrigation_service.get_current_run(
+            self.test_irrigation, now_timestamp=1150
+        )
+
+        self.assertEqual(
+            result,
+            IrrigationRun(
+                zone_number=2,
+                zone_name="Back Yard",
+                start_ts=1100,
+                end_ts=1200,
+                schedule_name="Morning Watering",
+                schedule_type="FIXED",
+            ),
+        )
+
+    async def test_get_current_run_preserves_manual_type(self):
+        """Run-level schedule type is retained for HomeKit program mode."""
+        self.irrigation_service._get_schedule_runs = AsyncMock(
+            return_value={
+                "data": {
+                    "schedules": [
+                        {
+                            "schedule_state": "running",
+                            "schedule_name": "Quick Run",
+                            "zone_runs": [
+                                {
+                                    "zone_number": 1,
+                                    "zone_name": "Front Yard",
+                                    "start_ts": 1000,
+                                    "end_ts": 1200,
+                                    "schedule_type": "MANUAL",
+                                }
+                            ],
+                        }
+                    ]
+                }
+            }
+        )
+
+        result = await self.irrigation_service.get_current_run(
+            self.test_irrigation, now_timestamp=1100
+        )
+
+        self.assertIsNotNone(result)
+        self.assertEqual(result.schedule_type, "MANUAL")
+
+    async def test_get_current_run_does_not_guess_between_sequential_zones(self):
+        """No zone is reported when no interval is currently active."""
+        self.irrigation_service._get_schedule_runs = AsyncMock(
+            return_value={
+                "data": {
+                    "schedules": [
+                        {
+                            "schedule_state": "running",
+                            "zone_runs": [
+                                {
+                                    "zone_number": 1,
+                                    "start_ts": 1000,
+                                    "end_ts": 1100,
+                                },
+                                {
+                                    "zone_number": 2,
+                                    "start_ts": 1200,
+                                    "end_ts": 1300,
+                                },
+                            ],
+                        }
+                    ]
+                }
+            }
+        )
+
+        result = await self.irrigation_service.get_current_run(
+            self.test_irrigation, now_timestamp=1150
+        )
+
+        self.assertIsNone(result)
 
     async def test_get_schedule_runs_past_schedule(self):
         # Mock the _get_schedule_runs method

@@ -44,6 +44,7 @@ from ..payload_factory import (
     olive_create_post_payload_irrigation_stop,
     olive_create_post_payload_irrigation_quickrun,
     olive_create_get_payload_irrigation_schedule_runs,
+    olive_create_scale_get_payload,
 )
 from ..types import PropertyIDs, Device, DeviceMgmtToggleType
 from ..utils import (
@@ -1086,6 +1087,30 @@ class BaseService:
 
         payload = olive_create_get_payload_irrigation_schedule_runs(device.mac)
         payload["limit"] = limit
+        signature = olive_create_signature(payload, self._auth_lib.token.access_token)
+        headers = {
+            "Accept-Encoding": "gzip",
+            "User-Agent": "myapp",
+            "appid": OLIVE_APP_ID,
+            "appinfo": APP_INFO,
+            "phoneid": PHONE_ID,
+            "access_token": self._auth_lib.token.access_token,
+            "signature2": signature,
+        }
+
+        response_json = await self._auth_lib.get(url, headers=headers, params=payload)
+
+        check_for_errors_iot(self, response_json)
+
+        return response_json
+
+    async def _olive_get(
+        self, url: str, **params: Any
+    ) -> Dict[Any, Any]:
+        """Signed olive GET used by scale/pluto and similar plugin services."""
+        await self._auth_lib.refresh_if_should()
+
+        payload = olive_create_scale_get_payload(**params)
         signature = olive_create_signature(payload, self._auth_lib.token.access_token)
         headers = {
             "Accept-Encoding": "gzip",

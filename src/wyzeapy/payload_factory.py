@@ -75,6 +75,22 @@ def olive_create_query_air_history_payload(
     }
 
 
+def olive_create_scale_get_payload(**params: Any) -> Dict[str, Any]:
+    """Build a GET payload for Wyze scale/pluto service endpoints.
+
+    Always includes a millisecond nonce. Caller-supplied params (e.g.
+    ``device_id``, ``family_member_id``, ``start_time``, ``end_time``) are
+    merged in after converting values to strings for signature stability.
+    """
+    nonce = int(time.time() * 1000)
+    payload: Dict[str, Any] = {"nonce": str(nonce)}
+    for key, value in params.items():
+        if value is None:
+            continue
+        payload[key] = str(value)
+    return payload
+
+
 def olive_create_get_payload_irrigation(device_mac: str) -> Dict[str, Any]:
     nonce = int(time.time() * 1000)
 

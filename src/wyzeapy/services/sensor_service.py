@@ -29,6 +29,14 @@ class SensorService(BaseService):
         # Get updated device_params
         async with BaseService._update_lock:
             sensor.device_params = await self.get_updated_params(sensor.mac)
+
+        if sensor.type is DeviceTypes.LEAK_SENSOR:
+            sensor.detected = sensor.device_params.get("ws_detect_state") == 1
+            return sensor
+
+        if sensor.type is DeviceTypes.TEMPERATURE_HUMIDITY:
+            return sensor
+
         properties = await self._get_device_info(sensor)
 
         for property in properties["data"]["property_list"]:
@@ -97,5 +105,7 @@ class SensorService(BaseService):
             for device in self._devices
             if device.type is DeviceTypes.MOTION_SENSOR
             or device.type is DeviceTypes.CONTACT_SENSOR
+            or device.type is DeviceTypes.LEAK_SENSOR
+            or device.type is DeviceTypes.TEMPERATURE_HUMIDITY
         ]
         return [Sensor(sensor.raw_dict) for sensor in sensors]

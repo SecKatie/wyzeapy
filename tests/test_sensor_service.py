@@ -19,7 +19,7 @@ class TestSensorService(unittest.IsolatedAsyncioTestCase):
         # Create test sensors
         self.motion_sensor = Sensor(
             {
-                "device_type": DeviceTypes.MOTION_SENSOR.value,
+                "product_type": DeviceTypes.MOTION_SENSOR.value,
                 "product_model": "PIR3U",
                 "mac": "MOTION123",
                 "nickname": "Test Motion Sensor",
@@ -30,11 +30,33 @@ class TestSensorService(unittest.IsolatedAsyncioTestCase):
 
         self.contact_sensor = Sensor(
             {
-                "device_type": DeviceTypes.CONTACT_SENSOR.value,
+                "product_type": DeviceTypes.CONTACT_SENSOR.value,
                 "product_model": "DWS3U",
                 "mac": "CONTACT456",
                 "nickname": "Test Contact Sensor",
                 "device_params": {"ip": "192.168.1.101"},
+                "raw_dict": {},
+            }
+        )
+
+        self.leak_sensor = Sensor(
+            {
+                "product_type": DeviceTypes.LEAK_SENSOR.value,
+                "product_model": "WS3U",
+                "mac": "LEAK789",
+                "nickname": "Test Leak Sensor",
+                "device_params": {},
+                "raw_dict": {},
+            }
+        )
+
+        self.temp_humidity_sensor = Sensor(
+            {
+                "product_type": DeviceTypes.TEMPERATURE_HUMIDITY.value,
+                "product_model": "TH3U",
+                "mac": "TEMPHUMID321",
+                "nickname": "Test Temp/Humidity Sensor",
+                "device_params": {},
                 "raw_dict": {},
             }
         )
@@ -83,6 +105,37 @@ class TestSensorService(unittest.IsolatedAsyncioTestCase):
         updated_sensor = await self.sensor_service.update(self.contact_sensor)
         self.assertFalse(updated_sensor.detected)
 
+    async def test_update_leak_sensor_detected(self):
+        self.sensor_service.get_updated_params.return_value = {
+            "ws_detect_state": 1
+        }
+
+        updated_sensor = await self.sensor_service.update(self.leak_sensor)
+        self.assertTrue(updated_sensor.detected)
+        self.sensor_service._get_device_info.assert_not_called()
+
+    async def test_update_leak_sensor_not_detected(self):
+        self.sensor_service.get_updated_params.return_value = {
+            "ws_detect_state": 0
+        }
+
+        updated_sensor = await self.sensor_service.update(self.leak_sensor)
+        self.assertFalse(updated_sensor.detected)
+        self.sensor_service._get_device_info.assert_not_called()
+
+    async def test_update_temperature_humidity_sensor(self):
+        self.sensor_service.get_updated_params.return_value = {
+            "th_sensor_temperature": "73.42",
+            "th_sensor_humidity": 76,
+        }
+
+        updated_sensor = await self.sensor_service.update(self.temp_humidity_sensor)
+        self.assertEqual(
+            updated_sensor.device_params["th_sensor_temperature"], "73.42"
+        )
+        self.assertEqual(updated_sensor.device_params["th_sensor_humidity"], 76)
+        self.sensor_service._get_device_info.assert_not_called()
+
     async def test_get_sensors(self):
         mock_motion_device = MagicMock()
         mock_motion_device.type = DeviceTypes.MOTION_SENSOR
@@ -100,16 +153,35 @@ class TestSensorService(unittest.IsolatedAsyncioTestCase):
             "mac": "CONTACT456",
         }
 
+        mock_leak_device = MagicMock()
+        mock_leak_device.type = DeviceTypes.LEAK_SENSOR
+        mock_leak_device.raw_dict = {
+            "device_type": DeviceTypes.LEAK_SENSOR.value,
+            "product_model": "WS3U",
+            "mac": "LEAK789",
+        }
+
+        mock_temp_humidity_device = MagicMock()
+        mock_temp_humidity_device.type = DeviceTypes.TEMPERATURE_HUMIDITY
+        mock_temp_humidity_device.raw_dict = {
+            "device_type": DeviceTypes.TEMPERATURE_HUMIDITY.value,
+            "product_model": "TH3U",
+            "mac": "TEMPHUMID321",
+        }
+
         self.sensor_service.get_object_list.return_value = [
             mock_motion_device,
             mock_contact_device,
+            mock_leak_device,
+            mock_temp_humidity_device,
         ]
 
         sensors = await self.sensor_service.get_sensors()
-
-        self.assertEqual(len(sensors), 2)
+        self.assertEqual(len(sensors), 4)
         self.assertIsInstance(sensors[0], Sensor)
         self.assertIsInstance(sensors[1], Sensor)
+        self.assertIsInstance(sensors[2], Sensor)
+        self.assertIsInstance(sensors[3], Sensor)
         self.sensor_service.get_object_list.assert_awaited_once()
 
     async def test_register_for_updates(self):

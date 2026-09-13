@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 from wyzeapy.services.sensor_service import SensorService, Sensor
 from wyzeapy.types import DeviceTypes, PropertyIDs
 from wyzeapy.wyze_auth_lib import WyzeAuthLib
@@ -62,49 +62,32 @@ class TestSensorService(unittest.IsolatedAsyncioTestCase):
         )
 
     async def test_update_motion_sensor_detected(self):
-        self.sensor_service._get_device_info.return_value = {
-            "data": {
-                "property_list": [{"pid": PropertyIDs.MOTION_STATE.value, "value": "1"}]
-            }
-        }
+        self.sensor_service.get_updated_params.return_value = {"motion_state": 1}
 
         updated_sensor = await self.sensor_service.update(self.motion_sensor)
         self.assertTrue(updated_sensor.detected)
+        self.sensor_service._get_device_info.assert_not_called()
 
     async def test_update_motion_sensor_not_detected(self):
-        self.sensor_service._get_device_info.return_value = {
-            "data": {
-                "property_list": [{"pid": PropertyIDs.MOTION_STATE.value, "value": "0"}]
-            }
-        }
+        self.sensor_service.get_updated_params.return_value = {"motion_state": 0}
 
         updated_sensor = await self.sensor_service.update(self.motion_sensor)
         self.assertFalse(updated_sensor.detected)
+        self.sensor_service._get_device_info.assert_not_called()
 
     async def test_update_contact_sensor_detected(self):
-        self.sensor_service._get_device_info.return_value = {
-            "data": {
-                "property_list": [
-                    {"pid": PropertyIDs.CONTACT_STATE.value, "value": "1"}
-                ]
-            }
-        }
+        self.sensor_service.get_updated_params.return_value = {"open_close_state": 1}
 
         updated_sensor = await self.sensor_service.update(self.contact_sensor)
         self.assertTrue(updated_sensor.detected)
+        self.sensor_service._get_device_info.assert_not_called()
 
     async def test_update_contact_sensor_not_detected(self):
-        self.sensor_service._get_device_info.return_value = {
-            "data": {
-                "property_list": [
-                    {"pid": PropertyIDs.CONTACT_STATE.value, "value": "0"}
-                ]
-            }
-        }
+        self.sensor_service.get_updated_params.return_value = {"open_close_state": 0}
 
         updated_sensor = await self.sensor_service.update(self.contact_sensor)
         self.assertFalse(updated_sensor.detected)
-
+        self.sensor_service._get_device_info.assert_not_called()
     async def test_update_leak_sensor_detected(self):
         self.sensor_service.get_updated_params.return_value = {
             "ws_detect_state": 1
@@ -203,13 +186,48 @@ class TestSensorService(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(len(self.sensor_service._subscribers), 0)
 
-    async def test_update_with_unknown_property(self):
+    async def test_update_unrecognized_sensor_type_falls_back_to_property_list(self):
+        unrecognized_sensor = Sensor(
+            {
+                "product_type": "SomeFutureSensorType",
+                "product_model": "XX1U",
+                "mac": "FUTURE999",
+                "nickname": "Test Future Sensor",
+                "device_params": {},
+                "raw_dict": {},
+            }
+        )
         self.sensor_service._get_device_info.return_value = {
             "data": {"property_list": [{"pid": "unknown_property", "value": "1"}]}
         }
 
-        updated_sensor = await self.sensor_service.update(self.motion_sensor)
+        updated_sensor = await self.sensor_service.update(unrecognized_sensor)
         self.assertFalse(updated_sensor.detected)  # Should maintain default value
+        self.sensor_service._get_device_info.assert_called_once()
+
+    async def test_update_worker_sleeps_between_passes(self):
+        self.sensor_service._subscribers = [(self.motion_sensor, MagicMock())]
+        # Avoid creating a real, never-awaited coroutine from self.update()
+        self.sensor_service.update = MagicMock(return_value="unused")
+
+        mock_future = MagicMock()
+        mock_future.result.return_value = self.motion_sensor
+
+        with (
+            patch(
+                "wyzeapy.services.sensor_service.asyncio.run_coroutine_threadsafe",
+                return_value=mock_future,
+            ),
+            patch(
+                "wyzeapy.services.sensor_service.time.sleep",
+                side_effect=[None, None, RuntimeError("stop loop")],
+            ) as mock_sleep,
+        ):
+            with self.assertRaises(RuntimeError):
+                self.sensor_service.update_worker(loop=MagicMock())
+
+        self.assertEqual(mock_sleep.call_count, 3)
+        mock_sleep.assert_called_with(self.sensor_service._worker_loop_interval)
 
 
 if __name__ == "__main__":

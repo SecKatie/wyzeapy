@@ -439,7 +439,6 @@ class TestCameraService(unittest.IsolatedAsyncioTestCase):
     async def test_update_worker_exceptions(self):
         mock_callback = MagicMock()
 
-        # Create a series of exceptions that will be raised when update is called
         exceptions_to_raise = [
             UnknownApiError("API Error"),
             ClientOSError(),
@@ -449,10 +448,14 @@ class TestCameraService(unittest.IsolatedAsyncioTestCase):
         ]
 
         self.camera_service.update = AsyncMock(side_effect=exceptions_to_raise)
+        self.camera_service._get_event_list = AsyncMock(
+            return_value={"data": {"event_list": []}}
+        )
 
         with (
             patch("wyzeapy.services.camera_service._LOGGER.warning") as mock_warning,
             patch("wyzeapy.services.camera_service._LOGGER.error") as mock_error,
+            patch("wyzeapy.services.camera_service.time.sleep"),
         ):
             await self.camera_service.register_for_updates(
                 self.test_camera, mock_callback
@@ -465,15 +468,12 @@ class TestCameraService(unittest.IsolatedAsyncioTestCase):
             self.camera_service._subscribers = []
             self.camera_service._updater_thread.join(timeout=1)
 
-            # Check that the update method was called at least the number of exceptions we set up
             self.assertGreaterEqual(
                 self.camera_service.update.call_count, len(exceptions_to_raise)
             )
-            # Check that the warning was called for UnknownApiError
             mock_warning.assert_called_with(
                 "The update method detected an UnknownApiError: API Error"
             )
-            # Check that error was called for other exceptions
             self.assertGreaterEqual(mock_error.call_count, 2)
 
 

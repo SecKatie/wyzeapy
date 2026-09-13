@@ -49,16 +49,20 @@ class Camera(Device):
 class CameraService(BaseService):
     _updater_thread: Optional[Thread] = None
     _subscribers: List[Tuple[Camera, Callable[[Camera], None]]] = []
+    _worker_loop_interval = 5  # seconds between full passes
 
-    async def update(self, camera: Camera):
+    async def update(self, camera: Camera, latest_events: Optional[List[Event]] = None):
         # Get updated device_params
         async with BaseService._update_lock:
             camera.device_params = await self.get_updated_params(camera.mac)
 
-        # Get camera events
-        response = await self._get_event_list(10)
-        raw_events = response["data"]["event_list"]
-        latest_events = [Event(raw_event) for raw_event in raw_events]
+        # Get camera events. When called from update_worker, latest_events is
+        # fetched once per pass and shared across all cameras, instead of
+        # each camera independently re-fetching the same account-wide list.
+        if latest_events is None:
+            response = await self._get_event_list(10)
+            raw_events = response["data"]["event_list"]
+            latest_events = [Event(raw_event) for raw_event in raw_events]
 
         if (event := return_event_for_device(camera, latest_events)) is not None:
             camera.last_event = event
@@ -138,11 +142,21 @@ class CameraService(BaseService):
             if len(self._subscribers) < 1:
                 time.sleep(0.1)
             else:
+                try:
+                    response = asyncio.run_coroutine_threadsafe(
+                        self._get_event_list(10), loop
+                    ).result()
+                    raw_events = response["data"]["event_list"]
+                    latest_events = [Event(raw_event) for raw_event in raw_events]
+                except (UnknownApiError, ClientOSError, ContentTypeError) as e:
+                    _LOGGER.error(f"Failed to fetch shared event list: {e}")
+                    latest_events = []
+
                 for camera, callback in self._subscribers:
                     try:
                         callback(
                             asyncio.run_coroutine_threadsafe(
-                                self.update(camera), loop
+                                self.update(camera, latest_events), loop
                             ).result()
                         )
                     except UnknownApiError as e:
@@ -153,6 +167,8 @@ class CameraService(BaseService):
                         _LOGGER.error(f"A network error was detected: {e}")
                     except ContentTypeError as e:
                         _LOGGER.error(f"Server returned unexpected ContentType: {e}")
+
+                time.sleep(self._worker_loop_interval)
 
     async def get_cameras(self) -> List[Camera]:
         if self._devices is None:

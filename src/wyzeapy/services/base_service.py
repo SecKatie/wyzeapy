@@ -98,7 +98,9 @@ class BaseService:
     _last_updated_time: time = (
         0  # preload a value of 0 so that comparison will succeed on the first run
     )
-    _min_update_time = 1200  # lets let the device_params update every 20 minutes for now. This could probably reduced signicficantly.
+    _min_update_time = (
+        60  # seconds; lowered from 1200 as part of the sensor rate-limit fix
+    )
     _update_lock: asyncio.Lock = asyncio.Lock()  # fmt: skip
     _update_manager: UpdateManager = UpdateManager()
     _update_loop = None

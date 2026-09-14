@@ -5,6 +5,7 @@
 #  katie@mulliken.net to receive a copy
 import asyncio
 import logging
+import time
 from threading import Thread
 from typing import List, Callable, Tuple, Optional
 
@@ -24,11 +25,35 @@ class Sensor(Device):
 class SensorService(BaseService):
     _updater_thread: Optional[Thread] = None
     _subscribers: List[Tuple[Sensor, Callable[[Sensor], None]]] = []
+    _worker_loop_interval = 5  # seconds between full passes; actual API
+    # calls are separately bounded by BaseService._min_update_time
 
     async def update(self, sensor: Sensor) -> Sensor:
         # Get updated device_params
         async with BaseService._update_lock:
             sensor.device_params = await self.get_updated_params(sensor.mac)
+
+        if sensor.type is DeviceTypes.LEAK_SENSOR:
+            sensor.detected = sensor.device_params.get("ws_detect_state") == 1
+            return sensor
+
+        if sensor.type is DeviceTypes.TEMPERATURE_HUMIDITY:
+            return sensor
+
+        if sensor.type is DeviceTypes.CONTACT_SENSOR:
+            sensor.detected = sensor.device_params.get("open_close_state") == 1
+            return sensor
+
+        if sensor.type is DeviceTypes.MOTION_SENSOR:
+            sensor.detected = sensor.device_params.get("motion_state") == 1
+            return sensor
+
+        # Fallback for any sensor type not explicitly handled above.
+        # Currently unused by MOTION_SENSOR, CONTACT_SENSOR, LEAK_SENSOR, and
+        # TEMPERATURE_HUMIDITY, which all read state from the already-cached
+        # device_params via get_updated_params() instead of making a separate
+        # per-sensor API call. Kept for forward compatibility with future
+        # sensor types that may still need PropertyIDs-based property lookup.
         properties = await self._get_device_info(sensor)
 
         for property in properties["data"]["property_list"]:
@@ -88,6 +113,8 @@ class SensorService(BaseService):
                 except ContentTypeError as e:
                     _LOGGER.error(f"Server returned unexpected ContentType: {e}")
 
+            time.sleep(self._worker_loop_interval)
+
     async def get_sensors(self) -> List[Sensor]:
         if self._devices is None:
             self._devices = await self.get_object_list()
@@ -97,5 +124,7 @@ class SensorService(BaseService):
             for device in self._devices
             if device.type is DeviceTypes.MOTION_SENSOR
             or device.type is DeviceTypes.CONTACT_SENSOR
+            or device.type is DeviceTypes.LEAK_SENSOR
+            or device.type is DeviceTypes.TEMPERATURE_HUMIDITY
         ]
         return [Sensor(sensor.raw_dict) for sensor in sensors]

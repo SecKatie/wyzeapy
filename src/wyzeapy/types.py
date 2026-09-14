@@ -34,6 +34,7 @@ class DeviceTypes(Enum):
     CONTACT_SENSOR = "ContactSensor"
     MOTION_SENSOR = "MotionSensor"
     LEAK_SENSOR = "LeakSensor"
+    TEMPERATURE_HUMIDITY = "TemperatureHumidity"
     WRIST = "Wrist"
     BASE_STATION = "BaseStation"
     SCALE = "WyzeScale"

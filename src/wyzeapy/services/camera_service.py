@@ -299,11 +299,15 @@ class CameraService(BaseService):
             raise UnknownApiError(
                 "Unexpected response from get_stream_info: " + str(data)
             )
-        if data["property"]["iot-device::iot-state"] != 1:
+        properties = data["property"]
+        if properties.get("iot-device::iot-state") != 1:
             raise UnknownApiError(
                 "Camera is offline according to get_stream_info response: " + str(data)
             )
-        if data["property"]["iot-device::iot-power"] != 1:
+        # Some cameras no longer return iot-power from this endpoint. The
+        # camera is streamable when it is online, so treat an omitted power
+        # property as on instead of failing with KeyError.
+        if properties.get("iot-device::iot-power", 1) != 1:
             raise UnknownApiError(
                 "Camera is off according to get_stream_info response: " + str(data)
             )

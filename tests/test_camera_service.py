@@ -387,6 +387,21 @@ class TestCameraService(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(stream_info, {"answer": "ok"})
 
+    async def test_get_stream_info_accepts_response_without_power_property(self):
+        self.camera_service._get_camera_stream.return_value = {
+            "code": ResponseCodes.SUCCESS.value,
+            "data": [
+                {
+                    "property": {"iot-device::iot-state": 1},
+                    "params": {"answer": "ok"},
+                }
+            ],
+        }
+
+        stream_info = await self.camera_service.get_stream_info(self.test_camera)
+
+        self.assertEqual(stream_info, {"answer": "ok"})
+
     async def test_get_stream_info_raises_offline_error_for_offline_response(self):
         self.camera_service._get_camera_stream.return_value = {
             "code": ResponseCodes.DEVICE_OFFLINE.value,

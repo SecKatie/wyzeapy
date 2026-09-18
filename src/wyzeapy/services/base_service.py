@@ -95,6 +95,7 @@ class BaseService:
     """
 
     _devices: Optional[List[Device]] = None
+    _devices_lock: asyncio.Lock = asyncio.Lock()
     _last_updated_time: time = (
         0  # preload a value of 0 so that comparison will succeed on the first run
     )
@@ -221,7 +222,7 @@ class BaseService:
 
         return response_json
 
-    async def get_object_list(self) -> List[Device]:
+    async def get_object_list(self, force_refresh: bool = False) -> List[Device]:
         """Discover and retrieve all devices associated with the Wyze account.
 
         This method fetches all devices from the Wyze API and caches them for
@@ -239,31 +240,42 @@ class BaseService:
 
         **Note:** Results are cached and shared across all BaseService instances
         """
-        await self._auth_lib.refresh_if_should()
+        # All platforms use separate service instances but share this cache.
+        # Without the lock, the first boot starts several identical API calls
+        # before any of them has populated BaseService._devices.
+        if BaseService._devices is not None and not force_refresh:
+            return BaseService._devices
 
-        payload = {
-            "phone_system_type": PHONE_SYSTEM_TYPE,
-            "app_version": APP_VERSION,
-            "app_ver": APP_VER,
-            "sc": "9f275790cab94a72bd206c8876429f3c",
-            "ts": int(time.time()),
-            "sv": "9d74946e652647e9b6c9d59326aef104",
-            "access_token": self._auth_lib.token.access_token,
-            "phone_id": PHONE_ID,
-            "app_name": APP_NAME,
-        }
+        async with BaseService._devices_lock:
+            if BaseService._devices is not None and not force_refresh:
+                return BaseService._devices
 
-        response_json = await self._auth_lib.post(
-            "https://api.wyzecam.com/app/v2/home_page/get_object_list", json=payload
-        )
+            await self._auth_lib.refresh_if_should()
 
-        check_for_errors_standard(self, response_json)
-        # Cache the devices so that update calls can pull more recent device_params
-        BaseService._devices = [
-            Device(device) for device in response_json["data"]["device_list"]
-        ]
+            payload = {
+                "phone_system_type": PHONE_SYSTEM_TYPE,
+                "app_version": APP_VERSION,
+                "app_ver": APP_VER,
+                "sc": "9f275790cab94a72bd206c8876429f3c",
+                "ts": int(time.time()),
+                "sv": "9d74946e652647e9b6c9d59326aef104",
+                "access_token": self._auth_lib.token.access_token,
+                "phone_id": PHONE_ID,
+                "app_name": APP_NAME,
+            }
 
-        return BaseService._devices
+            response_json = await self._auth_lib.post(
+                "https://api.wyzecam.com/app/v2/home_page/get_object_list",
+                json=payload,
+            )
+
+            check_for_errors_standard(self, response_json)
+            # Cache the devices so that update calls can pull more recent device_params
+            BaseService._devices = [
+                Device(device) for device in response_json["data"]["device_list"]
+            ]
+
+            return BaseService._devices
 
     async def get_updated_params(
         self, device_mac: str = None
@@ -274,7 +286,7 @@ class BaseService:
         :return: Updated params for the device.
         """
         if time.time() - BaseService._last_updated_time >= BaseService._min_update_time:
-            await self.get_object_list()
+            await self.get_object_list(force_refresh=True)
             BaseService._last_updated_time = time.time()
         ret_params = {}
         for dev in BaseService._devices:

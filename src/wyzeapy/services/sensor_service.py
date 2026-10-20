@@ -5,6 +5,7 @@
 #  katie@mulliken.net to receive a copy
 import asyncio
 import logging
+import time
 from threading import Thread
 from typing import List, Callable, Tuple, Optional
 
@@ -16,6 +17,13 @@ from ..types import Device, PropertyIDs, DeviceTypes
 
 _LOGGER = logging.getLogger(__name__)
 
+# device_params key holding the detected state, per sensor type
+_STATE_KEYS = {
+    DeviceTypes.MOTION_SENSOR: "motion_state",
+    DeviceTypes.CONTACT_SENSOR: "open_close_state",
+    DeviceTypes.LEAK_SENSOR: "ws_detect_state",
+}
+
 
 class Sensor(Device):
     detected: bool = False
@@ -24,11 +32,20 @@ class Sensor(Device):
 class SensorService(BaseService):
     _updater_thread: Optional[Thread] = None
     _subscribers: List[Tuple[Sensor, Callable[[Sensor], None]]] = []
+    _worker_loop_interval = 5  # seconds between passes
 
     async def update(self, sensor: Sensor) -> Sensor:
         # Get updated device_params
         async with BaseService._update_lock:
             sensor.device_params = await self.get_updated_params(sensor.mac)
+
+        # Known types read cached device_params to avoid extra API calls.
+        if sensor.type is DeviceTypes.TEMPERATURE_HUMIDITY:
+            return sensor
+        if (key := _STATE_KEYS.get(sensor.type)) is not None:
+            sensor.detected = sensor.device_params.get(key) == 1
+            return sensor
+
         properties = await self._get_device_info(sensor)
 
         for property in properties["data"]["property_list"]:
@@ -88,6 +105,8 @@ class SensorService(BaseService):
                 except ContentTypeError as e:
                     _LOGGER.error(f"Server returned unexpected ContentType: {e}")
 
+            time.sleep(self._worker_loop_interval)
+
     async def get_sensors(self) -> List[Sensor]:
         if self._devices is None:
             self._devices = await self.get_object_list()
@@ -97,5 +116,7 @@ class SensorService(BaseService):
             for device in self._devices
             if device.type is DeviceTypes.MOTION_SENSOR
             or device.type is DeviceTypes.CONTACT_SENSOR
+            or device.type is DeviceTypes.LEAK_SENSOR
+            or device.type is DeviceTypes.TEMPERATURE_HUMIDITY
         ]
         return [Sensor(sensor.raw_dict) for sensor in sensors]

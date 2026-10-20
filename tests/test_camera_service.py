@@ -449,10 +449,14 @@ class TestCameraService(unittest.IsolatedAsyncioTestCase):
         ]
 
         self.camera_service.update = AsyncMock(side_effect=exceptions_to_raise)
+        self.camera_service._get_event_list = AsyncMock(
+            return_value={"data": {"event_list": []}}
+        )
 
         with (
             patch("wyzeapy.services.camera_service._LOGGER.warning") as mock_warning,
             patch("wyzeapy.services.camera_service._LOGGER.error") as mock_error,
+            patch("wyzeapy.services.camera_service.time.sleep"),
         ):
             await self.camera_service.register_for_updates(
                 self.test_camera, mock_callback

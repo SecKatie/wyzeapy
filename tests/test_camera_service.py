@@ -439,6 +439,7 @@ class TestCameraService(unittest.IsolatedAsyncioTestCase):
     async def test_update_worker_exceptions(self):
         mock_callback = MagicMock()
 
+        # Create a series of exceptions that will be raised when update is called
         exceptions_to_raise = [
             UnknownApiError("API Error"),
             ClientOSError(),
@@ -468,12 +469,15 @@ class TestCameraService(unittest.IsolatedAsyncioTestCase):
             self.camera_service._subscribers = []
             self.camera_service._updater_thread.join(timeout=1)
 
+            # Check that the update method was called at least the number of exceptions we set up
             self.assertGreaterEqual(
                 self.camera_service.update.call_count, len(exceptions_to_raise)
             )
+            # Check that the warning was called for UnknownApiError
             mock_warning.assert_called_with(
                 "The update method detected an UnknownApiError: API Error"
             )
+            # Check that error was called for other exceptions
             self.assertGreaterEqual(mock_error.call_count, 2)
 
 

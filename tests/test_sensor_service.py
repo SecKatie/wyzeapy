@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 from wyzeapy.services.sensor_service import SensorService, Sensor
-from wyzeapy.types import DeviceTypes, PropertyIDs
+from wyzeapy.types import DeviceTypes
 from wyzeapy.wyze_auth_lib import WyzeAuthLib
 
 
@@ -88,19 +88,16 @@ class TestSensorService(unittest.IsolatedAsyncioTestCase):
         updated_sensor = await self.sensor_service.update(self.contact_sensor)
         self.assertFalse(updated_sensor.detected)
         self.sensor_service._get_device_info.assert_not_called()
+
     async def test_update_leak_sensor_detected(self):
-        self.sensor_service.get_updated_params.return_value = {
-            "ws_detect_state": 1
-        }
+        self.sensor_service.get_updated_params.return_value = {"ws_detect_state": 1}
 
         updated_sensor = await self.sensor_service.update(self.leak_sensor)
         self.assertTrue(updated_sensor.detected)
         self.sensor_service._get_device_info.assert_not_called()
 
     async def test_update_leak_sensor_not_detected(self):
-        self.sensor_service.get_updated_params.return_value = {
-            "ws_detect_state": 0
-        }
+        self.sensor_service.get_updated_params.return_value = {"ws_detect_state": 0}
 
         updated_sensor = await self.sensor_service.update(self.leak_sensor)
         self.assertFalse(updated_sensor.detected)
@@ -113,9 +110,7 @@ class TestSensorService(unittest.IsolatedAsyncioTestCase):
         }
 
         updated_sensor = await self.sensor_service.update(self.temp_humidity_sensor)
-        self.assertEqual(
-            updated_sensor.device_params["th_sensor_temperature"], "73.42"
-        )
+        self.assertEqual(updated_sensor.device_params["th_sensor_temperature"], "73.42")
         self.assertEqual(updated_sensor.device_params["th_sensor_humidity"], 76)
         self.sensor_service._get_device_info.assert_not_called()
 
@@ -160,6 +155,7 @@ class TestSensorService(unittest.IsolatedAsyncioTestCase):
         ]
 
         sensors = await self.sensor_service.get_sensors()
+
         self.assertEqual(len(sensors), 4)
         self.assertIsInstance(sensors[0], Sensor)
         self.assertIsInstance(sensors[1], Sensor)

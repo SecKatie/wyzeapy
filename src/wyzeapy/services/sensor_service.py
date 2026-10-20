@@ -17,6 +17,13 @@ from ..types import Device, PropertyIDs, DeviceTypes
 
 _LOGGER = logging.getLogger(__name__)
 
+# device_params key holding the detected state, per sensor type
+_STATE_KEYS = {
+    DeviceTypes.MOTION_SENSOR: "motion_state",
+    DeviceTypes.CONTACT_SENSOR: "open_close_state",
+    DeviceTypes.LEAK_SENSOR: "ws_detect_state",
+}
+
 
 class Sensor(Device):
     detected: bool = False
@@ -25,35 +32,20 @@ class Sensor(Device):
 class SensorService(BaseService):
     _updater_thread: Optional[Thread] = None
     _subscribers: List[Tuple[Sensor, Callable[[Sensor], None]]] = []
-    _worker_loop_interval = 5  # seconds between full passes; actual API
-    # calls are separately bounded by BaseService._min_update_time
+    _worker_loop_interval = 5  # seconds between passes
 
     async def update(self, sensor: Sensor) -> Sensor:
         # Get updated device_params
         async with BaseService._update_lock:
             sensor.device_params = await self.get_updated_params(sensor.mac)
 
-        if sensor.type is DeviceTypes.LEAK_SENSOR:
-            sensor.detected = sensor.device_params.get("ws_detect_state") == 1
-            return sensor
-
+        # Known types read cached device_params to avoid extra API calls.
         if sensor.type is DeviceTypes.TEMPERATURE_HUMIDITY:
             return sensor
-
-        if sensor.type is DeviceTypes.CONTACT_SENSOR:
-            sensor.detected = sensor.device_params.get("open_close_state") == 1
+        if (key := _STATE_KEYS.get(sensor.type)) is not None:
+            sensor.detected = sensor.device_params.get(key) == 1
             return sensor
 
-        if sensor.type is DeviceTypes.MOTION_SENSOR:
-            sensor.detected = sensor.device_params.get("motion_state") == 1
-            return sensor
-
-        # Fallback for any sensor type not explicitly handled above.
-        # Currently unused by MOTION_SENSOR, CONTACT_SENSOR, LEAK_SENSOR, and
-        # TEMPERATURE_HUMIDITY, which all read state from the already-cached
-        # device_params via get_updated_params() instead of making a separate
-        # per-sensor API call. Kept for forward compatibility with future
-        # sensor types that may still need PropertyIDs-based property lookup.
         properties = await self._get_device_info(sensor)
 
         for property in properties["data"]["property_list"]:

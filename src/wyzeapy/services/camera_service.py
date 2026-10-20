@@ -56,9 +56,7 @@ class CameraService(BaseService):
         async with BaseService._update_lock:
             camera.device_params = await self.get_updated_params(camera.mac)
 
-        # Get camera events. When called from update_worker, latest_events is
-        # fetched once per pass and shared across all cameras, instead of
-        # each camera independently re-fetching the same account-wide list.
+        # Get camera events, unless update_worker already fetched them
         if latest_events is None:
             response = await self._get_event_list(10)
             raw_events = response["data"]["event_list"]

@@ -45,11 +45,33 @@ _EXTRA_CA_BUNDLE = Path(__file__).with_name("wyze_api_ca.pem")
 
 @cache
 def get_ssl_context() -> ssl.SSLContext:
-    """Return an SSL context containing system, certifi, and Wyze CA roots."""
+    """Return an SSL context containing system, certifi, and Wyze CA roots.
+
+    This reads certificate bundles from disk, so it blocks. Callers running
+    inside an event loop should use :func:`async_get_ssl_context` instead.
+    """
     context = ssl.create_default_context()
     context.load_verify_locations(cafile=certifi.where())
     context.load_verify_locations(cafile=_EXTRA_CA_BUNDLE)
     return context
+
+
+async def async_get_ssl_context() -> ssl.SSLContext:
+    """Return the shared SSL context, building it off the event loop.
+
+    Building the context reads three certificate bundles from disk
+    (``create_default_context`` loads the system store, then certifi's bundle
+    and the Wyze CA bundle are loaded on top). That is blocking I/O, and doing
+    it inline stalls the caller's event loop. Home Assistant detects this and
+    logs a "Detected blocking call to load_default_certs ... inside the event
+    loop" warning naming this library.
+
+    Because :func:`get_ssl_context` is ``@cache``-decorated, awaiting this once
+    populates the cache from a worker thread; every later call, including the
+    synchronous ones in :func:`_create_client_session`, then returns the
+    memoized context without touching the filesystem.
+    """
+    return await asyncio.to_thread(get_ssl_context)
 
 
 def _create_client_session() -> ClientSession:
@@ -194,6 +216,12 @@ class WyzeAuthLib:
         ):
             assert self._username != ""
             assert self._password != ""
+
+        # Build the SSL context here, in a worker thread, while we are in async
+        # context. Every request path below reaches get_ssl_context() from
+        # synchronous code, so without this the one-time disk read happens on
+        # the caller's event loop.
+        await async_get_ssl_context()
 
         return self
 

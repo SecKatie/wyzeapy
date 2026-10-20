@@ -1,5 +1,6 @@
 from hashlib import sha256
 import ssl
+import threading
 import unittest
 from unittest.mock import patch, MagicMock, AsyncMock
 from wyzeapy.wyze_auth_lib import (
@@ -9,6 +10,7 @@ from wyzeapy.wyze_auth_lib import (
     AccessTokenError,
     UnknownApiError,
     get_ssl_context,
+    async_get_ssl_context,
 )
 import time
 import aiohttp  # Import aiohttp
@@ -31,6 +33,39 @@ class TestWyzeAuthLib(unittest.IsolatedAsyncioTestCase):
             "4348a0e9444c78cb265e058d5e8944b4d84f9662bd26db257f8934a443c70161",
             fingerprints,
         )
+
+    async def test_async_ssl_context_returns_the_cached_context(self):
+        self.assertIs(await async_get_ssl_context(), get_ssl_context())
+
+    async def test_async_ssl_context_builds_off_the_event_loop(self):
+        """The blocking cert load must happen in a worker thread, not the loop."""
+        get_ssl_context.cache_clear()
+        self.addCleanup(get_ssl_context.cache_clear)
+
+        loop_thread = threading.get_ident()
+        build_threads = []
+        real_create_default_context = ssl.create_default_context
+
+        def recording_create_default_context(*args, **kwargs):
+            build_threads.append(threading.get_ident())
+            return real_create_default_context(*args, **kwargs)
+
+        with patch(
+            "wyzeapy.wyze_auth_lib.ssl.create_default_context",
+            side_effect=recording_create_default_context,
+        ):
+            await async_get_ssl_context()
+
+        self.assertEqual(len(build_threads), 1)
+        self.assertNotEqual(build_threads[0], loop_thread)
+
+    async def test_create_warms_the_ssl_context_cache(self):
+        get_ssl_context.cache_clear()
+        self.addCleanup(get_ssl_context.cache_clear)
+
+        await WyzeAuthLib.create(username="test_user", password="test_password")
+
+        self.assertEqual(get_ssl_context.cache_info().currsize, 1)
 
     def test_initialization(self):
         auth_lib = WyzeAuthLib(username="test_user", password="test_password")

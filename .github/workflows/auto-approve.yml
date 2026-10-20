@@ -5,15 +5,38 @@ on:
     types: [opened, synchronize, reopened]
 
 permissions:
+  contents: read
   pull-requests: write
 
 jobs:
   auto-approve:
     runs-on: ubuntu-latest
-    # Only auto-approve PRs from the repository owner
-    if: github.event.pull_request.user.login == github.repository_owner
+    # Consider owner PRs, and pushes by the owner to other PRs. Only trust the
+    # actor on synchronize: on opened/reopened the actor didn't write the head
+    # commit, and committer identity on unsigned commits can be spoofed.
+    if: >-
+      github.event.pull_request.user.login == github.repository_owner ||
+      (github.event.action == 'synchronize' && github.actor == github.repository_owner)
     steps:
+      - name: Check latest committer
+        id: latest-committer
+        if: github.event.pull_request.user.login != github.repository_owner
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          committer=$(gh api "repos/$GH_REPO/commits/$HEAD_SHA" --jq '.committer.login // ""')
+          if [[ "${committer,,}" == "${OWNER,,}" ]]; then
+            echo "is-owner=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Auto Approve
-        uses: hmarr/auto-approve-action@8f929096a962e83ccdfa8afcf855f39f12d4dac7 # v4
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+        if: github.event.pull_request.user.login == github.repository_owner || steps.latest-committer.outputs.is-owner == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: gh api --method POST "repos/$GH_REPO/pulls/$PR_NUMBER/reviews" -f event=APPROVE -f commit_id="$HEAD_SHA"

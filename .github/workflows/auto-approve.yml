@@ -11,8 +11,12 @@ permissions:
 jobs:
   auto-approve:
     runs-on: ubuntu-latest
-    # Consider owner PRs and updates triggered by the owner.
-    if: github.event.pull_request.user.login == github.repository_owner || github.actor == github.repository_owner
+    # Consider owner PRs, and pushes by the owner to other PRs. Only trust the
+    # actor on synchronize: on opened/reopened the actor didn't write the head
+    # commit, and committer identity on unsigned commits can be spoofed.
+    if: >-
+      github.event.pull_request.user.login == github.repository_owner ||
+      (github.event.action == 'synchronize' && github.actor == github.repository_owner)
     steps:
       - name: Check latest committer
         id: latest-committer

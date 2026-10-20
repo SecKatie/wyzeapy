@@ -9,6 +9,18 @@ All notable changes to this project will be documented in this file.
 See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## 0.7.0 - 2026-10-19
+
+### Features
+
+* Add leak sensor and temperature/humidity sensor support (#342)
+
+### Bug Fixes
+
+* Build the SSL context off the event loop (#326)
+* Pace sensor and camera polling to avoid Wyze rate limits. Sensor state now comes from the device list, refreshed at most every 5 minutes (#342)
+
+- - -
 ## 0.6.1 - 2026-07-14
 
 ### Bug Fixes

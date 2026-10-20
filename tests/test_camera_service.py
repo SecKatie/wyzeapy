@@ -411,6 +411,25 @@ class TestCameraService(unittest.IsolatedAsyncioTestCase):
         with self.assertRaisesRegex(UnknownApiError, "Camera is offline"):
             await self.camera_service.get_stream_info(self.test_camera)
 
+    async def test_get_stream_info_rejects_unavailable_streams_without_logging_params(
+        self,
+    ):
+        for properties, message in (
+            ({"iot-device::iot-state": 1, "iot-device::iot-power": 0}, "Camera is off"),
+            ({"iot-device::iot-state": 0}, "Camera is offline"),
+            ({}, "Camera is offline"),
+        ):
+            with self.subTest(properties=properties):
+                self.camera_service._get_camera_stream.return_value = {
+                    "code": ResponseCodes.SUCCESS.value,
+                    "data": [{"property": properties, "params": {"token": "secret"}}],
+                }
+
+                with self.assertRaisesRegex(UnknownApiError, message) as caught:
+                    await self.camera_service.get_stream_info(self.test_camera)
+
+                self.assertNotIn("secret", str(caught.exception))
+
     async def test_register_for_updates(self):
         mock_callback = MagicMock()
         await self.camera_service.register_for_updates(self.test_camera, mock_callback)

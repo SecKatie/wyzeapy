@@ -387,6 +387,21 @@ class TestCameraService(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(stream_info, {"answer": "ok"})
 
+    async def test_get_stream_info_accepts_response_without_power_property(self):
+        self.camera_service._get_camera_stream.return_value = {
+            "code": ResponseCodes.SUCCESS.value,
+            "data": [
+                {
+                    "property": {"iot-device::iot-state": 1},
+                    "params": {"answer": "ok"},
+                }
+            ],
+        }
+
+        stream_info = await self.camera_service.get_stream_info(self.test_camera)
+
+        self.assertEqual(stream_info, {"answer": "ok"})
+
     async def test_get_stream_info_raises_offline_error_for_offline_response(self):
         self.camera_service._get_camera_stream.return_value = {
             "code": ResponseCodes.DEVICE_OFFLINE.value,
@@ -395,6 +410,25 @@ class TestCameraService(unittest.IsolatedAsyncioTestCase):
 
         with self.assertRaisesRegex(UnknownApiError, "Camera is offline"):
             await self.camera_service.get_stream_info(self.test_camera)
+
+    async def test_get_stream_info_rejects_unavailable_streams_without_logging_params(
+        self,
+    ):
+        for properties, message in (
+            ({"iot-device::iot-state": 1, "iot-device::iot-power": 0}, "Camera is off"),
+            ({"iot-device::iot-state": 0}, "Camera is offline"),
+            ({}, "Camera is offline"),
+        ):
+            with self.subTest(properties=properties):
+                self.camera_service._get_camera_stream.return_value = {
+                    "code": ResponseCodes.SUCCESS.value,
+                    "data": [{"property": properties, "params": {"token": "secret"}}],
+                }
+
+                with self.assertRaisesRegex(UnknownApiError, message) as caught:
+                    await self.camera_service.get_stream_info(self.test_camera)
+
+                self.assertNotIn("secret", str(caught.exception))
 
     async def test_register_for_updates(self):
         mock_callback = MagicMock()

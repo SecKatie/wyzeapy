@@ -1103,7 +1103,16 @@ class BaseService:
 
         return response_json
 
-    async def _get_camera_stream(self, device: Device) -> Dict[Any, Any]:
+    async def _get_camera_stream(
+        self, device: Device, provider: str = "webrtc"
+    ) -> Dict[Any, Any]:
+        """Wraps the app.wyzecam.com/app/v4/camera/get-streams endpoint
+
+        :param device: The camera for which to get stream connection info
+        :param provider: "webrtc" for cameras that stream via AWS Kinesis
+            signaling, "lake" for cameras that stream via Agora RTC
+            (e.g. the Wyze Solar Cam Pan)
+        """
         await self._auth_lib.refresh_if_should()
 
         payload = {
@@ -1111,7 +1120,7 @@ class BaseService:
                 {
                     "device_id": device.mac,
                     "device_model": device.product_model,
-                    "provider": "webrtc",
+                    "provider": provider,
                     "parameters": {"use_trickle": True},
                 }
             ],
@@ -1135,6 +1144,98 @@ class BaseService:
             "https://app.wyzecam.com/app/v4/camera/get-streams",
             json=payload,
             headers=headers,
+        )
+
+        check_for_errors_standard(self, response_json)
+
+        return response_json
+
+    def _web_api_headers(self, payload: Dict[Any, Any]) -> Dict[str, str]:
+        """Headers for the app.wyzecam.com/app/v4 web API endpoints"""
+        signature = web_create_signature(
+            json.dumps(payload), self._auth_lib.token.access_token
+        )
+        return {
+            "Accept-Encoding": "gzip",
+            "appId": WEB_APP_ID,
+            "appInfo": WEB_APP_INFO,
+            "access_token": self._auth_lib.token.access_token,
+            "Authorization": self._auth_lib.token.access_token,
+            "signature2": signature,
+            "requestid": str(time.time() % 100000),
+        }
+
+    async def _wakeup_device(
+        self, device: Device, user_id: str, rtc_client_uid: int, mode: int = 3
+    ) -> Dict[Any, Any]:
+        """Wraps the app.wyzecam.com/app/v4/device/wakeup endpoint
+
+        Wakes a battery camera so it connects to its streaming provider.
+        Used by cameras that stream via Agora RTC (provider "lake").
+
+        :param device: The camera to wake
+        :param user_id: The Wyze account user id (from the access token)
+        :param rtc_client_uid: The client-chosen Agora RTC uid
+        :param mode: Wakeup mode; the web app uses 3 for live view
+        """
+        await self._auth_lib.refresh_if_should()
+
+        payload = {
+            "nonce": int(time.time() * 1000),
+            "device_id": device.mac,
+            "device_model": device.product_model,
+            "params": {
+                "mode": mode,
+                "user_id": user_id,
+                "rtc_client_uid": rtc_client_uid,
+            },
+        }
+
+        response_json = await self._auth_lib.post(
+            "https://app.wyzecam.com/app/v4/device/wakeup",
+            json=payload,
+            headers=self._web_api_headers(payload),
+        )
+
+        check_for_errors_standard(self, response_json)
+
+        return response_json
+
+    async def _create_rtc_connection(
+        self,
+        device: Device,
+        rtc_client_uid: int,
+        mode: int = 3,
+        expire_time: int = 3600,
+        resolution: int = 2,
+    ) -> Dict[Any, Any]:
+        """Wraps the app.wyzecam.com/app/v4/wcsa/create-connection endpoint
+
+        Issues the Agora RTC credentials (app_id, rtc_token, uid) for a
+        camera that streams via Agora (provider "lake").
+
+        :param device: The camera to connect to
+        :param rtc_client_uid: The client-chosen Agora RTC uid
+        :param mode: Connection mode; the web app uses 3 for live view
+        :param expire_time: Token lifetime in seconds
+        :param resolution: Requested stream resolution (web app uses 2)
+        """
+        await self._auth_lib.refresh_if_should()
+
+        payload = {
+            "nonce": int(time.time() * 1000),
+            "device_id": device.mac,
+            "device_model": device.product_model,
+            "mode": mode,
+            "uid": rtc_client_uid,
+            "expire_time": expire_time,
+            "resolution": resolution,
+        }
+
+        response_json = await self._auth_lib.post(
+            "https://app.wyzecam.com/app/v4/wcsa/create-connection",
+            json=payload,
+            headers=self._web_api_headers(payload),
         )
 
         check_for_errors_standard(self, response_json)

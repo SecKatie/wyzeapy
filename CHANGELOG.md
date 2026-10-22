@@ -9,6 +9,22 @@ All notable changes to this project will be documented in this file.
 See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## 0.8.0 - 2026-10-22
+
+### Features
+
+* Add typed irrigation runtime and controller information APIs while preserving existing raw device-info and schedule-run return formats (#308)
+
+### Bug Fixes
+
+* Use the required device identifier in signed irrigation device-info requests (#308)
+* Accept camera stream responses that omit the power property and avoid including stream response details in errors (#351)
+
+### Dependencies
+
+* Update the locked aiohttp and certifi versions; runtime dependency bounds are unchanged (#354, #358)
+
+- - -
 ## 0.7.0 - 2026-10-19
 
 ### Features

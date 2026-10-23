@@ -6,13 +6,24 @@ from wyzeapy.services.base_service import BaseService
 from wyzeapy.wyze_auth_lib import WyzeAuthLib, Token
 
 
+def fake_auth():
+    auth = MagicMock(spec=WyzeAuthLib)
+    auth._username = "test@example.com"
+    auth._password = "fake-password"
+    auth._key_id = "fake-key-id"
+    auth._api_key = "fake-api-key"
+    auth.token = Token("access", "refresh")
+    auth.should_refresh = False
+    return auth
+
+
 @pytest.fixture
 def mock_auth_lib():
     with patch(
         "wyzeapy.wyze_auth_lib.WyzeAuthLib.create", new_callable=AsyncMock
     ) as mock_create:
-        mock_auth_lib_instance = MagicMock(spec=WyzeAuthLib)
-        mock_auth_lib_instance.token = Token("access", "refresh", 123)
+        mock_auth_lib_instance = fake_auth()
+        mock_auth_lib_instance.token = Token("access", "refresh")
         mock_auth_lib_instance.should_refresh = False
         mock_create.return_value = mock_auth_lib_instance
         yield mock_auth_lib_instance
@@ -37,8 +48,8 @@ async def test_login_success():
     with patch(
         "wyzeapy.wyze_auth_lib.WyzeAuthLib.create", new_callable=AsyncMock
     ) as mock_create:
-        mock_auth_lib_instance = MagicMock(spec=WyzeAuthLib)
-        mock_auth_lib_instance.token = Token("access", "refresh", 123)
+        mock_auth_lib_instance = fake_auth()
+        mock_auth_lib_instance.token = Token("access", "refresh")
         mock_auth_lib_instance.should_refresh = False
         mock_create.return_value = mock_auth_lib_instance
 
@@ -54,13 +65,13 @@ async def test_login_with_token_success():
     with patch(
         "wyzeapy.wyze_auth_lib.WyzeAuthLib.create", new_callable=AsyncMock
     ) as mock_create:
-        mock_auth_lib_instance = MagicMock(spec=WyzeAuthLib)
-        mock_auth_lib_instance.token = Token("access", "refresh", 123)
+        mock_auth_lib_instance = fake_auth()
+        mock_auth_lib_instance.token = Token("access", "refresh")
         mock_auth_lib_instance.should_refresh = False
         mock_create.return_value = mock_auth_lib_instance
 
         wyze = await Wyzeapy.create()
-        token = Token("access", "refresh", 123)
+        token = Token("access", "refresh")
         await wyze.login(
             "test@example.com", "password", "key_id", "api_key", token=token
         )
@@ -75,8 +86,8 @@ async def test_login_2fa_enabled():
     with patch(
         "wyzeapy.wyze_auth_lib.WyzeAuthLib.create", new_callable=AsyncMock
     ) as mock_create:
-        mock_auth_lib_instance = MagicMock(spec=WyzeAuthLib)
-        mock_auth_lib_instance.token = Token("access", "refresh", 123)
+        mock_auth_lib_instance = fake_auth()
+        mock_auth_lib_instance.token = Token("access", "refresh")
         mock_auth_lib_instance.should_refresh = False
         mock_create.side_effect = TwoFactorAuthenticationEnabled("2FA required")
 
@@ -88,7 +99,7 @@ async def test_login_2fa_enabled():
 @pytest.mark.asyncio
 async def test_login_with_2fa(mock_auth_lib):
     wyze = await Wyzeapy.create()
-    wyze._auth_lib = mock_auth_lib  # Manually set mock_auth_lib for this test
+    wyze._context.mfa = mock_auth_lib
     mock_auth_lib.get_token_with_2fa = AsyncMock()
     token = await wyze.login_with_2fa("123456")
     mock_auth_lib.get_token_with_2fa.assert_called_once_with("123456")
@@ -118,7 +129,7 @@ async def test_execute_token_callbacks_sync():
     wyze = await Wyzeapy.create()
     mock_callback = MagicMock()
     wyze.register_for_token_callback(mock_callback)
-    token = Token("access", "refresh", 123)
+    token = Token("access", "refresh")
     await wyze.execute_token_callbacks(token)
     mock_callback.assert_called_once_with(token)
 
@@ -128,7 +139,7 @@ async def test_execute_token_callbacks_async():
     wyze = await Wyzeapy.create()
     mock_callback = AsyncMock()
     wyze.register_for_token_callback(mock_callback)
-    token = Token("access", "refresh", 123)
+    token = Token("access", "refresh")
     await wyze.execute_token_callbacks(token)
     mock_callback.assert_called_once_with(token)
 
@@ -183,7 +194,7 @@ async def test_valid_login_success(mock_auth_lib):
 
 @pytest.mark.asyncio
 async def test_valid_login_failure(mock_auth_lib):
-    mock_auth_lib.should_refresh = True
+    mock_auth_lib.token._refresh_time = 123
     is_valid = await Wyzeapy.valid_login(
         "test@example.com", "password", "key_id", "api_key"
     )
@@ -236,7 +247,11 @@ async def test_air_purifier_service(mock_auth_lib):
 
 
 @pytest.mark.asyncio
-async def test_hms_service(mock_auth_lib):
+async def test_hms_service(mock_auth_lib, monkeypatch):
+    monkeypatch.setattr(
+        "wyzeapy.services.hms_service.HMSService._get_hms_id",
+        AsyncMock(return_value=None),
+    )
     wyze = await Wyzeapy.create()
     await wyze.login("test@example.com", "password", "key_id", "api_key")
     service = await wyze.hms_service

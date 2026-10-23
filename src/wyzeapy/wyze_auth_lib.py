@@ -348,13 +348,21 @@ class WyzeAuthLib:
         """Check whether the current token has reached its refresh time."""
         return time.time() >= self.token.refresh_time
 
+    def _commit_authentication(self, candidate):
+        """Publish a successful login without replacing the shared auth owner."""
+        self._username = candidate._username
+        self._password = candidate._password
+        self._key_id = candidate._key_id
+        self._api_key = candidate._api_key
+        self.token = candidate.token
+
     async def refresh_if_should(self):
-        """Refresh the token proactively if expired or past refresh_time."""
+        """Refresh once when concurrent requests discover an expired token."""
+        # Callback reads can use the committed token without reentering this lock.
         if self.should_refresh or self.token.expired:
             async with self.refresh_lock:
                 if self.should_refresh or self.token.expired:
-                    _LOGGER.debug("Should refresh. Refreshing...")
-                    await self.refresh()
+                    await self._refresh()
 
     async def refresh(self) -> None:
         """Exchange the refresh token for a new access token and update internal Token.
@@ -363,6 +371,10 @@ class WyzeAuthLib:
             AccessTokenError: If refresh fails due to invalid refresh token.
             UnknownApiError: For other errors during refresh.
         """
+        async with self.refresh_lock:
+            await self._refresh()
+
+    async def _refresh(self):
         payload = {
             "phone_id": PHONE_ID,
             "app_name": APP_NAME,
@@ -388,8 +400,8 @@ class WyzeAuthLib:
 
         self.token.access_token = response_json["data"]["access_token"]
         self.token.refresh_token = response_json["data"]["refresh_token"]
-        await self.token_callback(self.token)
         self.token.expired = False
+        await self.token_callback(self.token)
 
     def sanitize(self, data):
         """Recursively sanitize sensitive fields in dicts for safe logging.

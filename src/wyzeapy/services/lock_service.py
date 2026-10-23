@@ -49,10 +49,11 @@ class LockService(BaseService):
         return lock
 
     async def get_locks(self):
-        if self._devices is None:
-            self._devices = await self.get_object_list()
-
-        locks = [device for device in self._devices if device.type is DeviceTypes.LOCK]
+        locks = [
+            device
+            for device in await self._get_cached_devices()
+            if device.type is DeviceTypes.LOCK
+        ]
 
         return [Lock(device.raw_dict) for device in locks]
 

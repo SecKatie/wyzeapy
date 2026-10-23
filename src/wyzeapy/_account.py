@@ -20,6 +20,7 @@ class _AccountContext:
         self.login_pending = False
         self.mfa = None
         self.username = None
+        self.account_bound = False
         self.loop = None
 
     def bind_loop(self):

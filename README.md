@@ -44,6 +44,8 @@ owner. Failed or cancelled attempts preserve the last successful token. Finish
 MFA with `await client.login_with_2fa(code)` on the client that started it. A new
 login invalidates its previous challenge. Service operations raise `RuntimeError`
 until login/MFA finishes; changing username requires a new client.
+Token-only login with `email=None` remains supported and binds that unnamed
+identity; adding a username later also requires a new client.
 
 For existing automatic updates, register devices and start the owning manager:
 

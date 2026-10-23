@@ -678,8 +678,7 @@ class BaseService:
         :return: The response to gathering the plan for the current user
         """
 
-        if self._auth_lib.should_refresh:
-            await self._auth_lib.refresh()
+        await self._auth_lib.refresh_if_should()
 
         url = "https://wyze-membership-service.wyzecam.com/platform/v2/membership/get_plan_binding_list_by_user"
         payload = olive_create_hms_payload()
@@ -721,8 +720,7 @@ class BaseService:
         :param hms_id: The hms_id
         :return: The response that includes the status
         """
-        if self._auth_lib.should_refresh:
-            await self._auth_lib.refresh()
+        await self._auth_lib.refresh_if_should()
 
         url = "https://hms.api.wyze.com/api/v1/monitoring/v1/profile/state-status"
         query = olive_create_hms_get_payload(hms_id)
@@ -934,7 +932,7 @@ class BaseService:
         check_for_errors_iot(self, response_json)
 
     async def _local_bulb_command(self, bulb, plist):
-        # await self._auth_lib.refresh_if_should()
+        self._context.check_ready()
 
         characteristics = {
             "mac": bulb.mac.upper(),

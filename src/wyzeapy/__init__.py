@@ -100,9 +100,10 @@ class Wyzeapy:
 
         context = self._context
         context.bind_loop()
-        if context.username is not None and context.username != email:
+        if context.account_bound and context.username != email:
             raise ValueError("Use a new client for a different username")
         context.username = email  # Exact stored-username comparison, as in HA reauth.
+        context.account_bound = True
         async with context.login_lock:
             context.login_pending = True
             context.mfa = None  # A new attempt invalidates an earlier MFA challenge.

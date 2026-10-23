@@ -358,9 +358,11 @@ class WyzeAuthLib:
 
     async def refresh_if_should(self):
         """Refresh once when concurrent requests discover an expired token."""
-        async with self.refresh_lock:
-            if self.should_refresh or self.token.expired:
-                await self._refresh()
+        # Callback reads can use the committed token without reentering this lock.
+        if self.should_refresh or self.token.expired:
+            async with self.refresh_lock:
+                if self.should_refresh or self.token.expired:
+                    await self._refresh()
 
     async def refresh(self) -> None:
         """Exchange the refresh token for a new access token and update internal Token.
@@ -398,8 +400,8 @@ class WyzeAuthLib:
 
         self.token.access_token = response_json["data"]["access_token"]
         self.token.refresh_token = response_json["data"]["refresh_token"]
-        await self.token_callback(self.token)
         self.token.expired = False
+        await self.token_callback(self.token)
 
     def sanitize(self, data):
         """Recursively sanitize sensitive fields in dicts for safe logging.

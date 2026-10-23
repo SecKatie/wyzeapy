@@ -299,12 +299,9 @@ class IrrigationService(BaseService):
         return irrigation
 
     async def get_irrigations(self) -> List[Irrigation]:
-        if self._devices is None:
-            self._devices = await self.get_object_list()
-
         irrigations = [
             device
-            for device in self._devices
+            for device in await self._get_cached_devices()
             if device.type == DeviceTypes.IRRIGATION
             and "BS_WK1" in device.product_model
         ]

@@ -299,29 +299,29 @@ class TestWyzeAuthLib(unittest.IsolatedAsyncioTestCase):
             "access", "refresh", refresh_time=time.time() - 100
         )  # Expired
         auth_lib = WyzeAuthLib(token=mock_token)
-        auth_lib.refresh = AsyncMock()  # Mock the refresh method
+        auth_lib._refresh = AsyncMock()  # Mock the refresh method
 
         await auth_lib.refresh_if_should()
-        auth_lib.refresh.assert_awaited_once()
+        auth_lib._refresh.assert_awaited_once()
 
     async def test_refresh_if_should_expired_true(self):
         mock_token = Token("access", "refresh")
         mock_token.expired = True
         auth_lib = WyzeAuthLib(token=mock_token)
-        auth_lib.refresh = AsyncMock()
+        auth_lib._refresh = AsyncMock()
 
         await auth_lib.refresh_if_should()
-        auth_lib.refresh.assert_awaited_once()
+        auth_lib._refresh.assert_awaited_once()
 
     async def test_refresh_if_should_false(self):
         mock_token = Token(
             "access", "refresh", refresh_time=time.time() + 1000
         )  # Not expired
         auth_lib = WyzeAuthLib(token=mock_token)
-        auth_lib.refresh = AsyncMock()
+        auth_lib._refresh = AsyncMock()
 
         await auth_lib.refresh_if_should()
-        auth_lib.refresh.assert_not_awaited()
+        auth_lib._refresh.assert_not_awaited()
 
     def test_sanitize(self):
         auth_lib = WyzeAuthLib()

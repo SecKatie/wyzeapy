@@ -22,14 +22,14 @@ class HMSService(BaseService):
         hms_mode = await self._monitoring_profile_state_status(hms_id)
         return HMSMode(hms_mode["message"])
 
-    def __init__(self, auth_lib: WyzeAuthLib):
-        super().__init__(auth_lib)
+    def __init__(self, auth_lib: WyzeAuthLib, *, _context=None):
+        super().__init__(auth_lib, _context=_context)
 
         self._hms_id = None
 
     @classmethod
-    async def create(cls, auth_lib: WyzeAuthLib):
-        hms_service = cls(auth_lib)
+    async def create(cls, auth_lib: WyzeAuthLib, *, _context=None):
+        hms_service = cls(auth_lib, _context=_context)
         hms_service._hms_id = await hms_service._get_hms_id()
 
         return hms_service

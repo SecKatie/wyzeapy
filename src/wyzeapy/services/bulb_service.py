@@ -113,7 +113,7 @@ class BulbService(BaseService):
         :return: Updated bulb object with current property values
         """
         # Get updated device_params
-        async with BaseService._update_lock:
+        async with self._context.update_lock:
             bulb.device_params = await self.get_updated_params(bulb.mac)
 
         device_info = await self._get_property_list(bulb)
@@ -154,12 +154,9 @@ class BulbService(BaseService):
 
         :return: List of Bulb objects with default property values
         """
-        if self._devices is None:
-            self._devices = await self.get_object_list()
-
         bulbs = [
             device
-            for device in self._devices
+            for device in await self._get_cached_devices()
             if device.type
             in [DeviceTypes.LIGHT, DeviceTypes.MESH_LIGHT, DeviceTypes.LIGHTSTRIP]
         ]

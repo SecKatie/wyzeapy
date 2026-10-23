@@ -7,11 +7,11 @@ import asyncio
 import logging
 import time
 from threading import Thread
-from typing import List, Callable, Tuple, Optional
+from typing import List, Callable
 
 from aiohttp import ClientOSError, ContentTypeError
 
-from ..exceptions import UnknownApiError
+from ..exceptions import UnknownApiError, _AuthenticationInProgress
 from .base_service import BaseService
 from ..types import Device, PropertyIDs, DeviceTypes
 
@@ -30,13 +30,16 @@ class Sensor(Device):
 
 
 class SensorService(BaseService):
-    _updater_thread: Optional[Thread] = None
-    _subscribers: List[Tuple[Sensor, Callable[[Sensor], None]]] = []
+    def __init__(self, auth_lib, *, _context=None):
+        super().__init__(auth_lib, _context=_context)
+        self._updater_thread = None
+        self._subscribers = []
+
     _worker_loop_interval = 5  # seconds between passes
 
     async def update(self, sensor: Sensor) -> Sensor:
         # Get updated device_params
-        async with BaseService._update_lock:
+        async with self._context.update_lock:
             sensor.device_params = await self.get_updated_params(sensor.mac)
 
         # Known types read cached device_params to avoid extra API calls.
@@ -66,7 +69,8 @@ class SensorService(BaseService):
         self, sensor: Sensor, callback: Callable[[Sensor], None]
     ):
         _LOGGER.debug(f"Registering sensor: {sensor.nickname} for updates")
-        loop = asyncio.get_event_loop()
+        self._context.check_ready()
+        loop = asyncio.get_running_loop()
         if not self._updater_thread:
             self._updater_thread = Thread(
                 target=self.update_worker,
@@ -96,6 +100,8 @@ class SensorService(BaseService):
                             self.update(sensor), loop
                         ).result()
                     )
+                except _AuthenticationInProgress:
+                    pass
                 except UnknownApiError as e:
                     _LOGGER.warning(
                         f"The update method detected an UnknownApiError: {e}"
@@ -108,12 +114,9 @@ class SensorService(BaseService):
             time.sleep(self._worker_loop_interval)
 
     async def get_sensors(self) -> List[Sensor]:
-        if self._devices is None:
-            self._devices = await self.get_object_list()
-
         sensors = [
             Sensor(device.raw_dict)
-            for device in self._devices
+            for device in await self._get_cached_devices()
             if device.type is DeviceTypes.MOTION_SENSOR
             or device.type is DeviceTypes.CONTACT_SENSOR
             or device.type is DeviceTypes.LEAK_SENSOR

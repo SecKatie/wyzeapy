@@ -96,11 +96,10 @@ class ThermostatService(BaseService):
         return thermostat
 
     async def get_thermostats(self) -> List[Thermostat]:
-        if self._devices is None:
-            self._devices = await self.get_object_list()
-
         thermostats = [
-            device for device in self._devices if device.type is DeviceTypes.THERMOSTAT
+            device
+            for device in await self._get_cached_devices()
+            if device.type is DeviceTypes.THERMOSTAT
         ]
 
         return [Thermostat(thermostat.raw_dict) for thermostat in thermostats]

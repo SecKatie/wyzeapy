@@ -3,9 +3,13 @@
 #  of the attached license. You should have received a copy of
 #  the license with this file. If not, please write to:
 #  katie@mulliken.net to receive a copy
+import asyncio
 import logging
+from copy import copy
 from inspect import iscoroutinefunction
 from typing import List, Optional, Set, Callable
+
+from ._account import _AccountContext
 
 from .exceptions import TwoFactorAuthenticationEnabled
 from .services.air_purifier_service import AirPurifierService
@@ -41,10 +45,10 @@ class Wyzeapy:
     Most interactions with Wyze devices should go through this class.
     """
 
-    # _client: Client
-    _auth_lib: WyzeAuthLib
-
     def __init__(self):
+        self._context = _AccountContext(
+            WyzeAuthLib(token_callback=self.execute_token_callbacks)
+        )
         self._bulb_service = None
         self._switch_service = None
         self._camera_service = None
@@ -56,11 +60,7 @@ class Wyzeapy:
         self._air_purifier_service = None
         self._wall_switch_service = None
         self._switch_usage_service = None
-        self._email = None
-        self._password = None
-        self._key_id = None
-        self._api_key = None
-        self._service: Optional[BaseService] = None
+        self._service = BaseService(self._auth_lib, _context=self._context)
         self._token_callbacks: List[Callable] = []
 
     @classmethod
@@ -98,25 +98,41 @@ class Wyzeapy:
         * `TwoFactorAuthenticationEnabled`: When the account has 2FA enabled and requires verification
         """
 
-        self._email = email
-        self._password = password
-        self._key_id = key_id
-        self._api_key = api_key
+        context = self._context
+        context.bind_loop()
+        if context.username is not None and context.username != email:
+            raise ValueError("Use a new client for a different username")
+        context.username = email  # Exact stored-username comparison, as in HA reauth.
+        async with context.login_lock:
+            context.login_pending = True
+            context.mfa = None  # A new attempt invalidates an earlier MFA challenge.
+            try:
+                async with self._auth_lib.refresh_lock:
+                    candidate = await WyzeAuthLib.create(
+                        email, password, key_id, api_key, copy(token), self._defer_token
+                    )
+                    try:
+                        if token:
+                            await candidate.refresh()
+                        else:
+                            await candidate.get_token_with_username_password(
+                                email, password, key_id, api_key
+                            )
+                    except TwoFactorAuthenticationEnabled:
+                        context.mfa = candidate
+                        raise
+                    self._auth_lib._commit_authentication(candidate)
+            finally:
+                context.login_pending = False
+            await self.execute_token_callbacks(self._auth_lib.token)
 
-        try:
-            self._auth_lib = await WyzeAuthLib.create(
-                email, password, key_id, api_key, token, self.execute_token_callbacks
-            )
-            if token:
-                # User token supplied, refresh on startup
-                await self._auth_lib.refresh()
-            else:
-                await self._auth_lib.get_token_with_username_password(
-                    email, password, key_id, api_key
-                )
-            self._service = BaseService(self._auth_lib)
-        except TwoFactorAuthenticationEnabled as error:
-            raise error
+    @property
+    def _auth_lib(self):
+        return self._context.auth
+
+    @staticmethod
+    async def _defer_token(token):
+        """Candidate tokens are published only after a successful commit."""
 
     async def login_with_2fa(self, verification_code) -> Token:
         """
@@ -133,11 +149,24 @@ class Wyzeapy:
         * `Token`: The authenticated user token object
         """
 
-        _LOGGER.debug(f"Verification Code: {verification_code}")
-
-        await self._auth_lib.get_token_with_2fa(verification_code)
-        self._service = BaseService(self._auth_lib)
-        return self._auth_lib.token
+        context = self._context
+        context.bind_loop()
+        async with context.login_lock:
+            if context.mfa is None:
+                raise RuntimeError("Start login before continuing MFA")
+            context.login_pending = True
+            try:
+                async with self._auth_lib.refresh_lock:
+                    await context.mfa.get_token_with_2fa(verification_code)
+                    self._auth_lib._commit_authentication(context.mfa)
+                    context.mfa = None
+            except asyncio.CancelledError:
+                context.mfa = None
+                raise
+            finally:
+                context.login_pending = False
+            await self.execute_token_callbacks(self._auth_lib.token)
+            return self._auth_lib.token
 
     async def execute_token_callbacks(self, token: Token):
         """
@@ -311,7 +340,7 @@ class Wyzeapy:
         """
 
         if self._bulb_service is None:
-            self._bulb_service = BulbService(self._auth_lib)
+            self._bulb_service = BulbService(self._auth_lib, _context=self._context)
         return self._bulb_service
 
     @property
@@ -333,7 +362,7 @@ class Wyzeapy:
         """
 
         if self._switch_service is None:
-            self._switch_service = SwitchService(self._auth_lib)
+            self._switch_service = SwitchService(self._auth_lib, _context=self._context)
         return self._switch_service
 
     @property
@@ -355,7 +384,7 @@ class Wyzeapy:
         """
 
         if self._camera_service is None:
-            self._camera_service = CameraService(self._auth_lib)
+            self._camera_service = CameraService(self._auth_lib, _context=self._context)
         return self._camera_service
 
     @property
@@ -377,7 +406,9 @@ class Wyzeapy:
         """
 
         if self._thermostat_service is None:
-            self._thermostat_service = ThermostatService(self._auth_lib)
+            self._thermostat_service = ThermostatService(
+                self._auth_lib, _context=self._context
+            )
         return self._thermostat_service
 
     @property
@@ -399,7 +430,9 @@ class Wyzeapy:
         """
 
         if self._hms_service is None:
-            self._hms_service = await HMSService.create(self._auth_lib)
+            self._hms_service = await HMSService.create(
+                self._auth_lib, _context=self._context
+            )
         return self._hms_service
 
     @property
@@ -421,7 +454,7 @@ class Wyzeapy:
         """
 
         if self._lock_service is None:
-            self._lock_service = LockService(self._auth_lib)
+            self._lock_service = LockService(self._auth_lib, _context=self._context)
         return self._lock_service
 
     @property
@@ -443,7 +476,7 @@ class Wyzeapy:
         """
 
         if self._sensor_service is None:
-            self._sensor_service = SensorService(self._auth_lib)
+            self._sensor_service = SensorService(self._auth_lib, _context=self._context)
         return self._sensor_service
 
     @property
@@ -451,7 +484,9 @@ class Wyzeapy:
         """Returns an instance of the irrigation service"""
 
         if self._irrigation_service is None:
-            self._irrigation_service = IrrigationService(self._auth_lib)
+            self._irrigation_service = IrrigationService(
+                self._auth_lib, _context=self._context
+            )
         return self._irrigation_service
 
     @property
@@ -459,7 +494,9 @@ class Wyzeapy:
         """Returns an instance of the air purifier service"""
 
         if self._air_purifier_service is None:
-            self._air_purifier_service = AirPurifierService(self._auth_lib)
+            self._air_purifier_service = AirPurifierService(
+                self._auth_lib, _context=self._context
+            )
         return self._air_purifier_service
 
     @property
@@ -481,7 +518,9 @@ class Wyzeapy:
         """
 
         if self._wall_switch_service is None:
-            self._wall_switch_service = WallSwitchService(self._auth_lib)
+            self._wall_switch_service = WallSwitchService(
+                self._auth_lib, _context=self._context
+            )
         return self._wall_switch_service
 
     @property
@@ -502,5 +541,7 @@ class Wyzeapy:
         ```
         """
         if self._switch_usage_service is None:
-            self._switch_usage_service = SwitchUsageService(self._auth_lib)
+            self._switch_usage_service = SwitchUsageService(
+                self._auth_lib, _context=self._context
+            )
         return self._switch_usage_service

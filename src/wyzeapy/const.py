@@ -12,6 +12,11 @@ Configuration constants for Wyze API integration, including app metadata,
 API keys, and cryptographic secrets.
 """
 PHONE_SYSTEM_TYPE = "1"
+# Base host for the primary Wyze "/app" API. Points at app.wyzecam.com, whose cert
+# chains to DigiCert Global Root G2 (trusted by current certifi bundles). The former
+# host, api.wyzecam.com, still chains to the distrusted DigiCert Global Root CA (G1),
+# which certifi removed in 2026.06.17. See ha-wyzeapi issue #876.
+WYZE_API_URL = "https://app.wyzecam.com"
 API_KEY = "WMXHYf79Nr5gIlt3r0r7p9Tcw5bvs6BB4U8O8nGJ"
 APP_VERSION = "2.18.43"
 APP_VER = "com.hualai.WyzeCam___2.18.43"

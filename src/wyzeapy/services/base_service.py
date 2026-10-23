@@ -13,6 +13,7 @@ import aiohttp
 
 from .update_manager import DeviceUpdater, UpdateManager
 from ..const import (
+    WYZE_API_URL,
     PHONE_SYSTEM_TYPE,
     APP_VERSION,
     APP_VER,
@@ -177,7 +178,7 @@ class BaseService:
         """
         await self._auth_lib.refresh_if_should()
 
-        url = "https://api.wyzecam.com/app/user/set_push_info"
+        url = f"{WYZE_API_URL}/app/user/set_push_info"
         payload = {
             "phone_system_type": PHONE_SYSTEM_TYPE,
             "app_version": APP_VERSION,
@@ -255,7 +256,7 @@ class BaseService:
         }
 
         response_json = await self._auth_lib.post(
-            "https://api.wyzecam.com/app/v2/home_page/get_object_list", json=payload
+            f"{WYZE_API_URL}/app/v2/home_page/get_object_list", json=payload
         )
 
         check_for_errors_standard(self, response_json)
@@ -308,7 +309,7 @@ class BaseService:
         }
 
         response_json = await self._auth_lib.post(
-            "https://api.wyzecam.com/app/v2/device/get_property_list", json=payload
+            f"{WYZE_API_URL}/app/v2/device/get_property_list", json=payload
         )
 
         check_for_errors_standard(self, response_json)
@@ -348,7 +349,7 @@ class BaseService:
         }
 
         response_json = await self._auth_lib.post(
-            "https://api.wyzecam.com/app/v2/device/set_property_list", json=payload
+            f"{WYZE_API_URL}/app/v2/device/set_property_list", json=payload
         )
 
         check_for_errors_standard(self, response_json)
@@ -389,7 +390,7 @@ class BaseService:
         }
 
         response_json = await self._auth_lib.post(
-            "https://api.wyzecam.com/app/v2/device_list/set_property_list", json=payload
+            f"{WYZE_API_URL}/app/v2/device_list/set_property_list", json=payload
         )
 
         check_for_errors_standard(self, response_json)
@@ -423,7 +424,7 @@ class BaseService:
         }
 
         response_json = await self._auth_lib.post(
-            "https://api.wyzecam.com/app/v2/auto/run_action_list", json=payload
+            f"{WYZE_API_URL}/app/v2/auto/run_action_list", json=payload
         )
 
         check_for_errors_standard(self, response_json)
@@ -459,7 +460,7 @@ class BaseService:
         }
 
         response_json = await self._auth_lib.post(
-            "https://api.wyzecam.com/app/v2/device/get_event_list", json=payload
+            f"{WYZE_API_URL}/app/v2/device/get_event_list", json=payload
         )
 
         check_for_errors_standard(self, response_json)
@@ -492,7 +493,7 @@ class BaseService:
         }
 
         response_json = await self._auth_lib.post(
-            "https://api.wyzecam.com/app/v2/auto/run_action", json=payload
+            f"{WYZE_API_URL}/app/v2/auto/run_action", json=payload
         )
 
         check_for_errors_standard(self, response_json)
@@ -638,7 +639,7 @@ class BaseService:
         }
 
         response_json = await self._auth_lib.post(
-            "https://api.wyzecam.com/app/v2/device/set_property", json=payload
+            f"{WYZE_API_URL}/app/v2/device/set_property", json=payload
         )
 
         check_for_errors_standard(self, response_json)
@@ -821,7 +822,7 @@ class BaseService:
         }
 
         response_json = await self._auth_lib.post(
-            "https://api.wyzecam.com/app/v2/device/get_device_Info", json=payload
+            f"{WYZE_API_URL}/app/v2/device/get_device_Info", json=payload
         )
 
         check_for_errors_standard(self, response_json)
@@ -990,7 +991,7 @@ class BaseService:
         }
 
         response_json = await self._auth_lib.post(
-            "https://api.wyzecam.com/app/v2/plug/usage_record_list", json=payload
+            f"{WYZE_API_URL}/app/v2/plug/usage_record_list", json=payload
         )
 
         check_for_errors_standard(self, response_json)
@@ -1157,7 +1158,7 @@ class BaseService:
         }
 
         response_json = await self._auth_lib.post(
-            "https://app.wyzecam.com/app/v4/camera/get-streams",
+            f"{WYZE_API_URL}/app/v4/camera/get-streams",
             json=payload,
             headers=headers,
         )

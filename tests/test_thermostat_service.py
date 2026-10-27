@@ -1,5 +1,7 @@
+import json
 import unittest
 from unittest.mock import AsyncMock, MagicMock
+from wyzeapy.crypto import olive_create_signature
 from wyzeapy.services.thermostat_service import (
     ThermostatService,
     Thermostat,
@@ -11,7 +13,7 @@ from wyzeapy.services.thermostat_service import (
     ThermostatProps,
 )
 from wyzeapy.types import DeviceTypes
-from wyzeapy.wyze_auth_lib import WyzeAuthLib
+from wyzeapy.wyze_auth_lib import Token, WyzeAuthLib
 
 
 class TestThermostatService(unittest.IsolatedAsyncioTestCase):
@@ -57,6 +59,8 @@ class TestThermostatService(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(updated_thermostat.temp_unit, TemperatureUnit.FAHRENHEIT)
         self.assertEqual(updated_thermostat.cool_set_point, 74)
         self.assertEqual(updated_thermostat.heat_set_point, 64)
+        self.assertIs(type(updated_thermostat.cool_set_point), int)
+        self.assertIs(type(updated_thermostat.heat_set_point), int)
         self.assertEqual(updated_thermostat.fan_mode, FanMode.AUTO)
         self.assertEqual(updated_thermostat.hvac_mode, HVACMode.AUTO)
         self.assertEqual(updated_thermostat.preset, Preset.HOME)
@@ -85,14 +89,50 @@ class TestThermostatService(unittest.IsolatedAsyncioTestCase):
     async def test_set_cool_point(self):
         await self.thermostat_service.set_cool_point(self.test_thermostat, 75)
         self.thermostat_service._thermostat_set_iot_prop.assert_awaited_with(
-            self.test_thermostat, ThermostatProps.COOL_SP, 75
+            self.test_thermostat, ThermostatProps.COOL_SP, "75"
         )
 
     async def test_set_heat_point(self):
         await self.thermostat_service.set_heat_point(self.test_thermostat, 68)
         self.thermostat_service._thermostat_set_iot_prop.assert_awaited_with(
-            self.test_thermostat, ThermostatProps.HEAT_SP, 68
+            self.test_thermostat, ThermostatProps.HEAT_SP, "68"
         )
+
+    async def test_cool_point_request_uses_a_string(self):
+        await self._assert_set_point_request("set_cool_point", 75, {"cool_sp": "75"})
+
+    async def test_heat_point_request_uses_a_string(self):
+        await self._assert_set_point_request("set_heat_point", 68, {"heat_sp": "68"})
+
+    async def _assert_set_point_request(self, setter_name, temperature, expected_props):
+        # Exercise real payload construction and signing, mocking only transport/auth.
+        service = ThermostatService(auth_lib=self.mock_auth_lib)
+        self.mock_auth_lib.token = Token("test_access_token", "test_refresh_token")
+        self.mock_auth_lib.post.return_value = {"code": 1}
+
+        await getattr(service, setter_name)(self.test_thermostat, temperature)
+
+        self.mock_auth_lib.post.assert_awaited_once()
+        request = self.mock_auth_lib.post.call_args
+        self.assertEqual(
+            request.args,
+            (
+                "https://wyze-earth-service.wyzecam.com/plugin/earth/set_iot_prop_by_topic",
+            ),
+        )
+        body = request.kwargs["data"]
+        payload = json.loads(body)
+        self.assertEqual(payload["props"], expected_props)
+        self.assertEqual(payload["did"], self.test_thermostat.mac)
+        self.assertEqual(payload["model"], self.test_thermostat.product_model)
+        self.assertEqual(
+            request.kwargs["headers"]["signature2"],
+            olive_create_signature(body, "test_access_token"),
+        )
+        self.assertEqual(self.test_thermostat.heat_set_point, 64)
+        self.assertEqual(self.test_thermostat.cool_set_point, 74)
+        self.assertIs(type(self.test_thermostat.heat_set_point), int)
+        self.assertIs(type(self.test_thermostat.cool_set_point), int)
 
     async def test_set_hvac_mode(self):
         await self.thermostat_service.set_hvac_mode(self.test_thermostat, HVACMode.COOL)

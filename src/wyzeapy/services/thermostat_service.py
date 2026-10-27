@@ -105,10 +105,14 @@ class ThermostatService(BaseService):
         return [Thermostat(thermostat.raw_dict) for thermostat in thermostats]
 
     async def set_cool_point(self, thermostat: Device, temp: int):
-        await self._thermostat_set_iot_prop(thermostat, ThermostatProps.COOL_SP, temp)
+        await self._thermostat_set_iot_prop(
+            thermostat, ThermostatProps.COOL_SP, str(temp)
+        )
 
     async def set_heat_point(self, thermostat: Device, temp: int):
-        await self._thermostat_set_iot_prop(thermostat, ThermostatProps.HEAT_SP, temp)
+        await self._thermostat_set_iot_prop(
+            thermostat, ThermostatProps.HEAT_SP, str(temp)
+        )
 
     async def set_hvac_mode(self, thermostat: Device, hvac_mode: HVACMode):
         await self._thermostat_set_iot_prop(

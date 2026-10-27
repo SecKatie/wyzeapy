@@ -109,12 +109,9 @@ class AirPurifierService(BaseService):
         )
 
     async def get_air_purifiers(self) -> List[AirPurifier]:
-        if self._devices is None:
-            self._devices = await self.get_object_list()
-
         air_purifiers = [
             device
-            for device in self._devices
+            for device in await self._get_cached_devices()
             if device.type is DeviceTypes.COMMON
             and device.product_model in AIR_PURIFIER_MODELS
         ]

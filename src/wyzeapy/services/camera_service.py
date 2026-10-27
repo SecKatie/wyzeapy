@@ -169,11 +169,10 @@ class CameraService(BaseService):
                 time.sleep(self._worker_loop_interval)
 
     async def get_cameras(self) -> List[Camera]:
-        if self._devices is None:
-            self._devices = await self.get_object_list()
-
         cameras = [
-            device for device in self._devices if device.type is DeviceTypes.CAMERA
+            device
+            for device in await self._get_cached_devices()
+            if device.type is DeviceTypes.CAMERA
         ]
 
         return [Camera(camera.raw_dict) for camera in cameras]

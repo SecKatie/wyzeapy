@@ -266,6 +266,12 @@ class BaseService:
 
         return BaseService._devices
 
+    async def _get_cached_devices(self):
+        """Return cached inventory, fetching it when no inventory is available."""
+        if self._devices is None:
+            self._devices = await self.get_object_list()
+        return self._devices
+
     async def get_updated_params(
         self, device_mac: str = None
     ) -> Dict[str, Optional[Any]]:

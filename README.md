@@ -14,7 +14,7 @@ This project is used by the [ha-wyzeapi](https://github.com/SecKatie/ha-wyzeapi)
 
 ## Usage/Examples
 
-Getting logged in:
+List the bulbs in your Wyze account:
 
 ```python
 import asyncio
@@ -23,13 +23,22 @@ from wyzeapy import Wyzeapy
 
 async def async_main():
     client = await Wyzeapy.create()
-    await client.login(email="EMAIL", password="PASSWORD", key_id="KEY_ID", api_key="API_KEY")
+    await client.login(
+        email="you@example.com",
+        password="YOUR_PASSWORD",
+        key_id="YOUR_KEY_ID",
+        api_key="YOUR_API_KEY",
+    )
+    service = await client.bulb_service
+    for bulb in await service.get_bulbs():
+        print(bulb.mac, bulb.nickname)
 
 
 if __name__ == "__main__":
     asyncio.run(async_main())
 ```
-Note: Visit the [Wyze developer console](https://developer-api-console.wyze.com/#/apikey/view) to generate an Key Id and Api Key.
+Replace the placeholders with your credentials. Generate your API key and key ID
+in the [Wyze developer console](https://developer-api-console.wyze.com/#/apikey/view).
 
 ## Thanks to:
 

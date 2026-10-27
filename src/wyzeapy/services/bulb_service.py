@@ -154,12 +154,9 @@ class BulbService(BaseService):
 
         :return: List of Bulb objects with default property values
         """
-        if self._devices is None:
-            self._devices = await self.get_object_list()
-
         bulbs = [
             device
-            for device in self._devices
+            for device in await self._get_cached_devices()
             if device.type
             in [DeviceTypes.LIGHT, DeviceTypes.MESH_LIGHT, DeviceTypes.LIGHTSTRIP]
         ]

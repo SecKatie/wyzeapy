@@ -108,12 +108,9 @@ class SensorService(BaseService):
             time.sleep(self._worker_loop_interval)
 
     async def get_sensors(self) -> List[Sensor]:
-        if self._devices is None:
-            self._devices = await self.get_object_list()
-
         sensors = [
             Sensor(device.raw_dict)
-            for device in self._devices
+            for device in await self._get_cached_devices()
             if device.type is DeviceTypes.MOTION_SENSOR
             or device.type is DeviceTypes.CONTACT_SENSOR
             or device.type is DeviceTypes.LEAK_SENSOR

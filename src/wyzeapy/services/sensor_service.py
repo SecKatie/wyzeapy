@@ -7,11 +7,11 @@ import asyncio
 import logging
 import time
 from threading import Thread
-from typing import List, Callable
+from typing import List, Callable, Tuple, Optional
 
 from aiohttp import ClientOSError, ContentTypeError
 
-from ..exceptions import UnknownApiError, _AuthenticationInProgress
+from ..exceptions import UnknownApiError
 from .base_service import BaseService
 from ..types import Device, PropertyIDs, DeviceTypes
 
@@ -30,16 +30,13 @@ class Sensor(Device):
 
 
 class SensorService(BaseService):
-    def __init__(self, auth_lib, *, _context=None):
-        super().__init__(auth_lib, _context=_context)
-        self._updater_thread = None
-        self._subscribers = []
-
+    _updater_thread: Optional[Thread] = None
+    _subscribers: List[Tuple[Sensor, Callable[[Sensor], None]]] = []
     _worker_loop_interval = 5  # seconds between passes
 
     async def update(self, sensor: Sensor) -> Sensor:
         # Get updated device_params
-        async with self._context.update_lock:
+        async with BaseService._update_lock:
             sensor.device_params = await self.get_updated_params(sensor.mac)
 
         # Known types read cached device_params to avoid extra API calls.
@@ -69,8 +66,7 @@ class SensorService(BaseService):
         self, sensor: Sensor, callback: Callable[[Sensor], None]
     ):
         _LOGGER.debug(f"Registering sensor: {sensor.nickname} for updates")
-        self._context.check_ready()
-        loop = asyncio.get_running_loop()
+        loop = asyncio.get_event_loop()
         if not self._updater_thread:
             self._updater_thread = Thread(
                 target=self.update_worker,
@@ -100,8 +96,6 @@ class SensorService(BaseService):
                             self.update(sensor), loop
                         ).result()
                     )
-                except _AuthenticationInProgress:
-                    pass
                 except UnknownApiError as e:
                     _LOGGER.warning(
                         f"The update method detected an UnknownApiError: {e}"

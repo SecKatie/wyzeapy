@@ -34,7 +34,3 @@ class UnknownApiError(Exception):
 
 class TwoFactorAuthenticationEnabled(Exception):
     """Raised when two-factor authentication is required for login."""
-
-
-class _AuthenticationInProgress(RuntimeError):
-    """Internal signal allowing legacy workers to wait for authentication."""

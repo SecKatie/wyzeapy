@@ -9,7 +9,7 @@ class TestDeviceUpdater(unittest.IsolatedAsyncioTestCase):
         self.mock_service = MagicMock()
         self.mock_device = MagicMock(spec=Device)
         self.mock_device.nickname = "TestDevice"
-        self.mock_device.callback_function = MagicMock()
+        self.mock_device.callback_function = AsyncMock()
 
     def test_init(self):
         updater = DeviceUpdater(self.mock_service, self.mock_device, 60)
@@ -30,8 +30,8 @@ class TestDeviceUpdater(unittest.IsolatedAsyncioTestCase):
 
         self.mock_service.update.assert_awaited_once_with(self.mock_device)
         self.mock_device.callback_function.assert_called_once_with(self.mock_device)
-        mock_mutex.__aenter__.assert_awaited_once()
-        mock_mutex.__aexit__.assert_awaited_once()
+        mock_mutex.acquire.assert_called_once()
+        mock_mutex.release.assert_called_once()
         self.assertEqual(
             updater.update_in, 60
         )  # Reset to ceil(INTERVAL / updates_per_interval)
@@ -48,8 +48,8 @@ class TestDeviceUpdater(unittest.IsolatedAsyncioTestCase):
 
         self.mock_service.update.assert_not_awaited()
         self.mock_device.callback_function.assert_not_called()
-        mock_mutex.__aenter__.assert_not_awaited()
-        mock_mutex.__aexit__.assert_not_awaited()
+        mock_mutex.acquire.assert_not_called()
+        mock_mutex.release.assert_not_called()
         self.assertEqual(updater.update_in, 2)  # update_in reduced by 1
 
     async def test_update_exception_handling(self):
@@ -64,8 +64,8 @@ class TestDeviceUpdater(unittest.IsolatedAsyncioTestCase):
 
         self.mock_service.update.assert_awaited_once_with(self.mock_device)
         self.mock_device.callback_function.assert_not_called()
-        mock_mutex.__aenter__.assert_awaited_once()
-        mock_mutex.__aexit__.assert_awaited_once()
+        mock_mutex.acquire.assert_called_once()
+        mock_mutex.release.assert_called_once()
         self.assertEqual(updater.update_in, 60)  # Still resets update_in
 
     def test_tick_tock(self):
@@ -91,6 +91,9 @@ class TestDeviceUpdater(unittest.IsolatedAsyncioTestCase):
 
 class TestUpdateManager(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
+        # Reset the class-level attributes before each test
+        UpdateManager.updaters = []
+        UpdateManager.removed_updaters = []
         self.update_manager = UpdateManager()
         # For logging assertions
         import logging
@@ -157,7 +160,7 @@ class TestUpdateManager(unittest.IsolatedAsyncioTestCase):
 
     def test_add_updater_exceeds_max_slots(self):
         # Directly set updaters to exceed MAX_SLOTS
-        self.update_manager.updaters = [MagicMock()] * (MAX_SLOTS + 1)
+        UpdateManager.updaters = [MagicMock()] * (MAX_SLOTS + 1)
 
         new_updater = DeviceUpdater(
             MagicMock(), MagicMock(), 1

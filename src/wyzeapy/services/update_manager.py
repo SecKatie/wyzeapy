@@ -1,11 +1,11 @@
-from asyncio import Lock, sleep
+from asyncio import sleep
 from dataclasses import dataclass, field
 from heapq import heappush, heappop
 from typing import Any
 from math import ceil
 from ..types import Device
-from ..exceptions import _AuthenticationInProgress
 import logging
+import threading
 
 """
 Asynchronous device update scheduling and management.
@@ -48,21 +48,22 @@ class DeviceUpdater(object):
         self.update_in = 0  # Always initialize at 0 so that we get the first update ASAP. The items will shift based on priority after this.
         self.updates_per_interval = ceil(INTERVAL / update_interval)
 
-    async def update(self, mutex: Lock):
+    async def update(self, mutex: threading.Lock):
         # We only want to update if the update_in counter is zero
         if self.update_in <= 0:
             _LOGGER.debug("Updating device: " + self.device.nickname)
             # Acquire the mutex before making the async call
+            mutex.acquire()
             try:
-                async with mutex:
-                    # Get the updated info for the device from Wyze's API
-                    self.device = await self.service.update(self.device)
-                    # Callback to provide the updated info to the subscriber
-                    self.device.callback_function(self.device)
-            except _AuthenticationInProgress:
-                pass
+                # Get the updated info for the device from Wyze's API
+                self.device = await self.service.update(self.device)
+                # Callback to provide the updated info to the subscriber
+                self.device.callback_function(self.device)
             except Exception:
                 _LOGGER.exception("Unknown error happened during updating device info")
+            finally:
+                # Release the mutex after the async call
+                mutex.release()
             # Once it reaches zero and we update the device we want to reset the update_in counter
             self.update_in = ceil(INTERVAL / self.updates_per_interval)
         else:
@@ -87,10 +88,9 @@ class UpdateManager:
     limits and fair distribution of update calls across devices.
     """
 
-    def __init__(self):
-        self.updaters = []
-        self.removed_updaters = []
-        self.mutex = Lock()
+    updaters = []
+    removed_updaters = []
+    mutex = threading.Lock()
 
     def check_if_removed(self, updater: DeviceUpdater):
         for item in self.removed_updaters:

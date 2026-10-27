@@ -11,7 +11,7 @@ from typing import Any, List, Optional, Dict, Callable, Tuple
 
 from aiohttp import ClientOSError, ContentTypeError
 
-from ..exceptions import UnknownApiError, _AuthenticationInProgress
+from ..exceptions import UnknownApiError
 from .base_service import BaseService
 from ..types import (
     Device,
@@ -47,16 +47,13 @@ class Camera(Device):
 
 
 class CameraService(BaseService):
-    def __init__(self, auth_lib, *, _context=None):
-        super().__init__(auth_lib, _context=_context)
-        self._updater_thread = None
-        self._subscribers = []
-
+    _updater_thread: Optional[Thread] = None
+    _subscribers: List[Tuple[Camera, Callable[[Camera], None]]] = []
     _worker_loop_interval = 5  # seconds between full passes
 
     async def update(self, camera: Camera, latest_events: Optional[List[Event]] = None):
         # Get updated device_params
-        async with self._context.update_lock:
+        async with BaseService._update_lock:
             camera.device_params = await self.get_updated_params(camera.mac)
 
         # Get camera events, unless update_worker already fetched them
@@ -118,8 +115,7 @@ class CameraService(BaseService):
     async def register_for_updates(
         self, camera: Camera, callback: Callable[[Camera], None]
     ):
-        self._context.check_ready()
-        loop = asyncio.get_running_loop()
+        loop = asyncio.get_event_loop()
         if not self._updater_thread:
             self._updater_thread = Thread(
                 target=self.update_worker,
@@ -150,9 +146,6 @@ class CameraService(BaseService):
                     ).result()
                     raw_events = response["data"]["event_list"]
                     latest_events = [Event(raw_event) for raw_event in raw_events]
-                except _AuthenticationInProgress:
-                    time.sleep(self._worker_loop_interval)
-                    continue
                 except (UnknownApiError, ClientOSError, ContentTypeError) as e:
                     _LOGGER.error(f"Failed to fetch shared event list: {e}")
                     latest_events = []
@@ -164,8 +157,6 @@ class CameraService(BaseService):
                                 self.update(camera, latest_events), loop
                             ).result()
                         )
-                    except _AuthenticationInProgress:
-                        pass
                     except UnknownApiError as e:
                         _LOGGER.warning(
                             f"The update method detected an UnknownApiError: {e}"

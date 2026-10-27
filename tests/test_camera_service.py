@@ -8,15 +8,15 @@ from wyzeapy.types import (
     ResponseCodes,
 )
 from wyzeapy.wyze_auth_lib import WyzeAuthLib
+import asyncio
 from wyzeapy.exceptions import UnknownApiError
 from aiohttp import ClientOSError, ContentTypeError
 
 
 class TestCameraService(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
-        thread = patch("wyzeapy.services.camera_service.Thread")
-        thread.start()
-        self.addCleanup(thread.stop)
+        CameraService._updater_thread = None
+        CameraService._subscribers = []
         self.mock_auth_lib = MagicMock(spec=WyzeAuthLib)
         self.camera_service = CameraService(auth_lib=self.mock_auth_lib)
         self.camera_service._get_property_list = AsyncMock()
@@ -26,7 +26,7 @@ class TestCameraService(unittest.IsolatedAsyncioTestCase):
         self.camera_service._set_property = AsyncMock()
         self.camera_service._set_property_list = AsyncMock()
         self.camera_service._set_toggle = AsyncMock()
-        self.camera_service.get_updated_params = AsyncMock(return_value={})
+        self.camera_service.get_updated_params = AsyncMock()
         self.camera_service._get_iot_prop_devicemgmt = AsyncMock()
         self.camera_service._get_camera_stream = AsyncMock()
         self.camera_service.get_object_list = AsyncMock(
@@ -452,65 +452,67 @@ class TestCameraService(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.camera_service._subscribers[0][0], camera2)
 
     async def test_update_worker_success(self):
-        callback = MagicMock()
-        self.camera_service._subscribers = [(self.test_camera, callback)]
-        self.camera_service._get_event_list = MagicMock(return_value="events")
-        self.camera_service.update = MagicMock(return_value="camera")
-        event_future = MagicMock()
-        event_future.result.return_value = {"data": {"event_list": []}}
-        camera_future = MagicMock()
-        camera_future.result.return_value = self.test_camera
-        with (
-            patch(
-                "wyzeapy.services.camera_service.asyncio.run_coroutine_threadsafe",
-                side_effect=[event_future, camera_future],
-            ),
-            patch(
-                "wyzeapy.services.camera_service.time.sleep",
-                side_effect=RuntimeError("stop loop"),
-            ),
-        ):
-            with self.assertRaisesRegex(RuntimeError, "stop loop"):
-                self.camera_service.update_worker(loop=MagicMock())
-        self.camera_service.update.assert_called_once_with(self.test_camera, [])
-        callback.assert_called_once_with(self.test_camera)
+        mock_callback = MagicMock()
+        mock_callback.return_value = None  # Ensure callback doesn't return a coroutine
+        self.camera_service.update = AsyncMock(return_value=self.test_camera)
+
+        await self.camera_service.register_for_updates(self.test_camera, mock_callback)
+
+        # Give the worker a moment to run
+        await asyncio.sleep(0.2)
+
+        # Manually stop the thread for testing purposes
+        self.camera_service._subscribers = []
+        self.camera_service._updater_thread.join(timeout=1)
+
+        # The update method should have been called at least once
+        self.assertGreater(self.camera_service.update.call_count, 0)
+        # The callback should have been called at least once
+        self.assertGreater(mock_callback.call_count, 0)
 
     async def test_update_worker_exceptions(self):
-        self.camera_service._subscribers = [(self.test_camera, MagicMock())]
-        self.camera_service._get_event_list = MagicMock(return_value="events")
-        self.camera_service.update = MagicMock(return_value="camera")
-        event_future = MagicMock()
-        event_future.result.return_value = {"data": {"event_list": []}}
-        futures = []
-        for error in (
+        mock_callback = MagicMock()
+
+        # Create a series of exceptions that will be raised when update is called
+        exceptions_to_raise = [
             UnknownApiError("API Error"),
             ClientOSError(),
             ContentTypeError(
                 request_info=MagicMock(), history=(), status=200, message=""
             ),
-        ):
-            future = MagicMock()
-            future.result.side_effect = error
-            futures.extend([event_future, future])
+        ]
+
+        self.camera_service.update = AsyncMock(side_effect=exceptions_to_raise)
+        self.camera_service._get_event_list = AsyncMock(
+            return_value={"data": {"event_list": []}}
+        )
+
         with (
-            patch("wyzeapy.services.camera_service._LOGGER.warning") as warning,
-            patch("wyzeapy.services.camera_service._LOGGER.error") as error_log,
-            patch(
-                "wyzeapy.services.camera_service.asyncio.run_coroutine_threadsafe",
-                side_effect=futures,
-            ),
-            patch(
-                "wyzeapy.services.camera_service.time.sleep",
-                side_effect=[None, None, RuntimeError("stop loop")],
-            ),
+            patch("wyzeapy.services.camera_service._LOGGER.warning") as mock_warning,
+            patch("wyzeapy.services.camera_service._LOGGER.error") as mock_error,
+            patch("wyzeapy.services.camera_service.time.sleep"),
         ):
-            with self.assertRaisesRegex(RuntimeError, "stop loop"):
-                self.camera_service.update_worker(loop=MagicMock())
-            self.assertEqual(self.camera_service.update.call_count, 3)
-            warning.assert_called_once_with(
+            await self.camera_service.register_for_updates(
+                self.test_camera, mock_callback
+            )
+
+            # Give the worker a moment to run through exceptions
+            await asyncio.sleep(0.3)
+
+            # Manually stop the thread for testing purposes
+            self.camera_service._subscribers = []
+            self.camera_service._updater_thread.join(timeout=1)
+
+            # Check that the update method was called at least the number of exceptions we set up
+            self.assertGreaterEqual(
+                self.camera_service.update.call_count, len(exceptions_to_raise)
+            )
+            # Check that the warning was called for UnknownApiError
+            mock_warning.assert_called_with(
                 "The update method detected an UnknownApiError: API Error"
             )
-            self.assertEqual(error_log.call_count, 2)
+            # Check that error was called for other exceptions
+            self.assertGreaterEqual(mock_error.call_count, 2)
 
 
 if __name__ == "__main__":

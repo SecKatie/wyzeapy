@@ -113,7 +113,7 @@ class BulbService(BaseService):
         :return: Updated bulb object with current property values
         """
         # Get updated device_params
-        async with self._context.update_lock:
+        async with BaseService._update_lock:
             bulb.device_params = await self.get_updated_params(bulb.mac)
 
         device_info = await self._get_property_list(bulb)

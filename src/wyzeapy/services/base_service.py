@@ -11,7 +11,7 @@ from typing import List, Tuple, Any, Dict, Optional
 
 import aiohttp
 
-from .update_manager import DeviceUpdater
+from .update_manager import DeviceUpdater, UpdateManager
 from ..const import (
     PHONE_SYSTEM_TYPE,
     APP_VERSION,
@@ -56,7 +56,6 @@ from ..utils import (
     check_for_errors_devicemgmt,
 )
 from ..wyze_auth_lib import WyzeAuthLib
-from .._account import _AccountContext
 
 """
 BaseService provides shared functionality for Wyze device services,
@@ -96,28 +95,41 @@ class BaseService:
     **Note:** This class is not meant to be instantiated directly - use device-specific services instead.
     """
 
-    def __init__(self, auth_lib: WyzeAuthLib, *, _context=None):
-        self._context = _context if _context is not None else _AccountContext(auth_lib)
+    _devices: Optional[List[Device]] = None
+    _last_updated_time: time = (
+        0  # preload a value of 0 so that comparison will succeed on the first run
+    )
+    _min_update_time = 300  # seconds; shared by all services, avoid Wyze bans
+    _update_lock: asyncio.Lock = asyncio.Lock()  # fmt: skip
+    _update_manager: UpdateManager = UpdateManager()
+    _update_loop = None
+    _updater: DeviceUpdater = None
+    _updater_dict = {}
 
-    @property
-    def _auth_lib(self):
-        self._context.check_ready()
-        return self._context.auth
+    def __init__(self, auth_lib: WyzeAuthLib):
+        """Initialize the base service with authentication.
 
-    async def start_update_manager(self=None):
-        """Start this service's client manager once.
-
-        Ownerless ``BaseService.start_update_manager()`` is unsupported in 0.9.0.
-        Use ``await service.start_update_manager()`` instead.
+        **Args:**
+        * `auth_lib` (WyzeAuthLib): The authentication library for API access
         """
-        if self is None:
-            raise RuntimeError(
-                "Start updates on a service instance belonging to a client"
-            )
-        self._context.check_ready()
-        if self._context.update_task is None:
-            self._context.update_task = asyncio.create_task(
-                self._context.update_manager.update_next()
+        self._auth_lib = auth_lib
+
+    @staticmethod
+    async def start_update_manager():
+        """Start the global update manager for automatic device state updates.
+
+        This initializes the background update system that handles periodic
+        device state refreshes for all registered devices.
+
+        **Example:**
+        ```python
+        await BaseService.start_update_manager()
+        ```
+        """
+        if BaseService._update_loop is None:
+            BaseService._update_loop = asyncio.get_event_loop()
+            BaseService._update_loop.create_task(
+                BaseService._update_manager.update_next()
             )
 
     def register_updater(self, device: Device, interval):
@@ -136,10 +148,9 @@ class BaseService:
         service.register_updater(device, 30)
         ```
         """
-        self._context.check_ready()
-        updater = DeviceUpdater(self, device, interval)
-        self._context.update_manager.add_updater(updater)
-        self._context.updaters[device] = updater
+        self._updater = DeviceUpdater(self, device, interval)
+        BaseService._update_manager.add_updater(self._updater)
+        self._updater_dict[self._updater.device] = self._updater
 
     def unregister_updater(self, device: Device):
         """Stop automatic updates for a device.
@@ -155,10 +166,9 @@ class BaseService:
         service.unregister_updater(device)
         ```
         """
-        self._context.check_ready()
-        updater = self._context.updaters.pop(device, None)
-        if updater is not None:
-            self._context.update_manager.del_updater(updater)
+        if self._updater:
+            BaseService._update_manager.del_updater(self._updater_dict[device])
+            del self._updater_dict[device]
 
     async def set_push_info(self, on: bool):
         """Set push info for the user.
@@ -216,7 +226,7 @@ class BaseService:
         """Discover and retrieve all devices associated with the Wyze account.
 
         This method fetches all devices from the Wyze API and caches them for
-        efficient subsequent access. Results are shared by services belonging to this client.
+        efficient subsequent access. Results are shared across all service instances.
 
         **Returns:**
         * `List[Device]`: List of all discovered Wyze devices
@@ -228,7 +238,7 @@ class BaseService:
             print(f"Device: {device.nickname} ({device.product_model})")
         ```
 
-        **Note:** Results are cached within this client
+        **Note:** Results are cached and shared across all BaseService instances
         """
         await self._auth_lib.refresh_if_should()
 
@@ -250,18 +260,17 @@ class BaseService:
 
         check_for_errors_standard(self, response_json)
         # Cache the devices so that update calls can pull more recent device_params
-        self._context.devices = [
+        BaseService._devices = [
             Device(device) for device in response_json["data"]["device_list"]
         ]
 
-        return self._context.devices
+        return BaseService._devices
 
     async def _get_cached_devices(self):
-        """Reuse this client's inventory for service-specific discovery."""
-        self._context.check_ready()
-        if self._context.devices is None:
-            self._context.devices = await self.get_object_list()
-        return self._context.devices
+        """Return cached inventory, fetching it when no inventory is available."""
+        if self._devices is None:
+            self._devices = await self.get_object_list()
+        return self._devices
 
     async def get_updated_params(
         self, device_mac: str = None
@@ -271,15 +280,11 @@ class BaseService:
         :param device_mac: The device mac to get updated params for.
         :return: Updated params for the device.
         """
-        self._context.check_ready()
-        if (
-            time.time() - self._context.last_updated_time
-            >= self._context.min_update_time
-        ):
+        if time.time() - BaseService._last_updated_time >= BaseService._min_update_time:
             await self.get_object_list()
-            self._context.last_updated_time = time.time()
+            BaseService._last_updated_time = time.time()
         ret_params = {}
-        for dev in self._context.devices:
+        for dev in BaseService._devices:
             if dev.mac == device_mac:
                 ret_params = dev.device_params
         return ret_params
@@ -678,7 +683,8 @@ class BaseService:
         :return: The response to gathering the plan for the current user
         """
 
-        await self._auth_lib.refresh_if_should()
+        if self._auth_lib.should_refresh:
+            await self._auth_lib.refresh()
 
         url = "https://wyze-membership-service.wyzecam.com/platform/v2/membership/get_plan_binding_list_by_user"
         payload = olive_create_hms_payload()
@@ -720,7 +726,8 @@ class BaseService:
         :param hms_id: The hms_id
         :return: The response that includes the status
         """
-        await self._auth_lib.refresh_if_should()
+        if self._auth_lib.should_refresh:
+            await self._auth_lib.refresh()
 
         url = "https://hms.api.wyze.com/api/v1/monitoring/v1/profile/state-status"
         query = olive_create_hms_get_payload(hms_id)
@@ -932,7 +939,7 @@ class BaseService:
         check_for_errors_iot(self, response_json)
 
     async def _local_bulb_command(self, bulb, plist):
-        self._context.check_ready()
+        # await self._auth_lib.refresh_if_should()
 
         characteristics = {
             "mac": bulb.mac.upper(),

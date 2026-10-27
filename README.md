@@ -14,7 +14,7 @@ This project is used by the [ha-wyzeapi](https://github.com/SecKatie/ha-wyzeapi)
 
 ## Usage/Examples
 
-Getting logged in:
+List the bulbs in your Wyze account:
 
 ```python
 import asyncio
@@ -23,43 +23,22 @@ from wyzeapy import Wyzeapy
 
 async def async_main():
     client = await Wyzeapy.create()
-    await client.login(email="EMAIL", password="PASSWORD", key_id="KEY_ID", api_key="API_KEY")
+    await client.login(
+        email="you@example.com",
+        password="YOUR_PASSWORD",
+        key_id="YOUR_KEY_ID",
+        api_key="YOUR_API_KEY",
+    )
+    service = await client.bulb_service
+    for bulb in await service.get_bulbs():
+        print(bulb.mac, bulb.nickname)
 
 
 if __name__ == "__main__":
     asyncio.run(async_main())
 ```
-Note: Visit the [Wyze developer console](https://developer-api-console.wyze.com/#/apikey/view) to generate an Key Id and Api Key.
-
-### Account ownership (staged for 0.9.0)
-
-Use one client per exact username and event loop. Obtain services from that
-client so they share authentication, inventory, the parameter cache and legacy
-update coordination. Separate clients have separate state, even when devices
-have the same identifiers. Standalone service constructors remain usable but
-create independent contexts; use the client properties to share state.
-
-Same-username `login(...)` retries keep existing services connected to one auth
-owner. Failed or cancelled attempts preserve the last successful token. Finish
-MFA with `await client.login_with_2fa(code)` on the client that started it. A new
-login invalidates its previous challenge. Service operations raise `RuntimeError`
-until login/MFA finishes; changing username requires a new client.
-Token-only login with `email=None` remains supported and binds that unnamed
-identity; adding a username later also requires a new client.
-
-For existing automatic updates, register devices and start the owning manager:
-
-```python
-service = await client.bulb_service
-service.register_updater(device, 30)
-await service.start_update_manager()
-```
-
-Ownerless `await BaseService.start_update_manager()` raises `RuntimeError`.
-These restrictions are intended for the breaking 0.9.0 release, not 0.8.x.
-This slice retains per-request sessions and existing polling intervals. It does
-not yet provide client shutdown or complete HA account isolation. Consumer-owned
-polling remains the eventual direction.
+Replace the placeholders with your credentials. Generate your API key and key ID
+in the [Wyze developer console](https://developer-api-console.wyze.com/#/apikey/view).
 
 ## Thanks to:
 
@@ -79,8 +58,7 @@ Developed by Katie Mulliken ([SecKatie](https://github.com/SecKatie))
 
 ### Testing
 
-Run the complete pytest suite, including unittest cases, with `coverage` for
-coverage reporting. Its HTTP guard permits only controlled loopback endpoints.
+This project uses Python's built-in `unittest` framework with `coverage` for code coverage reporting.
 
 #### Prerequisites
 
@@ -94,12 +72,12 @@ uv sync --group dev
 
 **Run all tests:**
 ```bash
-.venv/bin/python -m pytest tests
+.venv/bin/python -m unittest discover tests
 ```
 
 **Run tests with verbose output:**
 ```bash
-.venv/bin/python -m pytest tests -v
+.venv/bin/python -m unittest discover tests -v
 ```
 
 **Run a specific test file:**
@@ -116,7 +94,7 @@ uv sync --group dev
 
 **Run tests with coverage:**
 ```bash
-.venv/bin/coverage run -m pytest tests
+.venv/bin/coverage run -m unittest discover tests
 ```
 
 **View coverage report in terminal:**
@@ -133,7 +111,7 @@ Then open `htmlcov/index.html` in your web browser to view the detailed coverage
 
 **One-liner to run tests and view coverage:**
 ```bash
-.venv/bin/coverage run -m pytest tests && .venv/bin/coverage report -m
+.venv/bin/coverage run -m unittest discover tests && .venv/bin/coverage report -m
 ```
 
 ### Documentation

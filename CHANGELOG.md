@@ -8,28 +8,6 @@ SPDX-License-Identifier: GPL-3.0-only
 All notable changes to this project will be documented in this file.
 See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
-## Unreleased — planned for 0.9.0
-
-* Isolate inventory, cache timing, update coordination and legacy updater queues
-  per client. All services obtained from one client share its account context.
-  Camera and sensor subscriptions belong to their service instances.
-* Keep one authentication owner across serialized same-account login retries.
-  Failed or cancelled attempts retain the last successful token. A new attempt
-  invalidates the previous MFA challenge; continue MFA on its originating client.
-  Legacy workers skip pending authentication and continue on their existing intervals.
-* **Breaking ownership restrictions:** a client is bound to its first exact
-  username and event loop. Create another client to change either. Device
-  operations raise `RuntimeError` while login or MFA is pending. Start legacy
-  updates with `await service.start_update_manager()`; ownerless
-  `await BaseService.start_update_manager()` now raises `RuntimeError`.
-
-These changes are staged for 0.9.0, not a 0.8.x patch. No release is made here.
-Per-request HTTP transport and the existing 300-second parameter cache policy
-remain. Explicit inventory discovery still fetches inventory. Legacy update
-intervals remain unchanged; client shutdown and stoppable workers are subsequent
-phase 1 work. This does not enable multiple runtime accounts in Home Assistant;
-entry-scoped token persistence and reauthentication routing still need migration.
-
 - - -
 ## 0.8.0 - 2026-10-22
 

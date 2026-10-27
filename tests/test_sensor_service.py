@@ -13,9 +13,8 @@ class TestSensorService(unittest.IsolatedAsyncioTestCase):
         self.sensor_service.get_updated_params = AsyncMock()
         self.sensor_service.get_object_list = AsyncMock()
 
-        thread = patch("wyzeapy.services.sensor_service.Thread")
-        thread.start()
-        self.addCleanup(thread.stop)
+        # Reset the class-level subscribers list
+        self.sensor_service._subscribers = []
 
         # Create test sensors
         self.motion_sensor = Sensor(

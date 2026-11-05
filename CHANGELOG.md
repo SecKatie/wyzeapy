@@ -9,6 +9,17 @@ All notable changes to this project will be documented in this file.
 See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## 0.8.1 - 2026-11-05
+
+### Bug Fixes
+
+* Send thermostat heat and cool setpoints as strings so Wyze accepts setpoint changes (#370)
+
+### Refactoring
+
+* Share the cached device inventory lookup across device services (#361)
+
+- - -
 ## 0.8.0 - 2026-10-22
 
 ### Features

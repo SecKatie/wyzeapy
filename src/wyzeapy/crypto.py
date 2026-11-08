@@ -16,7 +16,9 @@ Cryptographic helper functions for creating API request signatures.
 
 
 def olive_create_signature(
-    payload: Union[Dict[Any, Any], str], access_token: str
+    payload: Union[Dict[Any, Any], str],
+    access_token: str,
+    signing_secret: str = OLIVE_SIGNING_SECRET,
 ) -> str:
     """
     Compute the olive (Wyze) API request signature using HMAC-MD5.
@@ -24,6 +26,8 @@ def olive_create_signature(
     Args:
         payload: The request payload as a dict or raw string.
         access_token: The access token string for signing.
+        signing_secret: The salt for the target service. Each Wyze plugin service
+            carries its own; the vacuum's venus service rejects the olive one.
 
     Returns:
         The computed signature as a hex string.
@@ -38,7 +42,7 @@ def olive_create_signature(
     else:
         body = payload
 
-    access_key = "{}{}".format(access_token, OLIVE_SIGNING_SECRET)
+    access_key = "{}{}".format(access_token, signing_secret)
 
     secret = hashlib.md5(access_key.encode()).hexdigest()
     return hmac.new(secret.encode(), body.encode(), hashlib.md5).hexdigest()

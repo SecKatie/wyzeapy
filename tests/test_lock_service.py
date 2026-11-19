@@ -122,5 +122,67 @@ class TestLockService(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(UnknownApiError):
             await self.lock_service.unlock(mock_lock)
 
+    async def test_update_iot3_lock(self):
+        mock_lock = Lock(
+            {
+                "device_type": "Common",
+                "product_model": "DX_PVLOC",
+                "mac": "DX_PVLOC_abc123",
+                "raw_dict": {},
+            }
+        )
+        self.lock_service._auth_lib.post.return_value = {
+            "code": "1",
+            "data": {
+                "props": {
+                    "lock::lock-status": True,
+                    "battery::battery-level": 97,
+                    "iot-device::iot-state": True,
+                }
+            },
+        }
 
-# ... other test cases ...
+        updated_lock = await self.lock_service.update(mock_lock)
+
+        self.assertTrue(updated_lock.available)
+        self.assertTrue(updated_lock.unlocked)
+        self.assertEqual(updated_lock.raw_dict["power"], 97)
+        self.lock_service._get_lock_info.assert_not_awaited()
+
+    async def test_get_locks_includes_iot3_models(self):
+        mock_regular_lock = AsyncMock()
+        mock_regular_lock.type = DeviceTypes.LOCK
+        mock_regular_lock.product_model = "YD_BT1"
+        mock_regular_lock.raw_dict = {"device_type": "Lock"}
+
+        mock_palm_lock = AsyncMock()
+        mock_palm_lock.type = DeviceTypes.UNKNOWN
+        mock_palm_lock.product_model = "DX_PVLOC"
+        mock_palm_lock.raw_dict = {"device_type": "Common", "product_model": "DX_PVLOC"}
+
+        self.lock_service.get_object_list = AsyncMock(
+            return_value=[mock_regular_lock, mock_palm_lock]
+        )
+
+        locks = await self.lock_service.get_locks()
+
+        self.assertEqual(len(locks), 2)
+        self.assertTrue(all(isinstance(lock, Lock) for lock in locks))
+
+    async def test_lock_unlock_iot3(self):
+        mock_lock = Lock(
+            {
+                "device_type": "Common",
+                "product_model": "DX_PVLOC",
+                "mac": "DX_PVLOC_abc123",
+                "raw_dict": {},
+            }
+        )
+        self.lock_service._auth_lib.post.return_value = {"code": "1"}
+        self.lock_service._auth_lib._username = "test_user"
+
+        await self.lock_service.lock(mock_lock)
+        await self.lock_service.unlock(mock_lock)
+
+        self.lock_service._lock_control.assert_not_awaited()
+        self.assertEqual(self.lock_service._auth_lib.post.await_count, 2)

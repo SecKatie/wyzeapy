@@ -145,7 +145,9 @@ class TestLockService(unittest.IsolatedAsyncioTestCase):
         updated_lock = await self.lock_service.update(mock_lock)
 
         self.assertTrue(updated_lock.available)
-        self.assertTrue(updated_lock.unlocked)
+        # lock-status True means the lock is physically LOCKED, so it must
+        # be inverted to get this module's `unlocked` convention.
+        self.assertFalse(updated_lock.unlocked)
         self.assertEqual(updated_lock.raw_dict["power"], 97)
         self.lock_service._get_lock_info.assert_not_awaited()
 

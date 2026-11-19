@@ -139,11 +139,16 @@ class LockService(BaseService):
             )
             # data.props comes back as a flat {pid: value} dict with native
             # JSON types (bool/int/str) -- confirmed against the live API,
-            # not documented anywhere.
+            # not documented anywhere. lock-status is True when the lock is
+            # LOCKED (confirmed against a physical Palm Lock: lock-status
+            # stayed True across repeated polls while the lock was
+            # physically locked, flipping only when the lock itself was
+            # physically unlocked), so it must be inverted to get this
+            # module's `unlocked` convention, where True means unlocked.
             props = response_json.get("data", {}).get("props") or {}
             lock.raw_dict["power"] = props.get("battery::battery-level")
             lock.available = bool(props.get("iot-device::iot-state"))
-            lock.unlocked = bool(props.get("lock::lock-status"))
+            lock.unlocked = not bool(props.get("lock::lock-status"))
             lock.door_open = False
             lock.trash_mode = False
 

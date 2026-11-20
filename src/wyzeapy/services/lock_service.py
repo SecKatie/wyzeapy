@@ -16,15 +16,16 @@ from ..types import Device, DeviceTypes, ResponseCodes
 from ..utils import wyze_decrypt_cbc
 
 # Some lock hardware (confirmed: DX_PVLOC, the Wyze Palm Lock; DX_LB2, the
-# Wyze Lock Bolt 2) is reported by Wyze's cloud API with product_type
-# "Common" instead of "Lock", and does not speak the Ford/Yunding lock
-# protocol at all (calling /openapi/lock/v1/* fails with ErrNo 15501
-# OPEN_AUTH_EMPTY regardless of uuid, because the device was never
-# registered with Ford). These models only speak Wyze's separate "IoT3"
-# API (/app/v4/iot3/get-property, /app/v4/iot3/run-action), reverse-engineered
-# by the wyze-api Node project (https://github.com/jfarmer08/wyze-api), whose
-# changelog confirms IoT3 support was added for both models together.
-IOT3_LOCK_PRODUCT_MODELS = {"DX_PVLOC", "DX_LB2"}
+# Wyze Lock Bolt 2; DX_LL1, the Wyze Lever Lock) is reported by Wyze's cloud
+# API with product_type "Common" instead of "Lock", and does not speak the
+# Ford/Yunding lock protocol at all (calling /openapi/lock/v1/* fails with
+# ErrNo 15501 OPEN_AUTH_EMPTY regardless of uuid, because the device was
+# never registered with Ford). These models only speak Wyze's separate
+# "IoT3" API (/app/v4/iot3/get-property, /app/v4/iot3/run-action),
+# reverse-engineered by the wyze-api Node project
+# (https://github.com/jfarmer08/wyze-api). DX_LL1 confirmed via a live
+# device dump against a physical Lever Lock (nickname "Garage Door").
+IOT3_LOCK_PRODUCT_MODELS = {"DX_PVLOC", "DX_LB2", "DX_LL1"}
 
 IOT3_APP_INFO = "wyze_android_3.11.0.758"
 IOT3_APP_VERSION = "3.11.0.758"

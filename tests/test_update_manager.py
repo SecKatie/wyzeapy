@@ -189,6 +189,53 @@ class TestUpdateManager(unittest.IsolatedAsyncioTestCase):
             self.assertLess(updater2.updates_per_interval, 300)
             self.assertLess(updater3.updates_per_interval, 300)
 
+    @patch("wyzeapy.services.update_manager.sleep", new_callable=AsyncMock)
+    async def test_update_next_all_updaters_removed(self, mock_sleep):
+        # Reproduces the upstream heap-underflow bug: every queued updater is
+        # removed in the same tick, so after popping the last one there's
+        # nothing left for the removed-updater skip loop to pop. This used to
+        # raise IndexError and permanently kill the shared background task
+        # for every Wyze device on the account.
+        updater1 = DeviceUpdater(MagicMock(), MagicMock(), 60)
+        updater2 = DeviceUpdater(MagicMock(), MagicMock(), 60)
+        self.update_manager.updaters.extend([updater1, updater2])
+        self.update_manager.removed_updaters.extend([updater1, updater2])
+
+        await self.update_manager.update_next()
+
+        self.assertEqual(self.update_manager.updaters, [])
+        mock_sleep.assert_not_awaited()
+
+    @patch("wyzeapy.services.update_manager.sleep", new_callable=AsyncMock)
+    async def test_update_next_survives_unexpected_exception(self, mock_sleep):
+        # If a tick raises something other than the handled IndexError, the
+        # shared background task must log it and keep looping instead of
+        # dying -- a single bad tick shouldn't take down updates for every
+        # other device. update_next() loops forever by design (it's meant to
+        # run as a single long-lived background task), so to observe one
+        # failing tick followed by one successful tick we make the *second*
+        # asyncio.sleep call raise, which stops the loop deterministically
+        # right after the good updater has been serviced and requeued.
+        mock_sleep.side_effect = [None, RuntimeError("stop the test loop")]
+
+        good_device = MagicMock()
+        good_device.nickname = "Good"
+        good_device.callback_function = MagicMock()
+        good_updater = DeviceUpdater(MagicMock(), good_device, 60)
+
+        bad_updater = MagicMock()
+        bad_updater.update = AsyncMock(side_effect=RuntimeError("boom"))
+        bad_updater.__lt__ = lambda self, other: True
+
+        self.update_manager.updaters.extend([bad_updater, good_updater])
+
+        with self.assertLogs("wyzeapy.services.update_manager", level="ERROR"):
+            with self.assertRaises(RuntimeError):
+                await self.update_manager.update_next()
+
+        self.assertIn(good_updater, self.update_manager.updaters)
+        self.assertEqual(mock_sleep.await_count, 2)
+
     def test_del_updater(self):
         updater = DeviceUpdater(MagicMock(), MagicMock(), 60)
         self.update_manager.updaters.append(updater)

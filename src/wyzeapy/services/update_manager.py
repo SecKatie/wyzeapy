@@ -105,21 +105,37 @@ class UpdateManager:
             _LOGGER.debug("No devices to update in queue")
             return
         while True:
-            # First we get the next updater off the queue
-            updater = heappop(self.updaters)
-            # if the updater has been removed, pop the next and clear it from the removed updaters
-            if self.removed_updaters:
-                while self.check_if_removed(updater):
-                    self.removed_updaters.remove(updater)
-                    updater = heappop(self.updaters)
-            # We then reduce the counter for all the other updaters
-            self.tick_tock()
-            # Then we update the target device
-            await updater.update(
-                self.mutex
-            )  # It will only update if it is time for it to update. Otherwise it just reduces its update_in counter.
-            # Then we put it back at the end of the queue. Or the front again if it wasn't ready to update
-            heappush(self.updaters, updater)
+            try:
+                # First we get the next updater off the queue
+                updater = heappop(self.updaters)
+                # if the updater has been removed, pop the next and clear it from the removed updaters
+                if self.removed_updaters:
+                    while self.check_if_removed(updater):
+                        self.removed_updaters.remove(updater)
+                        # All remaining updaters were removed in the same tick:
+                        # nothing left to pop. Without this check heappop on the
+                        # empty queue raises IndexError, which (since this loop
+                        # runs as a single long-lived background task with no
+                        # retry) would permanently stop updates for every
+                        # device, not just the ones that were removed.
+                        if len(self.updaters) == 0:
+                            return
+                        updater = heappop(self.updaters)
+                # We then reduce the counter for all the other updaters
+                self.tick_tock()
+                # Then we update the target device
+                await updater.update(
+                    self.mutex
+                )  # It will only update if it is time for it to update. Otherwise it just reduces its update_in counter.
+                # Then we put it back at the end of the queue. Or the front again if it wasn't ready to update
+                heappush(self.updaters, updater)
+            except Exception:
+                # This loop is started once as a single long-lived background
+                # task (see BaseService.start_update_manager) shared by every
+                # device on the account. Letting any exception escape here
+                # would silently and permanently stop updates for all of them
+                # until the process restarts.
+                _LOGGER.exception("Unknown error happened during update_next")
             await sleep(1)
 
     def filled_slots(self):

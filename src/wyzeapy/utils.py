@@ -185,7 +185,7 @@ def check_for_errors_iot(service, response_json: Dict[Any, Any]) -> None:
         service: The IoT service instance.
         response_json: The JSON response from the IoT API.
     """
-    if response_json["code"] != 1:
+    if str(response_json["code"]) != ResponseCodes.SUCCESS.value:
         if str(response_json["code"]) == ResponseCodes.ACCESS_TOKEN_ERROR.value:
             service._auth_lib.token.expired = True
             raise AccessTokenError("Access Token expired, attempting to refresh")

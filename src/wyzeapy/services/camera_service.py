@@ -33,6 +33,10 @@ DEVICEMGMT_API_MODELS = [
     "HL_PAN4",  # Wyze Cam Pan v4
 ]  # Floodlight pro, battery cam pro, OG, and Pan v4 use a diffrent api (devicemgmt)
 
+# Seconds given to a woken battery camera to reconnect before retrying
+# a get_stream_info request that found it reported offline.
+_CAMERA_WAKE_RETRY_DELAY = 5
+
 
 class Camera(Device):
     def __init__(self, dictionary: Dict[Any, Any]):
@@ -296,12 +300,10 @@ class CameraService(BaseService):
                 camera, PropertyIDs.MOTION_DETECTION_TOGGLE.value, "0"
             )
 
-    async def get_stream_info(self, camera: Camera):
+    async def get_stream_info(self, camera: Camera, _retried: bool = False):
         data = await self._get_camera_stream(camera)
         if data.get("code") == ResponseCodes.DEVICE_OFFLINE.value:
-            raise UnknownApiError(
-                "Camera is offline according to get_stream_info response"
-            )
+            return await self._wake_and_retry_stream_info(camera, _retried)
         if "data" not in data or len(data["data"]) != 1:
             raise UnknownApiError("Unexpected response from get_stream_info")
 
@@ -310,12 +312,35 @@ class CameraService(BaseService):
             raise UnknownApiError("Unexpected response from get_stream_info")
         properties = data["property"]
         if properties.get("iot-device::iot-state") != 1:
-            raise UnknownApiError(
-                "Camera is offline according to get_stream_info response"
-            )
+            return await self._wake_and_retry_stream_info(camera, _retried)
         # Some cameras no longer return iot-power from this endpoint. The
         # camera is streamable when it is online, so treat an omitted power
         # property as on instead of failing with KeyError.
         if properties.get("iot-device::iot-power", 1) != 1:
             raise UnknownApiError("Camera is off according to get_stream_info response")
         return data["params"]
+
+    async def _wake_and_retry_stream_info(self, camera: Camera, already_retried: bool):
+        # Battery-powered cameras (confirmed: ME_WCO3 "Cam Outdoor v3") sleep
+        # between motion events to save power, and Wyze's cloud reports them
+        # as offline while asleep. Wake the camera the same way the "Power"
+        # switch does and retry once before giving up, so opening a live view
+        # on a sleeping battery camera just takes a few seconds longer instead
+        # of failing outright. This does not help a camera that is genuinely
+        # unreachable (dead battery, out of range, removed from the account);
+        # that still fails, just after the retry delay.
+        if already_retried:
+            raise UnknownApiError(
+                "Camera is offline according to get_stream_info response"
+            )
+        try:
+            await self.turn_on(camera)
+        except Exception:
+            _LOGGER.debug(
+                "wyzeapy: wake attempt for camera %s raised an error; "
+                "retrying get_stream_info anyway",
+                camera.mac,
+                exc_info=True,
+            )
+        await asyncio.sleep(_CAMERA_WAKE_RETRY_DELAY)
+        return await self.get_stream_info(camera, _retried=True)

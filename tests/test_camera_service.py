@@ -408,8 +408,12 @@ class TestCameraService(unittest.IsolatedAsyncioTestCase):
             "msg": "device offline",
         }
 
-        with self.assertRaisesRegex(UnknownApiError, "Camera is offline"):
-            await self.camera_service.get_stream_info(self.test_camera)
+        with patch("wyzeapy.services.camera_service.asyncio.sleep", AsyncMock()):
+            with self.assertRaisesRegex(UnknownApiError, "Camera is offline"):
+                await self.camera_service.get_stream_info(self.test_camera)
+
+        # Woken (and retried) once before giving up for good.
+        self.camera_service._run_action.assert_awaited_once()
 
     async def test_get_stream_info_rejects_unavailable_streams_without_logging_params(
         self,
@@ -425,10 +429,44 @@ class TestCameraService(unittest.IsolatedAsyncioTestCase):
                     "data": [{"property": properties, "params": {"token": "secret"}}],
                 }
 
-                with self.assertRaisesRegex(UnknownApiError, message) as caught:
-                    await self.camera_service.get_stream_info(self.test_camera)
+                with patch(
+                    "wyzeapy.services.camera_service.asyncio.sleep", AsyncMock()
+                ):
+                    with self.assertRaisesRegex(UnknownApiError, message) as caught:
+                        await self.camera_service.get_stream_info(self.test_camera)
 
                 self.assertNotIn("secret", str(caught.exception))
+
+    async def test_get_stream_info_wakes_sleeping_camera_and_retries_once(self):
+        """A battery camera reported offline is woken via turn_on() and retried once."""
+        offline_response = {
+            "code": ResponseCodes.SUCCESS.value,
+            "data": [{"property": {"iot-device::iot-state": 0}, "params": {}}],
+        }
+        online_response = {
+            "code": ResponseCodes.SUCCESS.value,
+            "data": [
+                {
+                    "property": {
+                        "iot-device::iot-state": 1,
+                        "iot-device::iot-power": 1,
+                    },
+                    "params": {"answer": "ok"},
+                }
+            ],
+        }
+        self.camera_service._get_camera_stream.side_effect = [
+            offline_response,
+            online_response,
+        ]
+
+        with patch("wyzeapy.services.camera_service.asyncio.sleep", AsyncMock()):
+            stream_info = await self.camera_service.get_stream_info(self.test_camera)
+
+        self.assertEqual(stream_info, {"answer": "ok"})
+        self.camera_service._run_action.assert_awaited_once_with(
+            self.test_camera, "power_on"
+        )
 
     async def test_register_for_updates(self):
         mock_callback = MagicMock()
